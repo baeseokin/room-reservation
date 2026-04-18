@@ -1,0 +1,383 @@
+const express = require("express");
+const router = express.Router();
+const pool = require("../config/db");
+const { sendReservationCompleteAlimTalk, sendInquiryAlimTalk } = require("../services/alimtalk");
+
+// Auth check middleware
+const isLogged = (req, res, next) => {
+  if (req.session.user) return next();
+  res.status(401).json({ success: false, message: "Login required" });
+};
+
+const isAdmin = (req, res, next) => {
+  if (req.session.user && req.session.user.roles.includes("관리자")) return next();
+  res.status(403).json({ success: false, message: "Admin permission required" });
+};
+
+/**
+ * List reservations (filter by date range, room, user)
+ */
+router.get("/", async (req, res) => {
+  const { date, start_date, end_date, room_id, user_id } = req.query;
+  try {
+    let query = `
+      SELECT r.*, rm.room_name, rm.floor 
+      FROM reservations r 
+      JOIN rooms rm ON r.room_id = rm.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (date) {
+      query += " AND r.reservation_date = ?";
+      params.push(date);
+    } else if (start_date && end_date) {
+      query += " AND r.reservation_date BETWEEN ? AND ?";
+      params.push(start_date, end_date);
+    }
+
+    if (room_id) {
+      query += " AND r.room_id = ?";
+      params.push(room_id);
+    }
+    if (user_id) {
+      query += " AND r.requester_id = ?";
+      params.push(user_id);
+    }
+
+    query += " ORDER BY r.reservation_date DESC, r.start_time DESC";
+    const [rows] = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("Reservations API Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Create Reservation
+ */
+router.post("/", isLogged, async (req, res) => {
+  const { 
+    room_id, 
+    reservation_date, 
+    start_time, 
+    end_time, 
+    reason, 
+    is_recurring, 
+    recurrence_count,
+    requester_name,
+    requester_phone,
+    title
+  } = req.body;
+
+  const requester_id = req.session.user.id;
+  const conn = await pool.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    // 1. Check for conflicts
+    const [conflicts] = await conn.query(
+      `SELECT * FROM reservations 
+       WHERE room_id = ? AND reservation_date = ? AND status = 'approved'
+       AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+      [room_id, reservation_date, start_time, start_time, end_time, end_time, start_time, end_time]
+    );
+
+    if (conflicts.length > 0) {
+      await conn.rollback();
+      return res.status(409).json({ 
+        success: false, 
+        message: "이미 해당 시간에 예약이 있습니다.",
+        conflicts: conflicts 
+      });
+    }
+
+    // 2. Insert Reservation(s)
+    let reservationIds = [];
+    if (is_recurring && recurrence_count > 1) {
+      // Simple Weekly recurrence for now
+      for (let i = 0; i < recurrence_count; i++) {
+        const d = new Date(reservation_date);
+        d.setDate(d.getDate() + (i * 7));
+        const dateStr = d.toISOString().split('T')[0];
+
+        // Recurrence conflict check inside loop
+        const [rConflicts] = await conn.query(
+          `SELECT id FROM reservations WHERE room_id = ? AND reservation_date = ? AND status = 'approved'
+           AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?))`,
+          [room_id, dateStr, start_time, start_time, end_time, end_time]
+        );
+        if (rConflicts.length > 0) continue; // Skip conflicted dates or handle error
+
+        const [result] = await conn.query(
+          `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [room_id, requester_id, requester_name, requester_phone, title, dateStr, start_time, end_time, reason, true]
+        );
+        reservationIds.push(result.insertId);
+      }
+    } else {
+      const [result] = await conn.query(
+        `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason]
+      );
+      reservationIds.push(result.insertId);
+    }
+
+    await conn.commit();
+
+    // 3. Send AlimTalk
+    const [rooms] = await pool.query("SELECT room_name FROM rooms WHERE id = ?", [room_id]);
+    const roomInfo = rooms[0];
+
+    if (roomInfo) {
+      try {
+          await sendReservationCompleteAlimTalk({
+              room_name: roomInfo.room_name,
+              reservation_date,
+              start_time,
+              end_time,
+              requester_name,
+              requester_phone,
+              reason
+          });
+      } catch (e) { console.error("AlimTalk skip:", e.message); }
+    }
+
+    res.json({ success: true, ids: reservationIds });
+  } catch (err) {
+    if (conn) await conn.rollback();
+    console.error("Create Reservation Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+/**
+ * Handle conflict inquiry
+ */
+router.post("/inquiry", isLogged, async (req, res) => {
+  const { reservation_id, content } = req.body;
+  const inquirer_id = req.session.user.id;
+
+  try {
+    // 1. Record Inquiry
+    await pool.query(
+      "INSERT INTO reservation_inquiries (reservation_id, inquirer_id, content) VALUES (?, ?, ?)",
+      [reservation_id, inquirer_id, content]
+    );
+
+    // 2. Send AlimTalk to original requester
+    const [original] = await pool.query(
+      `SELECT r.*, rm.room_name FROM reservations r 
+       JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`,
+      [reservation_id]
+    );
+
+    if (original.length > 0) {
+      await sendInquiryAlimTalk(original[0], req.session.user.userName, content);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Reservations API Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Get Inquiries for a specific reservation
+ */
+router.get("/:id/inquiries", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query(
+      `SELECT i.*, u.user_name as inquirer_name 
+       FROM reservation_inquiries i 
+       JOIN users u ON i.inquirer_id = u.id 
+       WHERE i.reservation_id = ? 
+       ORDER BY i.created_at ASC`,
+      [id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Answer an inquiry (Only for original requester)
+ */
+router.put("/inquiry/:inquiryId", isLogged, async (req, res) => {
+  const { inquiryId } = req.params;
+  const { answer } = req.body;
+  const user = req.session.user;
+
+  try {
+    // Check if the current user is the owner of the reservation this inquiry belongs to
+    const [original] = await pool.query(
+      `SELECT r.requester_id FROM reservations r 
+       JOIN reservation_inquiries i ON r.id = i.reservation_id 
+       WHERE i.id = ?`,
+      [inquiryId]
+    );
+
+    if (original.length === 0) return res.status(404).json({ success: false });
+    if (original[0].requester_id !== user.id && !user.roles.includes("관리자")) {
+      return res.status(403).json({ success: false, message: "Only the reservation owner can answer." });
+    }
+
+    await pool.query(
+      "UPDATE reservation_inquiries SET answer = ?, status = 'answered' WHERE id = ?",
+      [answer, inquiryId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Get all inquiries related to current user (Sent and Received)
+ */
+router.get("/inquiries/mine", isLogged, async (req, res) => {
+  const user = req.session.user;
+  try {
+    // 1) Sent Inquiries
+    const [sent] = await pool.query(
+      `SELECT i.*, r.title as reservation_title, r.reservation_date, r.start_time, r.end_time, 
+              rm.room_name, rm.floor
+       FROM reservation_inquiries i
+       JOIN reservations r ON i.reservation_id = r.id
+       JOIN rooms rm ON r.room_id = rm.id
+       WHERE i.inquirer_id = ?
+       ORDER BY i.created_at DESC`,
+      [user.id]
+    );
+
+    // 2) Received Inquiries
+    const [received] = await pool.query(
+      `SELECT i.*, r.title as reservation_title, r.reservation_date, r.start_time, r.end_time, 
+              rm.room_name, rm.floor, u.user_name as inquirer_name
+       FROM reservation_inquiries i
+       JOIN reservations r ON i.reservation_id = r.id
+       JOIN rooms rm ON r.room_id = rm.id
+       JOIN users u ON i.inquirer_id = u.id
+       WHERE r.requester_id = ?
+       ORDER BY i.created_at DESC`,
+      [user.id]
+    );
+
+    res.json({ sent, received });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Transfer Reservation to the Inquirer
+ */
+router.post("/inquiry/:inquiryId/transfer", isLogged, async (req, res) => {
+  const { inquiryId } = req.params;
+  const user = req.session.user;
+
+  try {
+    // 1) Check ownership and inquiry details
+    const [rows] = await pool.query(
+      `SELECT i.*, u.user_name as inquirer_name, u.phone as inquirer_phone 
+       FROM reservation_inquiries i
+       JOIN users u ON i.inquirer_id = u.id
+       WHERE i.id = ?`,
+      [inquiryId]
+    );
+
+    if (rows.length === 0) return res.status(404).json({ success: false, message: "Inquiry not found" });
+    const inquiry = rows[0];
+
+    const [resRows] = await pool.query("SELECT * FROM reservations WHERE id = ?", [inquiry.reservation_id]);
+    if (resRows.length === 0) return res.status(404).json({ success: false, message: "Reservation not found" });
+    const reservation = resRows[0];
+
+    if (reservation.requester_id !== user.id && !user.roles.includes("관리자")) {
+      return res.status(403).json({ success: false, message: "Only the owner can transfer." });
+    }
+
+    // 2) Update Reservation Owner
+    await pool.query(
+      `UPDATE reservations SET 
+       requester_id = ?, 
+       requester_name = ?, 
+       requester_phone = ?,
+       title = CONCAT('[양도] ', title)
+       WHERE id = ?`,
+      [inquiry.inquirer_id, inquiry.inquirer_name, inquiry.inquirer_phone, inquiry.reservation_id]
+    );
+
+    // 3) Update Inquiry Status (Preserve previous answer)
+    await pool.query(
+      `UPDATE reservation_inquiries SET 
+       status = 'transferred', 
+       answer = CONCAT(IFNULL(answer, ''), '\n[시스템] 공간이 양도되었습니다.') 
+       WHERE id = ?`,
+      [inquiryId]
+    );
+
+    res.json({ success: true, message: "Reservation transferred successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Update Reservation (Admin or Self)
+ */
+router.put("/:id", isLogged, async (req, res) => {
+    const { id } = req.params;
+    const { start_time, end_time, reason, reservation_date, title } = req.body;
+    const user = req.session.user;
+
+    try {
+        const [record] = await pool.query("SELECT * FROM reservations WHERE id = ?", [id]);
+        if (record.length === 0) return res.status(404).json({ success: false, message: "Not found" });
+
+        if (!user.roles.includes("관리자") && record[0].requester_id !== user.id) {
+            return res.status(403).json({ success: false, message: "No permission" });
+        }
+
+        await pool.query(
+            "UPDATE reservations SET start_time = ?, end_time = ?, reason = ?, reservation_date = ?, title = ? WHERE id = ?",
+            [start_time, end_time, reason, reservation_date, title, id]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Update Reservation Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * Delete / Cancel (Admin or Self)
+ */
+router.delete("/:id", isLogged, async (req, res) => {
+    const { id } = req.params;
+    const user = req.session.user;
+    try {
+        const [record] = await pool.query("SELECT * FROM reservations WHERE id = ?", [id]);
+        if (record.length === 0) return res.status(404).json({ success: false });
+
+        if (!user.roles.includes("관리자") && record[0].requester_id !== user.id) {
+            return res.status(403).json({ success: false, message: "No permission" });
+        }
+
+        await pool.query("UPDATE reservations SET status = 'cancelled' WHERE id = ?", [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+});
+
+module.exports = router;
