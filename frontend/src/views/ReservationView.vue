@@ -8,12 +8,25 @@ import {
   MapPinIcon, 
   ChevronLeftIcon, 
   ChevronRightIcon,
-  XMarkIcon 
+  XMarkIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
 const rooms = ref([])
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const reservations = ref([])
+const loadingRooms = ref(false)
+const expandedFloors = ref(['1', 'B1', 'B3']) // 1F, B1, B3 기본 펼침
+
+const toggleFloor = (floor) => {
+  if (expandedFloors.value.includes(floor)) {
+    expandedFloors.value = expandedFloors.value.filter(f => f !== floor)
+  } else {
+    expandedFloors.value.push(floor)
+  }
+}
+
+const isFloorExpanded = (floor) => expandedFloors.value.includes(floor)
 const showBookingModal = ref(false)
 const showInquiryModal = ref(false)
 const showDetailModal = ref(false) // New
@@ -133,8 +146,8 @@ const openBooking = (room, time = '09:00') => {
   
   // Auto-fill from user session
   if (auth.user) {
-    form.value.requester_name = auth.user.userName || ''
-    form.value.requester_phone = auth.user.phone || ''
+    form.value.requester_name = auth.user.userId // 사용자의 아이디를 넣음
+    form.value.requester_phone = auth.user.phone || '010-0000-0000'
   }
 
   const [h, m] = time.split(':').map(Number)
@@ -402,11 +415,18 @@ onMounted(() => {
           </div>
 
           <div v-for="floor in floors" :key="floor" class="overflow-hidden">
-            <div class="h-8 bg-slate-50 flex items-center justify-center border-b border-slate-100 whitespace-nowrap overflow-hidden">
+            <!-- Floor Toggle Header -->
+            <button @click="toggleFloor(floor)" 
+                    class="w-full h-8 bg-slate-50 flex items-center justify-center gap-2 border-b border-slate-100 hover:bg-slate-100 transition-colors group">
                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
-            </div>
-            <div v-for="room in roomsByFloor[floor]" :key="room.id" class="h-16 border-b border-slate-100 flex items-center justify-center px-4 hover:bg-slate-50 transition-colors whitespace-nowrap overflow-hidden">
-              <span class="text-sm font-bold text-slate-800 leading-tight text-center">{{ room.room_name }}</span>
+               <component :is="isFloorExpanded(floor) ? ChevronDownIcon : ChevronRightIcon" class="w-2.5 h-2.5 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+            </button>
+            
+            <!-- Rooms List (Collapsible) -->
+            <div v-show="isFloorExpanded(floor)">
+              <div v-for="room in roomsByFloor[floor]" :key="room.id" class="h-16 border-b border-slate-100 flex items-center justify-center px-4 hover:bg-slate-50 transition-colors whitespace-nowrap overflow-hidden">
+                <span class="text-sm font-bold text-slate-800 leading-tight text-center">{{ room.room_name }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -414,59 +434,63 @@ onMounted(() => {
         <!-- Timetable Grid -->
         <div class="relative shrink-0 flex flex-col">
           <!-- Time Header (Sticky Top) -->
-          <div class="h-12 bg-white flex border-b border-slate-300 sticky top-0 z-10">
+          <div class="h-12 bg-white flex border-b border-slate-300 sticky top-0 z-20">
             <template v-for="(time, idx) in timeSlots" :key="'header-' + time">
-              <!-- Show HH format only for :00 slots, spanning 2 cells conceptually -->
+              <!-- Show HH format only for :00 slots -->
               <div v-if="time.endsWith(':00')" class="w-[60px] flex items-center justify-center shrink-0 border-r border-slate-200">
                  <span class="text-[10px] font-black text-slate-900 leading-none">{{ time.split(':')[0] }}</span>
               </div>
-              <!-- For :30 slots, we don't render a div because the :00 slot above is 60px (2x30px) -->
+              <!-- For :30 slots start -->
               <div v-else-if="idx === 0" class="w-[30px] border-r border-slate-200 flex items-center justify-center shrink-0 bg-slate-50">
-                <!-- If the visible range starts with :30, show it simply -->
                 <span class="text-[9px] font-bold text-slate-500">{{ time }}</span>
               </div>
             </template>
           </div>
 
-          <!-- Body Rows -->
-          <div v-for="floor in floors" :key="'body-' + floor">
-            <div class="h-8 bg-slate-100/50 border-b border-slate-300 relative">
+          <!-- Body Rows (Grouped by Floor) -->
+          <div v-for="floor in floors" :key="'body-floor-' + floor">
+            <!-- Floor Indicator row in grid (matches sidebar header height) -->
+            <div class="h-8 bg-slate-50/50 border-b border-slate-100 relative">
                <div class="absolute inset-0 flex" :style="{ width: timeSlots.length * 30 + 'px' }">
-                 <div v-for="time in timeSlots" :key="time" class="w-[30px] border-r border-slate-200 h-full"></div>
+                 <div v-for="time in timeSlots" :key="'grid-h-' + time" class="w-[30px] border-r border-slate-100 h-full"></div>
                </div>
             </div>
-            <div v-for="room in roomsByFloor[floor]" :key="'body-' + room.id" class="h-16 relative border-b border-slate-300 group">
-              <!-- Background Grid -->
-              <div class="absolute inset-0 flex" :style="{ width: timeSlots.length * 30 + 'px' }">
-                 <div v-for="time in timeSlots" :key="time" 
-                      @mousedown.prevent="handleMouseDown(room, time)"
-                      @mouseenter="handleMouseEnterGrid(time)"
-                      :class="[time.endsWith(':00') ? 'border-slate-200' : 'border-slate-100']"
-                      class="w-[30px] border-r h-full hover:bg-slate-50 transition-colors cursor-pointer select-none">
-                 </div>
-              </div>
 
-              <!-- Selection Bar Overlay -->
-              <div class="absolute top-1 bottom-1 rounded-md pointer-events-none transition-all duration-75"
-                   :style="getSelectionStyle(room.id)">
-              </div>
+            <!-- Collapsible Room Rows -->
+            <div v-show="isFloorExpanded(floor)">
+              <div v-for="room in roomsByFloor[floor]" :key="'body-room-' + room.id" class="h-16 relative border-b border-slate-100 group">
+                <!-- Background Interaction Grid -->
+                <div class="absolute inset-0 flex" :style="{ width: timeSlots.length * 30 + 'px' }">
+                   <div v-for="time in timeSlots" :key="'cell-' + room.id + '-' + time" 
+                        @mousedown.prevent="handleMouseDown(room, time)"
+                        @mouseenter="handleMouseEnterGrid(time)"
+                        :class="[time.endsWith(':00') ? 'border-slate-200' : 'border-slate-100']"
+                        class="w-[30px] border-r h-full hover:bg-slate-50 transition-colors cursor-pointer select-none">
+                   </div>
+                </div>
 
-              <!-- Reservations Layer -->
-              <div class="absolute inset-0 pointer-events-none" :style="{ width: timeSlots.length * 30 + 'px' }">
-                 <div v-for="res in getReservationsForRoom(room.id)" :key="res.id"
-                      :style="getReservationStyle(res)"
-                      @mouseenter="handleMouseEnter(res, $event)"
-                      @mousemove="updateMousePos($event)"
-                      @mouseleave="handleMouseLeave"
-                      @click.stop="handleBlockClick(res, $event)"
-                      class="absolute top-2 bottom-2 rounded-lg bg-slate-900 border border-slate-700 shadow-lg p-2 pointer-events-auto cursor-pointer flex flex-col justify-center overflow-hidden transition-all hover:bg-slate-800">
-                    <div class="text-[9px] font-black text-indigo-400 leading-none truncate mb-1">
-                      {{ res.title || 'No Title' }}
-                    </div>
-                    <div class="text-[10px] text-white font-bold leading-tight line-clamp-1 italic">
-                      {{ res.requester_name }}
-                    </div>
-                 </div>
+                <!-- Selection Overlay -->
+                <div class="absolute top-1 bottom-1 rounded-md pointer-events-none transition-all duration-75 z-10"
+                     :style="getSelectionStyle(room.id)">
+                </div>
+
+                <!-- Reservations Blocks Overlay -->
+                <div class="absolute inset-0 pointer-events-none" :style="{ width: timeSlots.length * 30 + 'px' }">
+                   <div v-for="res in getReservationsForRoom(room.id)" :key="'res-' + res.id"
+                        :style="getReservationStyle(res)"
+                        @mouseenter="handleMouseEnter(res, $event)"
+                        @mousemove="updateMousePos($event)"
+                        @mouseleave="handleMouseLeave"
+                        @click.stop="handleBlockClick(res, $event)"
+                        class="absolute top-2 bottom-2 rounded-lg bg-slate-900 border border-slate-700 shadow-lg p-2 pointer-events-auto cursor-pointer flex flex-col justify-center overflow-hidden transition-all hover:bg-slate-800">
+                      <div class="text-[9px] font-black text-indigo-400 leading-none truncate mb-1">
+                        {{ res.title || 'No Title' }}
+                      </div>
+                      <div class="text-[10px] text-white font-bold leading-tight line-clamp-1 italic">
+                        {{ res.requester_name }}
+                      </div>
+                   </div>
+                </div>
               </div>
             </div>
           </div>

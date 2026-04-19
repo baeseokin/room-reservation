@@ -196,7 +196,7 @@ router.get("/:id/inquiries", async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await pool.query(
-      `SELECT i.*, u.user_name as inquirer_name 
+      `SELECT i.*, u.user_id as inquirer_name 
        FROM reservation_inquiries i 
        JOIN users u ON i.inquirer_id = u.id 
        WHERE i.reservation_id = ? 
@@ -262,7 +262,7 @@ router.get("/inquiries/mine", isLogged, async (req, res) => {
     // 2) Received Inquiries
     const [received] = await pool.query(
       `SELECT i.*, r.title as reservation_title, r.reservation_date, r.start_time, r.end_time, 
-              rm.room_name, rm.floor, u.user_name as inquirer_name
+              rm.room_name, rm.floor, u.user_id as inquirer_name
        FROM reservation_inquiries i
        JOIN reservations r ON i.reservation_id = r.id
        JOIN rooms rm ON r.room_id = rm.id
@@ -288,7 +288,7 @@ router.post("/inquiry/:inquiryId/transfer", isLogged, async (req, res) => {
   try {
     // 1) Check ownership and inquiry details
     const [rows] = await pool.query(
-      `SELECT i.*, u.user_name as inquirer_name, u.phone as inquirer_phone 
+      `SELECT i.*, u.user_id as inquirer_name, u.phone as inquirer_phone 
        FROM reservation_inquiries i
        JOIN users u ON i.inquirer_id = u.id
        WHERE i.id = ?`,

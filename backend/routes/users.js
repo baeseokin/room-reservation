@@ -11,6 +11,14 @@ const isAdmin = (req, res, next) => {
   }
 };
 
+const isLogged = (req, res, next) => {
+  if (req.session.user) {
+    next();
+  } else {
+    res.status(401).json({ success: false, message: "Login required" });
+  }
+};
+
 /**
  * Department Management
  */
@@ -34,6 +42,40 @@ router.post("/departments", isAdmin, async (req, res) => {
 });
 
 const bcrypt = require("bcrypt");
+
+/**
+ * Get current user profile
+ */
+router.get("/me", isLogged, async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT id, user_id, user_name, email, phone, dept_name FROM users WHERE id = ?", [req.session.user.id]);
+    if (rows.length === 0) return res.status(404).json({ success: false });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Update current user profile
+ */
+router.put("/me", isLogged, async (req, res) => {
+  const { user_name, email, phone } = req.body;
+  try {
+    await pool.query(
+      "UPDATE users SET user_name = ?, email = ?, phone = ? WHERE id = ?",
+      [user_name, email, phone, req.session.user.id]
+    );
+    
+    // Update session info if needed
+    req.session.user.userName = user_name;
+    req.session.user.phone = phone;
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /**
  * User Management

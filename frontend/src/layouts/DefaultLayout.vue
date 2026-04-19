@@ -57,7 +57,7 @@ const logout = () => auth.logout()
           :to="item.path"
           :title="isCollapsed ? item.name : ''"
           class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold hover:bg-slate-800 whitespace-nowrap"
-          active-class="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+          exact-active-class="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
         >
           <component :is="item.icon" class="w-6 h-6 shrink-0" />
           <span v-if="!isCollapsed">{{ item.name }}</span>
@@ -65,15 +65,15 @@ const logout = () => auth.logout()
       </nav>
 
       <div class="pt-8 border-t border-slate-800 space-y-4 overflow-hidden">
-        <div class="flex items-center gap-3 px-2">
-          <div class="w-10 h-10 shrink-0 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-bold text-indigo-400">
+        <router-link to="/profile" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-white/5 transition-all group" exact-active-class="bg-white/10 text-indigo-400">
+          <div class="w-10 h-10 shrink-0 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-bold text-indigo-400 group-hover:border-indigo-500 transition-colors">
              {{ auth.user?.userName.charAt(0) }}
           </div>
           <div v-if="!isCollapsed" class="flex-1 overflow-hidden">
-             <div class="text-sm font-bold truncate">{{ auth.user?.userName }}</div>
+             <div class="text-sm font-bold truncate group-hover:text-indigo-400 transition-colors">{{ auth.user?.userName }}</div>
              <div class="text-[10px] text-slate-500 truncate">{{ auth.user?.deptName || '미지정' }}</div>
           </div>
-        </div>
+        </router-link>
         <button @click="logout" 
                 :title="isCollapsed ? '로그아웃' : ''"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold text-sm whitespace-nowrap">
@@ -108,7 +108,7 @@ const logout = () => auth.logout()
             :to="item.path"
             @click="isSidebarOpen = false"
             class="flex items-center gap-4 text-xl font-bold"
-            active-class="text-indigo-400"
+            exact-active-class="text-indigo-400"
           >
             <component :is="item.icon" class="w-8 h-8" />
             {{ item.name }}
