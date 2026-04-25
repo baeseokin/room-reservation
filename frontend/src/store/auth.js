@@ -25,6 +25,19 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, message: e.response?.data?.message || '로그인 오류' }
       }
     },
+    async loginWithKakao(code) {
+      try {
+        const res = await axios.post('/api/auth/kakao', { code })
+        if (res.data.success) {
+          this.user = res.data.user
+          return true
+        }
+        return false
+      } catch (e) {
+        console.error('Kakao login fail:', e)
+        return false
+      }
+    },
     async checkSession() {
       try {
         const res = await axios.get('/api/auth/session')

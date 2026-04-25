@@ -18,6 +18,29 @@ const router = createRouter({
           path: 'reservations',
           name: 'Reservations',
           component: () => import('../views/ReservationView.vue')
+        },
+        {
+          path: 'my-reservations',
+          name: 'MyReservations',
+          component: () => import('../views/MyReservationsView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'inquiries',
+          name: 'InquiryManagement',
+          component: () => import('../views/InquiryManagementView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'profile',
+          name: 'Profile',
+          component: () => import('../views/ProfileView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'login',
+          name: 'Login',
+          component: () => import('../views/LoginView.vue')
         }
       ]
     },
@@ -73,6 +96,11 @@ router.beforeEach(async (to, from, next) => {
   // Admin login page: if already logged in, go to admin dashboard
   if (to.name === 'AdminLogin' && auth.user) {
     return next({ path: '/admin' })
+  }
+
+  // Auth-required routes (General users)
+  if (to.meta.requiresAuth && !auth.user) {
+    return next({ name: 'Login' })
   }
 
   // Admin-required routes

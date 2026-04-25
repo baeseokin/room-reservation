@@ -26,19 +26,32 @@ const router = useRouter()
           공간 예약
         </router-link>
 
+        <!-- User Links (if logged in) -->
+        <template v-if="auth.user">
+          <router-link to="/my-reservations" active-class="bg-indigo-50 text-indigo-600" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            나의 예약
+          </router-link>
+          <router-link to="/inquiries" active-class="bg-indigo-50 text-indigo-600" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            문의 관리
+          </router-link>
+          <router-link to="/profile" active-class="bg-indigo-50 text-indigo-600" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            내 정보
+          </router-link>
+        </template>
+
         <!-- Admin badge if logged in -->
         <template v-if="auth.isAdmin">
-          <div v-if="$route.path !== '/' || !$route.path.startsWith('/reservations')" class="w-px h-5 bg-slate-200 mx-1"></div>
+          <div class="w-px h-5 bg-slate-200 mx-1"></div>
           <router-link to="/admin" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all">
             <ShieldCheckIcon class="w-4 h-4" />
             관리자
           </router-link>
         </template>
-        <template v-else>
-          <div v-if="$route.path !== '/' || !$route.path.startsWith('/reservations')" class="w-px h-5 bg-slate-200 mx-1"></div>
-          <router-link to="/admin/login" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-700 transition-all">
-            <ShieldCheckIcon class="w-4 h-4" />
-            관리자 로그인
+        <template v-else-if="!auth.user">
+          <div class="w-px h-5 bg-slate-200 mx-1"></div>
+          <router-link to="/login" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+            <SparklesIcon class="w-4 h-4" />
+            로그인
           </router-link>
         </template>
       </nav>

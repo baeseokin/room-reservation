@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/store/auth'
 import { 
   ChevronLeftIcon, ChevronRightIcon, 
   ChevronDoubleLeftIcon, ChevronDoubleRightIcon,
@@ -700,33 +700,33 @@ onMounted(() => {
               <button @click="showBookingModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all"><XMarkIcon class="w-6 h-6" /></button>
             </div>
             <div class="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100">
-              <label class="block text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-widest">신청명</label>
+              <label class="block text-[10px] font-black text-indigo-400 mb-[5px] uppercase tracking-widest">신청명</label>
               <input type="text" v-model="form.title" placeholder="신청명 입력" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 placeholder:text-slate-300 focus:ring-0" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">시작 시간</label>
+                  <label class="block text-[10px] font-black text-slate-300 mb-[5px] uppercase tracking-widest">시작 시간</label>
                   <input type="time" v-model="form.start_time" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-700 focus:ring-0" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">종료 시간</label>
+                  <label class="block text-[10px] font-black text-slate-300 mb-[5px] uppercase tracking-widest">종료 시간</label>
                   <input type="time" v-model="form.end_time" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-700 focus:ring-0" />
                 </div>
               </div>
               <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">신청자 이름</label>
+                  <label class="block text-[10px] font-black text-slate-500 mb-[5px] uppercase tracking-widest">신청자 이름</label>
                   <input type="text" v-model="form.requester_name" placeholder="홍길동" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 placeholder:text-slate-300 focus:ring-0" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">연락처</label>
+                  <label class="block text-[10px] font-black text-slate-500 mb-[5px] uppercase tracking-widest">연락처</label>
                   <input type="tel" v-model="form.requester_phone" placeholder="010-0000-0000" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 placeholder:text-slate-300 focus:ring-0" />
                 </div>
               </div>
             </div>
             <div class="bg-slate-50 p-6 rounded-3xl">
-              <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">사유</label>
+              <label class="block text-[10px] font-black text-slate-300 mb-[5px] uppercase tracking-widest">사유</label>
               <textarea v-model="form.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 placeholder:text-slate-300 focus:ring-0 h-24 resize-none" placeholder="사용 목적"></textarea>
             </div>
             <div class="flex gap-4 pt-4">

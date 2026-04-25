@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
-import { useAuthStore } from '../store/auth'
+import { useAuthStore } from '@/store/auth'
 import { 
   CalendarDaysIcon, 
   ClockIcon, 
@@ -156,9 +156,11 @@ onMounted(fetchMyReservations)
           </tr>
         </thead>
         <tbody>
-          <tr v-if="loading" v-for="i in 3" :key="'loader-'+i" class="animate-pulse">
-             <td colspan="5" class="px-8 py-6 bg-slate-50/50"></td>
-          </tr>
+          <template v-if="loading">
+            <tr v-for="i in 3" :key="'loader-'+i" class="animate-pulse">
+              <td colspan="5" class="px-8 py-6 bg-slate-50/50"></td>
+            </tr>
+          </template>
           <tr v-else-if="reservations.length === 0">
              <td colspan="5" class="px-8 py-20 text-center">
                 <div class="text-slate-300 font-bold">조회된 예약 내역이 없습니다.</div>
@@ -217,28 +219,28 @@ onMounted(fetchMyReservations)
           <div class="grid grid-cols-2 gap-4">
              <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">신청명</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">신청명</label>
                   <input type="text" v-model="editForm.title" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">날짜</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
                   <input type="date" v-model="editForm.reservation_date" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
              </div>
              <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">시작 시간</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">시작 시간</label>
                   <input type="time" v-model="editForm.start_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">종료 시간</label>
+                  <label class="block text-[10px] font-black text-slate-300 mb-[5px] uppercase tracking-widest">종료 시간</label>
                   <input type="time" v-model="editForm.end_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
              </div>
           </div>
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
-            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">사용 목적</label>
+            <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
             <textarea v-model="editForm.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans" placeholder="목적을 입력하세요"></textarea>
           </div>
 
