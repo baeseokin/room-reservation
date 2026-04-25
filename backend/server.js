@@ -58,6 +58,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Health check
 app.get("/health", (req, res) => res.send("OK"));

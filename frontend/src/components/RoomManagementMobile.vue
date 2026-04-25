@@ -12,8 +12,20 @@ const form = ref({
   floor: '',
   dept_name: '',
   manager_name: '',
-  manager_contact: ''
+  manager_contact: '',
+  image_url: null
 })
+const selectedFile = ref(null)
+const previewUrl = ref(null)
+
+const onFileChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    selectedFile.value = file
+    previewUrl.value = URL.createObjectURL(file)
+  }
+}
+
 
 const fetchRooms = async () => {
   const res = await axios.get('/api/rooms')
@@ -26,22 +38,40 @@ const fetchDepartments = async () => {
 }
 
 const openModal = (room = null) => {
+  selectedFile.value = null
+  previewUrl.value = null
   if (room) {
     editingRoom.value = room
     form.value = { ...room }
+    previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', floor: '', dept_name: '', manager_name: '', manager_contact: '' }
+    form.value = { room_name: '', floor: '', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
 
+
 const saveRoom = async () => {
   try {
+    const formData = new FormData()
+    formData.append('room_name', form.value.room_name)
+    formData.append('floor', form.value.floor)
+    formData.append('dept_name', form.value.dept_name)
+    formData.append('manager_name', form.value.manager_name)
+    formData.append('manager_contact', form.value.manager_contact)
+    if (selectedFile.value) {
+      formData.append('image', selectedFile.value)
+    }
+
     if (editingRoom.value) {
-      await axios.put(`/api/rooms/${editingRoom.value.id}`, form.value)
+      await axios.put(`/api/rooms/${editingRoom.value.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     } else {
-      await axios.post('/api/rooms', form.value)
+      await axios.post('/api/rooms', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     }
     showModal.value = false
     fetchRooms()
@@ -49,6 +79,7 @@ const saveRoom = async () => {
     alert('저장에 실패했습니다: ' + (err.response?.data?.error || err.message))
   }
 }
+
 
 onMounted(() => {
   fetchRooms()
@@ -68,9 +99,11 @@ onMounted(() => {
     <div class="space-y-4">
       <div v-for="room in rooms" :key="room.id" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
         <div class="flex items-center gap-4">
-           <div class="w-12 h-12 bg-slate-50 flex items-center justify-center rounded-2xl font-black text-slate-400">
-             {{ room.floor }}
+           <div class="w-12 h-12 bg-slate-50 flex items-center justify-center rounded-2xl font-black text-slate-400 overflow-hidden">
+             <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover" />
+             <template v-else>{{ room.floor }}</template>
            </div>
+
            <div>
              <h3 class="font-bold text-slate-900">{{ room.room_name }}</h3>
              <p class="text-xs text-slate-400">{{ room.dept_name }} | {{ room.manager_name }}</p>
@@ -97,8 +130,22 @@ onMounted(() => {
                  </option>
                </select>
             </div>
-            <input v-model="form.manager_name" type="text" class="input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="담당자 성명" />
-            <input v-model="form.manager_contact" type="text" class="input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="담당자 연락처" />
+            <input v-model="form.manager_name" type="text" class="input-field p-4 bg-slate-50 border-none rounded-2xl w-full" placeholder="담당자 성명" />
+            <input v-model="form.manager_contact" type="text" class="input-field p-4 bg-slate-50 border-none rounded-2xl w-full" placeholder="담당자 연락처" />
+            
+            <div class="space-y-2">
+              <div v-if="previewUrl" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-200">
+                <img :src="previewUrl" class="w-full h-full object-cover" />
+                <button @click="previewUrl = null; selectedFile = null; form.image_url = null" class="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full text-slate-600 hover:text-red-600">
+                  <TrashIcon class="w-4 h-4" />
+                </button>
+              </div>
+              <label class="block w-full cursor-pointer bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-4 px-6 text-center hover:bg-slate-100">
+                <input type="file" @change="onFileChange" accept="image/*" class="hidden" />
+                <span class="text-xs font-bold text-slate-400">{{ previewUrl ? '사진 변경' : '공간 사진 등록' }}</span>
+              </label>
+            </div>
+
           </div>
           <div class="flex gap-4 pt-4">
             <button @click="showModal = false" class="flex-1 p-4 font-bold text-slate-400 uppercase tracking-widest text-xs">Close</button>

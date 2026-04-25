@@ -1,6 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/rooms/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage: storage });
+
 
 // Middlewares for admin check
 const isAdmin = (req, res, next) => {
@@ -33,12 +49,13 @@ router.get("/", async (req, res) => {
 /**
  * Add a new room
  */
-router.post("/", isAdmin, async (req, res) => {
+router.post("/", isAdmin, upload.single("image"), async (req, res) => {
   const { room_name, floor, dept_name, manager_name, manager_contact } = req.body;
+  const image_url = req.file ? `/uploads/rooms/${req.file.filename}` : null;
   try {
     const [result] = await pool.query(
-      "INSERT INTO rooms (room_name, floor, dept_name, manager_name, manager_contact) VALUES (?, ?, ?, ?, ?)",
-      [room_name, floor, dept_name, manager_name, manager_contact]
+      "INSERT INTO rooms (room_name, floor, dept_name, manager_name, manager_contact, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+      [room_name, floor, dept_name, manager_name, manager_contact, image_url]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) {
@@ -46,22 +63,34 @@ router.post("/", isAdmin, async (req, res) => {
   }
 });
 
+
 /**
  * Update a room
  */
-router.put("/:id", isAdmin, async (req, res) => {
+router.put("/:id", isAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
-  const { room_name, floor, dept_name, manager_name, manager_contact } = req.body;
+  const { room_name, floor, dept_name, manager_name, manager_contact, remove_image } = req.body;
+  
   try {
-    await pool.query(
-      "UPDATE rooms SET room_name = ?, floor = ?, dept_name = ?, manager_name = ?, manager_contact = ? WHERE id = ?",
-      [room_name, floor, dept_name, manager_name, manager_contact, id]
-    );
+    let updateFields = "room_name = ?, floor = ?, dept_name = ?, manager_name = ?, manager_contact = ?";
+    let params = [room_name, floor, dept_name, manager_name, manager_contact];
+
+    if (req.file) {
+      const image_url = `/uploads/rooms/${req.file.filename}`;
+      updateFields += ", image_url = ?";
+      params.push(image_url);
+    } else if (remove_image === "true") {
+      updateFields += ", image_url = NULL";
+    }
+
+    params.push(id);
+    await pool.query(`UPDATE rooms SET ${updateFields} WHERE id = ?`, params);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 /**
  * Delete a room

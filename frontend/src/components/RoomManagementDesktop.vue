@@ -12,8 +12,20 @@ const form = ref({
   floor: '',
   dept_name: '',
   manager_name: '',
-  manager_contact: ''
+  manager_contact: '',
+  image_url: null
 })
+const selectedFile = ref(null)
+const previewUrl = ref(null)
+
+const onFileChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    selectedFile.value = file
+    previewUrl.value = URL.createObjectURL(file)
+  }
+}
+
 
 // Fixed floor order for Blueprint
 const floorOrder = ['3', '1', 'B1', 'B3']
@@ -39,22 +51,40 @@ const roomsByFloor = computed(() => {
 })
 
 const openModal = (floor = '', room = null) => {
+  selectedFile.value = null
+  previewUrl.value = null
   if (room) {
     editingRoom.value = room
     form.value = { ...room }
+    previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', floor: floor, dept_name: '', manager_name: '', manager_contact: '' }
+    form.value = { room_name: '', floor: floor, dept_name: '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
 
+
 const saveRoom = async () => {
   try {
+    const formData = new FormData()
+    formData.append('room_name', form.value.room_name)
+    formData.append('floor', form.value.floor)
+    formData.append('dept_name', form.value.dept_name)
+    formData.append('manager_name', form.value.manager_name)
+    formData.append('manager_contact', form.value.manager_contact)
+    if (selectedFile.value) {
+      formData.append('image', selectedFile.value)
+    }
+
     if (editingRoom.value) {
-      await axios.put(`/api/rooms/${editingRoom.value.id}`, form.value)
+      await axios.put(`/api/rooms/${editingRoom.value.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     } else {
-      await axios.post('/api/rooms', form.value)
+      await axios.post('/api/rooms', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     }
     showModal.value = false
     fetchRooms()
@@ -62,6 +92,7 @@ const saveRoom = async () => {
     alert('저장에 실패했습니다: ' + (err.response?.data?.error || err.message))
   }
 }
+
 
 const deleteRoom = async (id) => {
   if (confirm('정말 삭제하시겠습니까?')) {
@@ -103,16 +134,23 @@ onMounted(() => {
            <!-- Individual Room Tile -->
            <div v-for="room in roomsByFloor[fLabel]" :key="room.id" 
                 class="min-w-[160px] h-full bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-between hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all cursor-pointer group/room relative">
-             <div class="overflow-hidden">
-               <div class="flex justify-between items-start gap-1">
-                  <h3 class="text-[11px] font-black text-slate-800 leading-tight uppercase truncate">{{ room.room_name }}</h3>
-                  <div class="flex gap-1 opacity-0 group-hover/room:opacity-100 transition-opacity shrink-0">
-                    <button @click.stop="openModal(fLabel, room)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><PencilIcon class="w-3 h-3" /></button>
-                    <button @click.stop="deleteRoom(room.id)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><TrashIcon class="w-3 h-3" /></button>
-                  </div>
+             <div class="overflow-hidden flex-1 flex flex-col justify-between">
+               <div>
+                 <div class="flex justify-between items-start gap-1">
+                    <h3 class="text-[11px] font-black text-slate-800 leading-tight uppercase truncate">{{ room.room_name }}</h3>
+                    <div class="flex gap-1 opacity-0 group-hover/room:opacity-100 transition-opacity shrink-0">
+                      <button @click.stop="openModal(fLabel, room)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><PencilIcon class="w-3 h-3" /></button>
+                      <button @click.stop="deleteRoom(room.id)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><TrashIcon class="w-3 h-3" /></button>
+                    </div>
+                 </div>
+                 <p class="text-[8px] text-slate-400 font-bold mt-0.5 uppercase truncate">{{ room.dept_name || 'Public' }}</p>
                </div>
-               <p class="text-[8px] text-slate-400 font-bold mt-0.5 uppercase truncate">{{ room.dept_name || 'Public' }}</p>
+
+               <div v-if="room.image_url" class="mt-2 w-full h-16 rounded-lg overflow-hidden border border-slate-100">
+                 <img :src="room.image_url" class="w-full h-full object-cover" />
+               </div>
              </div>
+
              
              <div class="flex justify-between items-center bg-white rounded-lg px-2 py-1 border border-slate-100 mt-2">
                 <span class="text-[8px] font-bold text-slate-500 truncate">{{ room.manager_name }}</span>
@@ -160,12 +198,26 @@ onMounted(() => {
             </div>
 
             <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Management</label>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Management \u0026 Media</label>
               <div class="space-y-4">
                 <input v-model="form.manager_name" type="text" placeholder="Manager Name" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
                 <input v-model="form.manager_contact" type="text" placeholder="Contact Number" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                
+                <div class="space-y-2">
+                  <div v-if="previewUrl" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-200">
+                    <img :src="previewUrl" class="w-full h-full object-cover" />
+                    <button @click="previewUrl = null; selectedFile = null; form.image_url = null" class="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full text-slate-600 hover:text-red-600">
+                      <TrashIcon class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <label class="block w-full cursor-pointer bg-white border-2 border-dashed border-slate-200 rounded-2xl py-4 px-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                    <input type="file" @change="onFileChange" accept="image/*" class="hidden" />
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ previewUrl ? 'Change Photo' : 'Upload Room Photo' }}</span>
+                  </label>
+                </div>
               </div>
             </div>
+
           </div>
 
           <div class="flex gap-4">
