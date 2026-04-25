@@ -104,14 +104,14 @@ onMounted(fetchData)
       <div class="space-y-1">
         <h1 class="text-5xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
           <UserGroupIcon class="w-12 h-12 text-indigo-600" />
-          Identity
+          사용자
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">User & Permission Management</p>
+        <p class="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">사용자 관리</p>
       </div>
 
       <button @click="openModal()" class="bg-slate-900 text-white px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all active:scale-95 shadow-2xl flex items-center gap-2">
         <UserPlusIcon class="w-5 h-5" />
-        New User
+        새 사용자
       </button>
     </div>
 
@@ -120,10 +120,10 @@ onMounted(fetchData)
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100 font-black text-[10px] text-slate-400 uppercase tracking-widest">
-            <th class="px-8 py-6">User / Identity</th>
-            <th class="px-8 py-6">Department</th>
-            <th class="px-8 py-6">Permissions</th>
-            <th class="px-8 py-6 text-right">Actions</th>
+            <th class="px-8 py-6">사용자 / 아이디</th>
+            <th class="px-8 py-6">부서</th>
+            <th class="px-8 py-6">권한</th>
+            <th class="px-8 py-6 text-right">작업</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -149,7 +149,7 @@ onMounted(fetchData)
             </td>
             <td class="px-8 py-6">
                 <span class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                  {{ user.dept_name || 'Public' }}
+                  {{ user.dept_name || '일반' }}
                 </span>
             </td>
             <td class="px-8 py-6">
@@ -176,8 +176,8 @@ onMounted(fetchData)
         <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-2xl w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">User Management</span>
-              <h2 class="text-3xl font-black text-slate-900 italic">{{ editingUser ? 'User Details' : 'Identity Creation' }}</h2>
+              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">사용자 관리</span>
+              <h2 class="text-3xl font-black text-slate-900 italic">{{ editingUser ? '사용자 상세' : '사용자 추가' }}</h2>
             </div>
             <button @click="showModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all">
               <XMarkIcon class="w-6 h-6" />
@@ -190,24 +190,24 @@ onMounted(fetchData)
                 <div class="space-y-4">
                    <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
                       <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">User ID / Login</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">사용자 아이디</label>
                         <div class="relative">
                           <EnvelopeIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                          <input v-model="userForm.user_id" type="text" placeholder="ID or Email" 
+                          <input v-model="userForm.user_id" type="text" placeholder="아이디" 
                                  :disabled="!!editingUser"
                                  class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-400" required />
                         </div>
                       </div>
                       <div v-if="!editingUser">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Initial Password</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">초기 비밀번호</label>
                         <div class="relative">
                           <KeyIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                          <input v-model="userForm.password" type="password" placeholder="Default: 1234" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                          <input v-model="userForm.password" type="password" placeholder="기본값: 1234" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
                         </div>
                       </div>
                       <div v-else class="py-2">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Account Type</label>
-                        <span class="text-xs font-bold text-indigo-600">{{ editingUser.kakao_id ? 'Kakao SSO Linked' : 'Internal Database Account' }}</span>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">계정 유형</label>
+                        <span class="text-xs font-bold text-indigo-600">{{ editingUser.kakao_id ? '카카오 SSO 연동' : '내부 데이터베이스 계정' }}</span>
                       </div>
                    </div>
                 </div>
@@ -216,15 +216,15 @@ onMounted(fetchData)
                 <div class="space-y-4">
                    <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
                       <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Full Name</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">이름</label>
                         <input v-model="userForm.user_name" type="text" placeholder="성함" class="w-full bg-white border-none rounded-xl py-3 px-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" required />
                       </div>
                       <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Department</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">부서</label>
                         <div class="relative">
                           <BuildingOfficeIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                           <select v-model="userForm.dept_name" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                            <option value="">No Department</option>
+                            <option value="">부서 없음</option>
                             <option v-for="dept in depts" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                           </select>
                         </div>
@@ -234,25 +234,25 @@ onMounted(fetchData)
              </div>
 
              <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Contact Information</label>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">연락처 정보</label>
                 <div class="grid grid-cols-2 gap-4">
                    <div class="relative">
                      <EnvelopeIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                     <input v-model="userForm.email" type="email" placeholder="Email Address" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                     <input v-model="userForm.email" type="email" placeholder="이메일 주소" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
                    </div>
                    <div class="relative">
                      <PhoneIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                     <input v-model="userForm.phone" type="text" placeholder="Phone Number" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                     <input v-model="userForm.phone" type="text" placeholder="전화번호" class="w-full bg-white border-none rounded-xl py-3 pl-11 pr-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" />
                    </div>
                 </div>
              </div>
 
              <div class="flex gap-4">
-                <button v-if="editingUser" type="button" @click="deleteUser" class="px-8 py-5 border border-red-100 text-red-500 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all">Delete Account</button>
+                <button v-if="editingUser" type="button" @click="deleteUser" class="px-8 py-5 border border-red-100 text-red-500 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all">계정 삭제</button>
                 <div class="flex-1 flex gap-4">
-                   <button type="button" @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Cancel</button>
+                   <button type="button" @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">취소</button>
                    <button type="submit" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">
-                     {{ editingUser ? 'Update Profile' : 'Complete Registration' }}
+                     {{ editingUser ? '정보 수정' : '등록 완료' }}
                    </button>
                 </div>
              </div>

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
-const { sendReservationCompleteAlimTalk, sendInquiryAlimTalk } = require("../services/alimtalk");
+const { sendNewReservationToAdmin, sendApprovalAlimTalk, sendRejectionAlimTalk, sendInquiryAlimTalk } = require("../services/alimtalk");
 
 // Auth check middleware
 const isLogged = (req, res, next) => {
@@ -18,15 +18,25 @@ const isAdmin = (req, res, next) => {
  * List reservations (filter by date range, room, user)
  */
 router.get("/", async (req, res) => {
-  const { date, start_date, end_date, room_id, user_id } = req.query;
+  const { date, start_date, end_date, room_id, user_id, status } = req.query;
   try {
     let query = `
       SELECT r.*, rm.room_name, rm.floor 
       FROM reservations r 
       JOIN rooms rm ON r.room_id = rm.id
-      WHERE r.status != 'cancelled'
+      WHERE 1=1
     `;
     const params = [];
+
+    if (status && status !== 'all') {
+      query += " AND r.status = ?";
+      params.push(status);
+    } else if (status === 'all') {
+      // 'all' means everything including cancelled
+    } else {
+      // Default: don't show cancelled (for public grid view)
+      query += " AND r.status != 'cancelled'";
+    }
 
     if (date) {
       query += " AND r.reservation_date = ?";
@@ -55,9 +65,10 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Create Reservation
+ * Create Reservation (No login required — public)
+ * Status defaults to 'pending' (대기중), admin must approve
  */
-router.post("/", isLogged, async (req, res) => {
+router.post("/", async (req, res) => {
   const { 
     room_id, 
     reservation_date, 
@@ -72,14 +83,15 @@ router.post("/", isLogged, async (req, res) => {
     title
   } = req.body;
 
-
-  const requester_id = req.session.user.id;
+  // requester_id is optional (no login required)
+  const requester_id = req.session?.user?.id || null;
   const conn = await pool.getConnection();
+
 
   try {
     await conn.beginTransaction();
 
-    // 1. Check for conflicts
+    // Conflict check only against 'approved' reservations
     const [conflicts] = await conn.query(
       `SELECT * FROM reservations 
        WHERE room_id = ? AND reservation_date = ? AND status = 'approved'
@@ -91,8 +103,8 @@ router.post("/", isLogged, async (req, res) => {
       await conn.rollback();
       return res.status(409).json({ 
         success: false, 
-        message: "이미 해당 시간에 예약이 있습니다.",
-        conflicts: conflicts 
+        message: "이미 해당 시간에 승인된 예약이 있습니다.",
+        conflicts 
       });
     }
 
@@ -166,21 +178,30 @@ router.post("/", isLogged, async (req, res) => {
 
     await conn.commit();
 
-    // 3. Send AlimTalk
+    // 3. Send AlimTalk to ALL admins
     const [rooms] = await pool.query("SELECT room_name FROM rooms WHERE id = ?", [room_id]);
     const roomInfo = rooms[0];
 
     if (roomInfo) {
       try {
-          await sendReservationCompleteAlimTalk({
-              room_name: roomInfo.room_name,
-              reservation_date,
-              start_time,
-              end_time,
-              requester_name,
-              requester_phone,
-              reason
-          });
+        // Get all admin phones
+        const [admins] = await pool.query(
+          `SELECT u.phone FROM users u
+           JOIN user_roles ur ON u.id = ur.user_id
+           JOIN roles r ON ur.role_id = r.id
+           WHERE r.role_name = '관리자' AND u.phone IS NOT NULL AND u.phone != ''`
+        );
+        for (const admin of admins) {
+          await sendNewReservationToAdmin({
+            room_name: roomInfo.room_name,
+            reservation_date,
+            start_time,
+            end_time,
+            requester_name,
+            title,
+            reason
+          }, admin.phone).catch(e => console.error("Admin AlimTalk skip:", e.message));
+        }
       } catch (e) { console.error("AlimTalk skip:", e.message); }
     }
 
@@ -191,6 +212,52 @@ router.post("/", isLogged, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   } finally {
     conn.release();
+  }
+});
+
+/**
+ * PATCH /api/reservations/:id/approve — 관리자 승인
+ */
+router.patch("/:id/approve", isLogged, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("UPDATE reservations SET status = 'approved' WHERE id = ?", [id]);
+
+    // Send approval alimtalk to requester
+    const [rows] = await pool.query(
+      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
+    );
+    if (rows.length > 0 && rows[0].requester_phone) {
+      sendApprovalAlimTalk(rows[0]).catch(e => console.error("Approval AlimTalk skip:", e.message));
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * PATCH /api/reservations/:id/reject — 관리자 거부
+ */
+router.patch("/:id/reject", isLogged, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { reject_reason } = req.body;
+  try {
+    await pool.query(
+      "UPDATE reservations SET status = 'rejected', reject_reason = ? WHERE id = ?",
+      [reject_reason || null, id]
+    );
+
+    // Send rejection alimtalk to requester
+    const [rows] = await pool.query(
+      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
+    );
+    if (rows.length > 0 && rows[0].requester_phone) {
+      sendRejectionAlimTalk(rows[0], reject_reason).catch(e => console.error("Rejection AlimTalk skip:", e.message));
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

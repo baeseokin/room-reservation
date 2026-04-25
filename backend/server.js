@@ -52,12 +52,14 @@ const userRoutes = require("./routes/users");
 const roomRoutes = require("./routes/rooms");
 const reservationRoutes = require("./routes/reservations");
 const departmentRoutes = require("./routes/departments");
+const adminRoutes = require("./routes/admins");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/admins", adminRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 

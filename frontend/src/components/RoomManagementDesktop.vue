@@ -111,12 +111,12 @@ onMounted(() => {
   <div class="p-6 max-w-7xl mx-auto space-y-6 bg-slate-50 h-screen flex flex-col font-sans overflow-hidden">
     <div class="flex justify-between items-end border-b-2 border-slate-900 pb-3 shrink-0">
       <div class="space-y-0.5">
-        <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Blueprint</h1>
-        <p class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px]">Room Configuration</p>
+        <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">공간 관리</h1>
+        <p class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px]">공간 배치도</p>
       </div>
       <div class="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase">
-         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-indigo-600 rounded-sm"></span> Registered</span>
-         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-white border border-dashed border-slate-300 rounded-sm"></span> Empty</span>
+         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-indigo-600 rounded-sm"></span> 등록됨</span>
+         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-white border border-dashed border-slate-300 rounded-sm"></span> 비어있음</span>
       </div>
     </div>
 
@@ -125,8 +125,8 @@ onMounted(() => {
       <div v-for="fLabel in floorOrder" :key="fLabel" class="group flex items-stretch gap-4 flex-1 min-h-0">
         <!-- Floor Label -->
         <div class="w-24 bg-slate-900 text-white flex flex-col items-center justify-center rounded-xl shadow-lg transition-all group-hover:bg-indigo-600 shrink-0">
-           <span class="text-[8px] font-black opacity-50 uppercase leading-none">{{ fLabel.includes('B') ? 'Basement' : 'Floor' }}</span>
-           <span class="text-xl font-black tracking-tighter">{{ fLabel }}F</span>
+           <span class="text-[8px] font-black opacity-50 uppercase leading-none">{{ fLabel.includes('B') ? '지하' : '지상' }}</span>
+           <span class="text-xl font-black tracking-tighter">{{ fLabel }}층</span>
         </div>
 
         <!-- Rooms Row -->
@@ -161,7 +161,7 @@ onMounted(() => {
            <button @click="openModal(fLabel)" 
                    class="min-w-[80px] h-full border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-indigo-400 hover:bg-indigo-50 group/add transition-all shrink-0">
               <PlusIcon class="w-4 h-4 text-slate-300 group-hover/add:text-indigo-600" />
-              <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover/add:text-indigo-600">Add</span>
+              <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover/add:text-indigo-600">추가</span>
            </button>
         </div>
       </div>
@@ -172,25 +172,25 @@ onMounted(() => {
       <div v-if="showModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-lg w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
           <div class="space-y-1">
-            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">Configuration</span>
-            <h2 class="text-3xl font-black text-slate-900">{{ editingRoom ? 'Modify Space' : 'New Blueprint Entry' }}</h2>
+            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">설정</span>
+            <h2 class="text-3xl font-black text-slate-900">{{ editingRoom ? '공간 수정' : '새 공간 추가' }}</h2>
           </div>
 
           <div class="space-y-6">
             <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Space Identity</label>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">공간 정보</label>
               <div class="space-y-4">
-                <input v-model="form.room_name" type="text" placeholder="Room Name (e.g. Master Hall)" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                <input v-model="form.room_name" type="text" placeholder="공간명 입력 (예: 본당)" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
                 <div class="grid grid-cols-2 gap-4">
                   <div class="relative">
                     <select v-model="form.floor" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                      <option value="">Select Floor</option>
-                      <option v-for="f in floorOrder" :key="f" :value="f">{{ f }}F</option>
+                      <option value="">층 선택</option>
+                      <option v-for="f in floorOrder" :key="f" :value="f">{{ f }}층</option>
                     </select>
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 pointer-events-none">FL</span>
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 pointer-events-none">층</span>
                   </div>
                   <select v-model="form.dept_name" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                    <option value="">Department</option>
+                    <option value="">소속 부서</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                   </select>
                 </div>
@@ -198,10 +198,10 @@ onMounted(() => {
             </div>
 
             <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Management \u0026 Media</label>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">관리 및 미디어</label>
               <div class="space-y-4">
-                <input v-model="form.manager_name" type="text" placeholder="Manager Name" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
-                <input v-model="form.manager_contact" type="text" placeholder="Contact Number" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                <input v-model="form.manager_name" type="text" placeholder="관리자 이름" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                <input v-model="form.manager_contact" type="text" placeholder="연락처" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
                 
                 <div class="space-y-2">
                   <div v-if="previewUrl" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-200">
@@ -212,7 +212,7 @@ onMounted(() => {
                   </div>
                   <label class="block w-full cursor-pointer bg-white border-2 border-dashed border-slate-200 rounded-2xl py-4 px-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
                     <input type="file" @change="onFileChange" accept="image/*" class="hidden" />
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ previewUrl ? 'Change Photo' : 'Upload Room Photo' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ previewUrl ? '사진 변경' : '공간 사진 업로드' }}</span>
                   </label>
                 </div>
               </div>
@@ -221,8 +221,8 @@ onMounted(() => {
           </div>
 
           <div class="flex gap-4">
-            <button @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Cancel</button>
-            <button @click="saveRoom" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">Complete Entry</button>
+            <button @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">취소</button>
+            <button @click="saveRoom" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">등록 완료</button>
           </div>
         </div>
       </div>

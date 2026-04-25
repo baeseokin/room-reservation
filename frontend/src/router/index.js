@@ -4,14 +4,10 @@ import { useAuthStore } from '../store/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    {
-      path: '/login',
-      name: 'Login',
-      component: () => import('../views/LoginView.vue')
-    },
+    // ─── 공개 라우트 (로그인 불필요) ───────────────────────
     {
       path: '/',
-      component: () => import('../layouts/DefaultLayout.vue'),
+      component: () => import('../layouts/PublicLayout.vue'),
       children: [
         {
           path: '',
@@ -19,37 +15,47 @@ const router = createRouter({
           component: () => import('../views/HomeView.vue')
         },
         {
+          path: 'reservations',
+          name: 'Reservations',
+          component: () => import('../views/ReservationView.vue')
+        }
+      ]
+    },
+
+    // ─── 관리자 로그인 ─────────────────────────────────────
+    {
+      path: '/admin/login',
+      name: 'AdminLogin',
+      component: () => import('../views/AdminLoginView.vue')
+    },
+
+    // ─── 관리자 전용 (로그인 필요) ─────────────────────────
+    {
+      path: '/admin',
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          redirect: '/admin/reservations'
+        },
+        {
+          path: 'reservations',
+          name: 'AdminReservations',
+          component: () => import('../views/AdminReservationsView.vue')
+        },
+        {
           path: 'rooms',
           name: 'Rooms',
           component: () => import('../views/RoomManagementView.vue')
         },
         {
-          path: 'reservations',
-          name: 'Reservations',
-          component: () => import('../views/ReservationView.vue')
+          path: 'admins',
+          name: 'AdminManagement',
+          component: () => import('../views/AdminManagementView.vue')
         },
         {
-          path: 'my-reservations',
-          name: 'MyReservations',
-          component: () => import('../views/MyReservationsView.vue')
-        },
-        {
-          path: 'inquiries',
-          name: 'InquiryManagement',
-          component: () => import('../views/InquiryManagementView.vue')
-        },
-        {
-          path: 'profile',
-          name: 'Profile',
-          component: () => import('../views/ProfileView.vue')
-        },
-        {
-          path: 'admin/users',
-          name: 'UserManagement',
-          component: () => import('../views/UserManagementView.vue')
-        },
-        {
-          path: 'admin/departments',
+          path: 'departments',
           name: 'DepartmentManagement',
           component: () => import('../views/DepartmentManagementView.vue')
         }
@@ -64,11 +70,18 @@ router.beforeEach(async (to, from, next) => {
     await auth.checkSession()
   }
 
-  if (to.name !== 'Login' && !auth.user) {
-    next({ name: 'Login' })
-  } else {
-    next()
+  // Admin login page: if already logged in, go to admin dashboard
+  if (to.name === 'AdminLogin' && auth.user) {
+    return next({ path: '/admin' })
   }
+
+  // Admin-required routes
+  if (to.meta.requiresAdmin) {
+    if (!auth.user) return next({ name: 'AdminLogin' })
+    if (!auth.isAdmin) return next({ path: '/' })
+  }
+
+  next()
 })
 
 export default router

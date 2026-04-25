@@ -148,7 +148,7 @@ onMounted(() => {
 
           </div>
           <div class="flex gap-4 pt-4">
-            <button @click="showModal = false" class="flex-1 p-4 font-bold text-slate-400 uppercase tracking-widest text-xs">Close</button>
+            <button @click="showModal = false" class="flex-1 p-4 font-bold text-slate-400 uppercase tracking-widest text-xs">닫기</button>
             <button @click="saveRoom" class="flex-1 p-4 bg-slate-900 text-white rounded-2xl font-bold">확인</button>
           </div>
        </div>

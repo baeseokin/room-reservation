@@ -17,6 +17,12 @@ const activeTab = ref('received') // 'received' | 'sent'
 const loading = ref(false)
 const answerContents = ref({})
 
+const statusMap = {
+  'pending': '대기중',
+  'answered': '답변완료',
+  'transferred': '양도됨'
+}
+
 const fetchInquiries = async () => {
   loading.value = true
   try {
@@ -79,7 +85,7 @@ onMounted(fetchInquiries)
           <ChatBubbleLeftRightIcon class="w-10 h-10 text-indigo-600" />
           나의 문의 관리
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Communication Hub & Space Transfer</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">소통 및 공간 양도 관리</p>
       </div>
 
       <!-- Tabs -->
@@ -106,7 +112,7 @@ onMounted(fetchInquiries)
     <!-- Content -->
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
       <div class="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-      <p class="text-xs font-black text-slate-300 uppercase tracking-widest">Loading Inquiries...</p>
+      <p class="text-xs font-black text-slate-300 uppercase tracking-widest">문의 내역 불러오는 중...</p>
     </div>
 
     <div v-else class="space-y-6">
@@ -124,13 +130,13 @@ onMounted(fetchInquiries)
               <div class="space-y-2">
                 <div class="flex items-center gap-2">
                   <span :class="getStatusBadge(inc.status)" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm">
-                    {{ inc.status }}
+                    {{ statusMap[inc.status] || inc.status }}
                   </span>
-                  <span class="text-[10px] font-black text-slate-300 italic">{{ new Date(inc.created_at).toLocaleString() }}</span>
+                  <span class="text-[10px] font-black text-slate-300 italic">{{ new Date(inc.created_at).toLocaleString('ko-KR') }}</span>
                 </div>
                 <h3 class="text-xl font-black text-slate-900 leading-tight">
                   <span class="text-indigo-600 mr-2">{{ inc.room_name }}</span>
-                  {{ inc.reservation_title || 'Reservation' }}
+                  {{ inc.reservation_title || '예약 신청' }}
                 </h3>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ inc.reservation_date }} | {{ inc.start_time }} - {{ inc.end_time }}</p>
               </div>
@@ -202,7 +208,7 @@ onMounted(fetchInquiries)
           <div class="md:w-1/3 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-between">
             <div class="space-y-2">
                <span :class="getStatusBadge(inc.status)" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter block w-fit">
-                  {{ inc.status }}
+                  {{ statusMap[inc.status] || inc.status }}
                </span>
                <h4 class="text-lg font-black text-slate-800 leading-tight pt-2">{{ inc.room_name }}</h4>
                <p class="text-xs font-bold text-slate-400">{{ inc.reservation_date }}</p>

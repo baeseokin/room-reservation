@@ -70,7 +70,7 @@ onMounted(fetchProfile)
       
       <div class="relative z-10 text-center md:text-left space-y-3">
         <h1 class="text-4xl font-black text-slate-900 tracking-tight">마이 프로필</h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Manage your personal identity & settings</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">개인 정보 및 설정 관리</p>
         <div class="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
           <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">{{ profile.dept_name || '부서 미지정' }}</span>
           <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">{{ profile.user_id }}</span>
@@ -85,7 +85,7 @@ onMounted(fetchProfile)
         <div class="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
           <div class="flex items-center gap-3">
             <IdentificationIcon class="w-6 h-6 text-indigo-400" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Account ID</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">계정 아이디</span>
           </div>
           <p class="text-xl font-black">{{ profile.user_id }}</p>
           <div class="pt-4 border-t border-slate-800">
@@ -96,7 +96,7 @@ onMounted(fetchProfile)
         <div class="bg-indigo-600 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
           <div class="flex items-center gap-3">
             <BuildingLibraryIcon class="w-6 h-6 text-indigo-200" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Department</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-300">소속 부서</span>
           </div>
           <p class="text-xl font-black">{{ profile.dept_name || '미지정' }}</p>
         </div>
@@ -108,7 +108,7 @@ onMounted(fetchProfile)
           <div class="space-y-6">
             <!-- Name -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">Full Name</label>
+              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">이름</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <UserCircleIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.user_name" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0" placeholder="성함을 입력하세요" />
@@ -117,7 +117,7 @@ onMounted(fetchProfile)
 
             <!-- Email -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">Email Address</label>
+              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">이메일 주소</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <EnvelopeIcon class="w-6 h-6 text-slate-300" />
                 <input type="email" v-model="profile.email" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="example@church.com" />
@@ -126,7 +126,7 @@ onMounted(fetchProfile)
 
             <!-- Phone -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">Contact Phone</label>
+              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">연락처</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <PhoneIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.phone" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="010-0000-0000" />
@@ -141,7 +141,7 @@ onMounted(fetchProfile)
           >
             <ArrowPathIcon v-if="saving" class="w-5 h-5 animate-spin" />
             <CheckBadgeIcon v-else class="w-5 h-5" />
-            {{ saving ? 'Saving Changes...' : 'Save Profile Changes' }}
+            {{ saving ? '저장 중...' : '프로필 저장' }}
           </button>
         </div>
       </div>

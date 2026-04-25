@@ -42,8 +42,11 @@ const logout = () => auth.logout()
     <!-- Desktop Sidebar -->
     <aside :class="[isCollapsed ? 'w-20 px-3' : 'w-72 px-6']" class="hidden lg:flex flex-col bg-slate-900 text-white py-6 transition-all duration-300 relative">
       <!-- Toggle Button (Top) -->
-      <div :class="[isCollapsed ? 'justify-center' : 'justify-between']" class="flex items-center mb-10 h-10 px-2">
-        <h1 v-if="!isCollapsed" class="text-xl font-black tracking-tighter">ECCLESIA</h1>
+      <div :class="[isCollapsed ? 'flex-col gap-4' : 'justify-between']" class="flex items-center mb-10 px-2">
+        <div v-if="!isCollapsed" class="flex items-center">
+          <img src="../assets/logo_wonchon.png" alt="Logo" class="h-8 object-contain bg-white rounded-lg p-1" />
+        </div>
+        <img v-else src="../assets/logo_wonchon.png" alt="Logo" class="w-8 h-8 object-cover object-left bg-white rounded-lg p-1" />
         <button @click="isCollapsed = !isCollapsed" 
                 class="p-2 hover:bg-slate-800 rounded-xl text-slate-400 transition-colors">
           <Bars3Icon class="w-6 h-6" />
@@ -85,7 +88,9 @@ const logout = () => auth.logout()
 
     <!-- Mobile Header -->
     <div class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-40">
-      <h1 class="font-black text-xl">ECCLESIA</h1>
+      <div class="flex items-center">
+        <img src="../assets/logo_wonchon.png" alt="Logo" class="h-8 object-contain" />
+      </div>
       <button @click="isSidebarOpen = true">
         <Bars3Icon class="w-8 h-8 text-slate-900" />
       </button>
@@ -95,7 +100,9 @@ const logout = () => auth.logout()
     <div v-if="isSidebarOpen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 overflow-hidden" @click="isSidebarOpen = false">
       <div class="w-4/5 h-full bg-slate-900 text-white p-8 flex flex-col space-y-8" @click.stop>
         <div class="flex justify-between items-center">
-          <h1 class="font-black text-2xl">ECCLESIA</h1>
+          <div class="flex items-center">
+            <img src="../assets/logo_wonchon.png" alt="Logo" class="h-10 object-contain bg-white rounded-lg p-1" />
+          </div>
           <button @click="isSidebarOpen = false">
             <XMarkIcon class="w-8 h-8" />
           </button>

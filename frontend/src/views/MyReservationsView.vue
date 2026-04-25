@@ -127,7 +127,7 @@ onMounted(fetchMyReservations)
           <CalendarDaysIcon class="w-10 h-10 text-indigo-600" />
           나의 예약 현황
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Managed & Booked Spaces</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">관리 및 예약 공간</p>
       </div>
 
       <!-- Date Filter -->
@@ -138,7 +138,7 @@ onMounted(fetchMyReservations)
            <input type="date" v-model="endDate" class="bg-transparent border-none focus:ring-0 font-bold text-slate-700 text-sm" />
          </div>
          <button @click="fetchMyReservations" class="bg-slate-900 text-white px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95">
-           Search
+           검색
          </button>
       </div>
     </div>
@@ -148,11 +148,11 @@ onMounted(fetchMyReservations)
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100">
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Space / Floor</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date / Time</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Reservation Title</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
+            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
+            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">신청명</th>
+            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">상태</th>
+            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
           </tr>
         </thead>
         <tbody>
@@ -185,7 +185,7 @@ onMounted(fetchMyReservations)
             </td>
             <td class="px-8 py-6">
               <span :class="getStatusClass(res.status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
-                {{ res.status === 'cancelled' ? 'Cancelled' : 'Approved' }}
+                {{ res.status === 'cancelled' ? '취소됨' : '승인됨' }}
               </span>
             </td>
             <td class="px-8 py-6 text-center">
@@ -204,7 +204,7 @@ onMounted(fetchMyReservations)
         <div class="p-10 space-y-8 text-left">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">Reservation Details</span>
+              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
               <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes.room_name }}</h2>
               <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ editingRes.room_name }} | {{ editingRes.reservation_date }}</p>
             </div>
@@ -217,36 +217,36 @@ onMounted(fetchMyReservations)
           <div class="grid grid-cols-2 gap-4">
              <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">신청명 (Title)</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">신청명</label>
                   <input type="text" v-model="editForm.title" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Date</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">날짜</label>
                   <input type="date" v-model="editForm.reservation_date" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
              </div>
              <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Start Time</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">시작 시간</label>
                   <input type="time" v-model="editForm.start_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
                 <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">End Time</label>
+                  <label class="block text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">종료 시간</label>
                   <input type="time" v-model="editForm.end_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
                 </div>
              </div>
           </div>
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
-            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Reason for use</label>
+            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">사용 목적</label>
             <textarea v-model="editForm.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans" placeholder="목적을 입력하세요"></textarea>
           </div>
 
           <!-- Inquiries & Answers Section -->
           <div class="space-y-4 pt-4 border-t border-slate-100">
             <div class="flex items-center justify-between px-1">
-              <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Inquiries from others</span>
-              <span class="text-[9px] font-black text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">{{ inquiries.length }} Messages</span>
+              <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">받은 문의 내역</span>
+              <span class="text-[9px] font-black text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">{{ inquiries.length }} 메시지</span>
             </div>
 
             <!-- Inquiry List -->
@@ -286,15 +286,15 @@ onMounted(fetchMyReservations)
               </div>
 
               <div v-if="inquiries.length === 0" class="text-center py-6">
-                <p class="text-[10px] text-slate-300 font-black uppercase tracking-widest">No inquiries yet.</p>
+                <p class="text-[10px] text-slate-300 font-black uppercase tracking-widest">문의 내역이 없습니다.</p>
               </div>
             </div>
           </div>
 
           <!-- Actions -->
           <div class="flex gap-4 pt-4 border-t border-slate-100">
-             <button @click="cancelReservation(editingRes.id)" class="flex-1 py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-red-100 transition-all active:scale-95">Cancel / Delete</button>
-             <button @click="updateReservation" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">Update Reservation</button>
+             <button @click="cancelReservation(editingRes.id)" class="flex-1 py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-red-100 transition-all active:scale-95">예약 취소 / 삭제</button>
+             <button @click="updateReservation" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">예약 수정</button>
           </div>
         </div>
       </div>
