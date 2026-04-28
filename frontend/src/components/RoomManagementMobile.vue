@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
-import { PlusIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, EllipsisVerticalIcon, NoSymbolIcon } from '@heroicons/vue/24/outline'
 
 const rooms = ref([])
 const departments = ref([])
@@ -17,6 +17,40 @@ const form = ref({
 })
 const selectedFile = ref(null)
 const previewUrl = ref(null)
+const showBlockedModal = ref(false)
+const currentRoomForBlocked = ref(null)
+const blockedTimes = ref([])
+const blockedForm = ref({
+  day_of_week: '1',
+  start_time: '09:00',
+  end_time: '12:00',
+  reason: ''
+})
+
+const startHour = ref('09')
+const startMin = ref('00')
+const endHour = ref('12')
+const endMin = ref('00')
+
+watch([startHour, startMin], () => {
+  blockedForm.value.start_time = `${startHour.value}:${startMin.value}`
+})
+watch([endHour, endMin], () => {
+  blockedForm.value.end_time = `${endHour.value}:${endMin.value}`
+})
+
+const hours = Array.from({ length: 25 }, (_, i) => String(i).padStart(2, '0'))
+const minutes = ['00', '30']
+
+const days = [
+  { val: '0', label: '일' },
+  { val: '1', label: '월' },
+  { val: '2', label: '화' },
+  { val: '3', label: '수' },
+  { val: '4', label: '목' },
+  { val: '5', label: '금' },
+  { val: '6', label: '토' }
+]
 
 const onFileChange = (e) => {
   const file = e.target.files[0]
@@ -80,7 +114,35 @@ const saveRoom = async () => {
   }
 }
 
+const openBlockedModal = async (room) => {
+  currentRoomForBlocked.value = room
+  await fetchBlockedTimes(room.id)
+  showBlockedModal.value = true
+}
 
+const fetchBlockedTimes = async (roomId) => {
+  const res = await axios.get(`/api/rooms/${roomId}/blocked-times`)
+  blockedTimes.value = res.data
+}
+
+const addBlockedTime = async () => {
+  try {
+    await axios.post(`/api/rooms/${currentRoomForBlocked.value.id}/blocked-times`, blockedForm.value)
+    blockedForm.value.reason = ''
+    fetchBlockedTimes(currentRoomForBlocked.value.id)
+  } catch (err) {
+    alert('등록 실패: ' + (err.response?.data?.error || err.message))
+  }
+}
+
+const deleteBlockedTime = async (blockedId) => {
+  if (confirm('삭제하시겠습니까?')) {
+    await axios.delete(`/api/rooms/blocked-times/${blockedId}`)
+    fetchBlockedTimes(currentRoomForBlocked.value.id)
+  }
+}
+
+const getDayLabel = (val) => days.find(d => d.val == val)?.label || ''
 onMounted(() => {
   fetchRooms()
   fetchDepartments()
@@ -107,9 +169,18 @@ onMounted(() => {
            <div>
              <h3 class="font-bold text-slate-900">{{ room.room_name }}</h3>
              <p class="text-xs text-slate-400">{{ room.dept_name }} | {{ room.manager_name }}</p>
+             
+             <!-- Blocked Times mini badges -->
+             <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 mt-2">
+               <div v-for="bt in room.blocked_times" :key="'mob-bt-'+bt.id" 
+                    class="px-1.5 py-0.5 bg-rose-50 text-[8px] font-black text-rose-600 rounded">
+                 {{ getDayLabel(bt.day_of_week) }} {{ bt.start_time.slice(0,5) }}
+               </div>
+             </div>
            </div>
         </div>
         <div class="flex gap-1">
+          <button @click="openBlockedModal(room)" class="p-2 text-indigo-500"><NoSymbolIcon class="w-5 h-5" /></button>
           <button @click="openModal(room)" class="p-2 text-slate-300"><PencilIcon class="w-5 h-5" /></button>
         </div>
       </div>
@@ -151,6 +222,71 @@ onMounted(() => {
             <button @click="showModal = false" class="flex-1 p-4 font-bold text-slate-400 uppercase tracking-widest text-xs">닫기</button>
             <button @click="saveRoom" class="flex-1 p-4 bg-slate-900 text-white rounded-2xl font-bold">확인</button>
           </div>
+       </div>
+    </div>
+
+    <!-- Blocked Times Mobile Modal -->
+    <div v-if="showBlockedModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex flex-col justify-end">
+       <div class="bg-white rounded-t-[3rem] p-8 space-y-6 animate-slide-up max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-start">
+            <h2 class="text-xl font-black">{{ currentRoomForBlocked?.room_name }} - 예약 불가 설정</h2>
+            <button @click="showBlockedModal = false" class="p-2 text-slate-400"><PlusIcon class="w-6 h-6 rotate-45" /></button>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-slate-50 p-6 rounded-[2rem] space-y-4">
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">요일</span>
+                <select v-model="blockedForm.day_of_week" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none">
+                  <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">시작</span>
+                <div class="flex-1 flex gap-2">
+                  <select v-model="startHour" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
+                    <option v-for="h in hours.slice(0, 24)" :key="'msh-'+h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select v-model="startMin" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
+                    <option v-for="m in minutes" :key="'msm-'+m" :value="m">{{ m }}분</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">종료</span>
+                <div class="flex-1 flex gap-2">
+                  <select v-model="endHour" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
+                    <option v-for="h in hours" :key="'meh-'+h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select v-model="endMin" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
+                    <option v-for="m in minutes" :key="'mem-'+m" :value="m">{{ m }}분</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">차단 사유</label>
+                <div class="flex gap-2">
+                  <input v-model="blockedForm.reason" type="text" placeholder="사유 (예: 점검)" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold shadow-sm" />
+                  <button @click="addBlockedTime" class="bg-rose-500 text-white px-5 py-3 rounded-xl font-bold text-xs shadow-lg shadow-rose-100">추가</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                <div class="flex items-center gap-3">
+                  <span class="bg-rose-100 text-rose-600 text-[10px] font-black px-2 py-1 rounded-lg">{{ getDayLabel(bt.day_of_week) }}</span>
+                  <div class="text-xs font-bold text-slate-900">{{ bt.start_time.slice(0,5) }} - {{ bt.end_time.slice(0,5) }}</div>
+                </div>
+                <button @click="deleteBlockedTime(bt.id)" class="p-2 text-slate-300"><TrashIcon class="w-4 h-4" /></button>
+              </div>
+            </div>
+          </div>
+
+          <button @click="showBlockedModal = false" class="w-full p-4 bg-slate-900 text-white rounded-2xl font-bold">닫기</button>
        </div>
     </div>
   </div>

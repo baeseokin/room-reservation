@@ -4,10 +4,33 @@ import { useAuthStore } from '../store/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // ─── 공개 라우트 (로그인 불필요) ───────────────────────
+    // ─── 기본 랜딩 (로그인) ────────────────────────────────
     {
       path: '/',
+      name: 'Login',
+      component: () => import('../views/AdminLoginView.vue'),
+      beforeEnter: (to, from, next) => {
+        const auth = useAuthStore()
+        if (auth.user) {
+          next({ name: 'Home' })
+        } else {
+          next()
+        }
+      }
+    },
+
+    // ─── 회원가입 ──────────────────────────────────────────
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('../views/RegisterView.vue')
+    },
+
+    // ─── 보호된 라우트 (로그인 필요) ───────────────────────
+    {
+      path: '/home',
       component: () => import('../layouts/PublicLayout.vue'),
+      meta: { requiresAuth: true },
       children: [
         {
           path: '',
@@ -22,34 +45,15 @@ const router = createRouter({
         {
           path: 'my-reservations',
           name: 'MyReservations',
-          component: () => import('../views/MyReservationsView.vue'),
-          meta: { requiresAuth: true }
+          component: () => import('../views/MyReservationsView.vue')
         },
-        {
-          path: 'inquiries',
-          name: 'InquiryManagement',
-          component: () => import('../views/InquiryManagementView.vue'),
-          meta: { requiresAuth: true }
-        },
+
         {
           path: 'profile',
           name: 'Profile',
-          component: () => import('../views/ProfileView.vue'),
-          meta: { requiresAuth: true }
-        },
-        {
-          path: 'login',
-          name: 'Login',
-          component: () => import('../views/LoginView.vue')
+          component: () => import('../views/ProfileView.vue')
         }
       ]
-    },
-
-    // ─── 관리자 로그인 ─────────────────────────────────────
-    {
-      path: '/admin/login',
-      name: 'AdminLogin',
-      component: () => import('../views/AdminLoginView.vue')
     },
 
     // ─── 관리자 전용 (로그인 필요) ─────────────────────────
@@ -73,14 +77,19 @@ const router = createRouter({
           component: () => import('../views/RoomManagementView.vue')
         },
         {
-          path: 'admins',
-          name: 'AdminManagement',
-          component: () => import('../views/AdminManagementView.vue')
+          path: 'users',
+          name: 'UserManagement',
+          component: () => import('../views/UserManagementView.vue')
         },
         {
           path: 'departments',
           name: 'DepartmentManagement',
           component: () => import('../views/DepartmentManagementView.vue')
+        },
+        {
+          path: 'applications',
+          name: 'AdminUserApplications',
+          component: () => import('../views/AdminUserApplicationsView.vue')
         }
       ]
     }
@@ -93,20 +102,20 @@ router.beforeEach(async (to, from, next) => {
     await auth.checkSession()
   }
 
-  // Admin login page: if already logged in, go to admin dashboard
-  if (to.name === 'AdminLogin' && auth.user) {
-    return next({ path: '/admin' })
+  // Already logged in? Redirect from Login page to Home
+  if (to.name === 'Login' && auth.user) {
+    return next({ name: 'Home' })
   }
 
-  // Auth-required routes (General users)
+  // Auth-required routes
   if (to.meta.requiresAuth && !auth.user) {
     return next({ name: 'Login' })
   }
 
   // Admin-required routes
   if (to.meta.requiresAdmin) {
-    if (!auth.user) return next({ name: 'AdminLogin' })
-    if (!auth.isAdmin) return next({ path: '/' })
+    if (!auth.user) return next({ name: 'Login' })
+    if (!auth.isAdmin) return next({ path: '/home' })
   }
 
   next()

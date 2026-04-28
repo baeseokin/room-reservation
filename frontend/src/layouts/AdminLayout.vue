@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/auth'
 import { useRouter } from 'vue-router'
 import {
   CalendarIcon, MapIcon, UserGroupIcon, BuildingOfficeIcon,
-  ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, ShieldCheckIcon, HomeIcon
+  ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, ShieldCheckIcon, HomeIcon, UserPlusIcon
 } from '@heroicons/vue/24/outline'
 import { ref } from 'vue'
 
@@ -15,7 +15,8 @@ const isCollapsed = ref(false)
 const navItems = [
   { name: '예약 관리', icon: CalendarIcon, path: '/admin/reservations' },
   { name: '공간 관리', icon: MapIcon, path: '/admin/rooms' },
-  { name: '관리자 관리', icon: UserGroupIcon, path: '/admin/admins' },
+  { name: '사용자 관리', icon: UserGroupIcon, path: '/admin/users' },
+  { name: '가입 신청 관리', icon: UserPlusIcon, path: '/admin/applications' },
   { name: '부서 관리', icon: BuildingOfficeIcon, path: '/admin/departments' },
 ]
 
@@ -25,8 +26,8 @@ const logout = () => auth.logout()
 <template>
   <div class="min-h-screen bg-slate-50 flex">
     <!-- Desktop Sidebar -->
-    <aside :class="[isCollapsed ? 'w-20 px-3' : 'w-64 px-5']" class="hidden lg:flex flex-col bg-slate-900 text-white py-6 transition-all duration-300 shrink-0">
-      <div :class="[isCollapsed ? 'justify-center' : 'justify-between']" class="flex items-center mb-8 h-10 px-2">
+    <aside :class="[isCollapsed ? 'w-20 px-3' : 'w-64 px-5']" class="hidden lg:flex flex-col bg-slate-900 text-white py-6 transition-all duration-300 shrink-0 h-screen sticky top-0">
+      <div :class="[isCollapsed ? 'justify-center' : 'justify-between']" class="flex items-center mb-8 h-10 px-2 shrink-0">
         <div v-if="!isCollapsed" class="flex items-center gap-2">
           <ShieldCheckIcon class="w-5 h-5 text-indigo-400" />
           <span class="text-base font-black tracking-tight">관리자 패널</span>
@@ -36,7 +37,7 @@ const logout = () => auth.logout()
         </button>
       </div>
 
-      <nav class="flex-1 space-y-1">
+      <nav class="flex-1 space-y-1 overflow-y-auto scrollbar-hide pr-1">
         <router-link
           v-for="item in navItems" :key="item.name"
           :to="item.path" :title="isCollapsed ? item.name : ''"
@@ -49,14 +50,14 @@ const logout = () => auth.logout()
 
         <div class="my-3 border-t border-slate-800"></div>
 
-        <router-link to="/" :title="isCollapsed ? '공개 홈' : ''"
+        <router-link to="/" :title="isCollapsed ? '홈' : ''"
           class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-slate-500 hover:bg-slate-800 hover:text-white whitespace-nowrap text-sm">
           <HomeIcon class="w-5 h-5 shrink-0" />
-          <span v-if="!isCollapsed">공개 홈으로</span>
+          <span v-if="!isCollapsed">홈으로</span>
         </router-link>
       </nav>
 
-      <div class="pt-6 border-t border-slate-800 space-y-3">
+      <div class="pt-6 border-t border-slate-800 space-y-3 shrink-0">
         <div v-if="!isCollapsed" class="px-2 py-2 rounded-xl bg-slate-800">
           <div class="text-xs font-black text-slate-400 uppercase tracking-widest">로그인된 관리자</div>
           <div class="text-sm font-bold text-white mt-0.5">{{ auth.user?.userName }}</div>
@@ -94,7 +95,7 @@ const logout = () => auth.logout()
             {{ item.name }}
           </router-link>
           <router-link to="/" @click="isSidebarOpen = false" class="flex items-center gap-3 text-base font-bold text-slate-500 py-2">
-            <HomeIcon class="w-6 h-6" />공개 홈으로
+            <HomeIcon class="w-6 h-6" />홈으로
           </router-link>
         </nav>
         <button @click="logout" class="text-slate-500 font-bold flex items-center gap-2">

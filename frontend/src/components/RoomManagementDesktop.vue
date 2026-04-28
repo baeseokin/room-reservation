@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
-import { PlusIcon, PencilIcon, TrashIcon, BuildingOffice2Icon, HomeIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, BuildingOffice2Icon, HomeIcon, ArrowPathIcon, ClockIcon, NoSymbolIcon } from '@heroicons/vue/24/outline'
 
 const rooms = ref([])
 const departments = ref([])
+const isLoading = ref(false)
 const showModal = ref(false)
 const editingRoom = ref(null)
 const form = ref({
@@ -17,6 +18,40 @@ const form = ref({
 })
 const selectedFile = ref(null)
 const previewUrl = ref(null)
+const showBlockedModal = ref(false)
+const currentRoomForBlocked = ref(null)
+const blockedTimes = ref([])
+const blockedForm = ref({
+  day_of_week: '1',
+  start_time: '09:00',
+  end_time: '12:00',
+  reason: ''
+})
+
+const startHour = ref('09')
+const startMin = ref('00')
+const endHour = ref('12')
+const endMin = ref('00')
+
+watch([startHour, startMin], () => {
+  blockedForm.value.start_time = `${startHour.value}:${startMin.value}`
+})
+watch([endHour, endMin], () => {
+  blockedForm.value.end_time = `${endHour.value}:${endMin.value}`
+})
+
+const hours = Array.from({ length: 25 }, (_, i) => String(i).padStart(2, '0'))
+const minutes = ['00', '30']
+
+const days = [
+  { val: '0', label: '일' },
+  { val: '1', label: '월' },
+  { val: '2', label: '화' },
+  { val: '3', label: '수' },
+  { val: '4', label: '목' },
+  { val: '5', label: '금' },
+  { val: '6', label: '토' }
+]
 
 const onFileChange = (e) => {
   const file = e.target.files[0]
@@ -26,29 +61,29 @@ const onFileChange = (e) => {
   }
 }
 
-
 // Fixed floor order for Blueprint
 const floorOrder = ['3', '1', 'B1', 'B3']
+const filterFloor = ref('all')
+
+const filteredRooms = computed(() => {
+  if (filterFloor.value === 'all') return rooms.value
+  return rooms.value.filter(r => r.floor === filterFloor.value)
+})
 
 const fetchRooms = async () => {
-  const res = await axios.get('/api/rooms')
-  rooms.value = res.data
+  isLoading.value = true
+  try {
+    const res = await axios.get('/api/rooms')
+    rooms.value = res.data
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const fetchDepartments = async () => {
   const res = await axios.get('/api/departments')
   departments.value = res.data
 }
-
-const roomsByFloor = computed(() => {
-  const map = {}
-  rooms.value.forEach(room => {
-    const f = room.floor
-    if (!map[f]) map[f] = []
-    map[f].push(room)
-  })
-  return map
-})
 
 const openModal = (floor = '', room = null) => {
   selectedFile.value = null
@@ -59,11 +94,10 @@ const openModal = (floor = '', room = null) => {
     previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', floor: floor, dept_name: '', manager_name: '', manager_contact: '', image_url: null }
+    form.value = { room_name: '', floor: floor || '3', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
-
 
 const saveRoom = async () => {
   try {
@@ -93,13 +127,42 @@ const saveRoom = async () => {
   }
 }
 
-
 const deleteRoom = async (id) => {
   if (confirm('정말 삭제하시겠습니까?')) {
     await axios.delete(`/api/rooms/${id}`)
     fetchRooms()
   }
 }
+
+const openBlockedModal = async (room) => {
+  currentRoomForBlocked.value = room
+  await fetchBlockedTimes(room.id)
+  showBlockedModal.value = true
+}
+
+const fetchBlockedTimes = async (roomId) => {
+  const res = await axios.get(`/api/rooms/${roomId}/blocked-times`)
+  blockedTimes.value = res.data
+}
+
+const addBlockedTime = async () => {
+  try {
+    await axios.post(`/api/rooms/${currentRoomForBlocked.value.id}/blocked-times`, blockedForm.value)
+    blockedForm.value.reason = ''
+    fetchBlockedTimes(currentRoomForBlocked.value.id)
+  } catch (err) {
+    alert('등록 실패: ' + (err.response?.data?.error || err.message))
+  }
+}
+
+const deleteBlockedTime = async (blockedId) => {
+  if (confirm('삭제하시겠습니까?')) {
+    await axios.delete(`/api/rooms/blocked-times/${blockedId}`)
+    fetchBlockedTimes(currentRoomForBlocked.value.id)
+  }
+}
+
+const getDayLabel = (val) => days.find(d => d.val == val)?.label || ''
 
 onMounted(() => {
   fetchRooms()
@@ -108,121 +171,280 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-6 max-w-7xl mx-auto space-y-6 bg-slate-50 h-screen flex flex-col font-sans overflow-hidden">
-    <div class="flex justify-between items-end border-b-2 border-slate-900 pb-3 shrink-0">
-      <div class="space-y-0.5">
-        <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">공간 관리</h1>
-        <p class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px]">공간 배치도</p>
+  <div class="p-6 max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-black text-slate-900">공간 관리</h1>
+        <p class="text-slate-500 text-sm font-medium mt-0.5">시설물을 등록하고 관리 부서 및 담당자를 지정하세요.</p>
       </div>
-      <div class="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase">
-         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-indigo-600 rounded-sm"></span> 등록됨</span>
-         <span class="flex items-center gap-1"><span class="w-2 h-2 bg-white border border-dashed border-slate-300 rounded-sm"></span> 비어있음</span>
-      </div>
-    </div>
-
-    <!-- Blueprint Container -->
-    <div class="flex-1 flex flex-col gap-2 min-h-0">
-      <div v-for="fLabel in floorOrder" :key="fLabel" class="group flex items-stretch gap-4 flex-1 min-h-0">
-        <!-- Floor Label -->
-        <div class="w-24 bg-slate-900 text-white flex flex-col items-center justify-center rounded-xl shadow-lg transition-all group-hover:bg-indigo-600 shrink-0">
-           <span class="text-[8px] font-black opacity-50 uppercase leading-none">{{ fLabel.includes('B') ? '지하' : '지상' }}</span>
-           <span class="text-xl font-black tracking-tighter">{{ fLabel }}층</span>
-        </div>
-
-        <!-- Rooms Row -->
-        <div class="flex-1 bg-white border border-slate-200 rounded-[1.5rem] p-2 flex items-center gap-2 overflow-x-auto shadow-sm group-hover:shadow-indigo-500/5 transition-all scrollbar-hide">
-           <!-- Individual Room Tile -->
-           <div v-for="room in roomsByFloor[fLabel]" :key="room.id" 
-                class="min-w-[160px] h-full bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-between hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all cursor-pointer group/room relative">
-             <div class="overflow-hidden flex-1 flex flex-col justify-between">
-               <div>
-                 <div class="flex justify-between items-start gap-1">
-                    <h3 class="text-[11px] font-black text-slate-800 leading-tight uppercase truncate">{{ room.room_name }}</h3>
-                    <div class="flex gap-1 opacity-0 group-hover/room:opacity-100 transition-opacity shrink-0">
-                      <button @click.stop="openModal(fLabel, room)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><PencilIcon class="w-3 h-3" /></button>
-                      <button @click.stop="deleteRoom(room.id)" class="p-1 hover:bg-slate-100 rounded text-slate-400"><TrashIcon class="w-3 h-3" /></button>
-                    </div>
-                 </div>
-                 <p class="text-[8px] text-slate-400 font-bold mt-0.5 uppercase truncate">{{ room.dept_name || 'Public' }}</p>
-               </div>
-
-               <div v-if="room.image_url" class="mt-2 w-full h-16 rounded-lg overflow-hidden border border-slate-100">
-                 <img :src="room.image_url" class="w-full h-full object-cover" />
-               </div>
-             </div>
-
-             
-             <div class="flex justify-between items-center bg-white rounded-lg px-2 py-1 border border-slate-100 mt-2">
-                <span class="text-[8px] font-bold text-slate-500 truncate">{{ room.manager_name }}</span>
-             </div>
-           </div>
-
-           <!-- Add Button Tile -->
-           <button @click="openModal(fLabel)" 
-                   class="min-w-[80px] h-full border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-indigo-400 hover:bg-indigo-50 group/add transition-all shrink-0">
-              <PlusIcon class="w-4 h-4 text-slate-300 group-hover/add:text-indigo-600" />
-              <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover/add:text-indigo-600">추가</span>
-           </button>
-        </div>
+      <div class="flex gap-2">
+        <button @click="fetchRooms" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+          <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': isLoading }" />
+          새로고침
+        </button>
+        <button @click="openModal()" class="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95">
+          <PlusIcon class="w-4 h-4" />
+          새 공간 등록
+        </button>
       </div>
     </div>
 
-    <!-- Modal (Redesigned) -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-lg w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
-          <div class="space-y-1">
-            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">설정</span>
-            <h2 class="text-3xl font-black text-slate-900">{{ editingRoom ? '공간 수정' : '새 공간 추가' }}</h2>
+    <!-- Filter Tabs (Floor) -->
+    <div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl p-1.5 w-fit shadow-sm">
+      <button @click="filterFloor = 'all'"
+        :class="filterFloor === 'all' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'"
+        class="px-5 py-2 rounded-xl text-xs font-black transition-all uppercase tracking-widest">
+        전체
+      </button>
+      <button v-for="f in floorOrder" :key="f"
+        @click="filterFloor = f"
+        :class="filterFloor === f ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'"
+        class="px-5 py-2 rounded-xl text-xs font-black transition-all uppercase tracking-widest">
+        {{ f }}층
+      </button>
+    </div>
+
+    <!-- Rooms Table/List -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+      <div v-if="filteredRooms.length === 0" class="text-center py-20">
+        <HomeIcon class="w-12 h-12 text-slate-200 mx-auto mb-4" />
+        <p class="text-slate-400 font-black text-sm uppercase tracking-widest">해당 층에 등록된 공간이 없습니다</p>
+      </div>
+
+      <div v-else class="divide-y divide-slate-100">
+        <div v-for="room in filteredRooms" :key="room.id"
+          class="p-6 hover:bg-slate-50 transition-all flex flex-col md:flex-row md:items-center gap-6 group">
+          
+          <!-- Room Image or Placeholder -->
+          <div class="w-full md:w-40 h-28 shrink-0 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 relative group">
+            <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <BuildingOffice2Icon class="w-8 h-8 text-slate-200" />
+            </div>
+            <div class="absolute top-2 left-2 px-2 py-1 bg-slate-900/80 backdrop-blur text-white text-[9px] font-black rounded-lg uppercase tracking-tighter">
+              {{ room.floor }}층
+            </div>
           </div>
 
-          <div class="space-y-6">
-            <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">공간 정보</label>
-              <div class="space-y-4">
-                <input v-model="form.room_name" type="text" placeholder="공간명 입력 (예: 본당)" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="relative">
-                    <select v-model="form.floor" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                      <option value="">층 선택</option>
-                      <option v-for="f in floorOrder" :key="f" :value="f">{{ f }}층</option>
-                    </select>
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 pointer-events-none">층</span>
-                  </div>
-                  <select v-model="form.dept_name" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                    <option value="">소속 부서</option>
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1">
+              <h3 class="text-lg font-black text-slate-900 tracking-tight">{{ room.room_name }}</h3>
+              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                {{ room.dept_name || '전체 공용' }}
+              </span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 mt-3">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">담당자</span>
+                <span class="text-xs font-bold text-slate-700">{{ room.manager_name || '미지정' }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">연락처</span>
+                <span class="text-xs font-bold text-slate-700">{{ room.manager_contact || '-' }}</span>
+              </div>
+              
+              <!-- Blocked Times Badges -->
+              <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 col-span-full mt-2">
+                <span class="text-[10px] font-black text-rose-500 uppercase tracking-widest w-full mb-1">예약 불가 시간</span>
+                <div v-for="bt in room.blocked_times" :key="'list-bt-'+bt.id" 
+                     class="flex items-center gap-1.5 px-2 py-1 bg-rose-50/50 border border-rose-100 rounded-lg">
+                  <span class="text-[9px] font-black text-rose-600">{{ getDayLabel(bt.day_of_week) }}</span>
+                  <span class="text-[9px] font-bold text-slate-600">{{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <button @click="openBlockedModal(room)"
+              title="예약 불가 시간 설정"
+              class="p-3 bg-white border border-slate-200 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all active:scale-95">
+              <NoSymbolIcon class="w-4 h-4" />
+            </button>
+            <button @click="openModal(room.floor, room)"
+              class="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95">
+              <PencilIcon class="w-4 h-4" />
+            </button>
+            <button @click="deleteRoom(room.id)"
+              class="p-3 bg-white border border-slate-200 text-rose-500 rounded-xl hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95">
+              <TrashIcon class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal (Premium Redesign) -->
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-[3rem] shadow-2xl max-w-lg w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300 overflow-y-auto max-h-[90vh] scrollbar-hide">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1">
+              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">시설 정보 설정</span>
+              <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ editingRoom ? '공간 정보 수정' : '새 공간 등록' }}</h2>
+            </div>
+            <button @click="showModal = false" class="p-2 text-slate-400 hover:text-slate-900 transition-colors"><PlusIcon class="w-6 h-6 rotate-45" /></button>
+          </div>
+
+          <form @submit.prevent="saveRoom" class="space-y-6">
+            <div class="space-y-4">
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간명</label>
+                <input v-model="form.room_name" type="text" placeholder="예: 비전홀" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">위치 (층)</label>
+                  <select v-model="form.floor" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 appearance-none">
+                    <option v-for="f in floorOrder" :key="f" :value="f">{{ f }}층</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
+                  <select v-model="form.dept_name" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 appearance-none">
+                    <option value="">전체 공용</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">관리 및 미디어</label>
-              <div class="space-y-4">
-                <input v-model="form.manager_name" type="text" placeholder="관리자 이름" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
-                <input v-model="form.manager_contact" type="text" placeholder="연락처" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
-                
-                <div class="space-y-2">
-                  <div v-if="previewUrl" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-200">
+            <div class="space-y-4 pt-4 border-t border-slate-100">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">담당자</label>
+                  <input v-model="form.manager_name" type="text" placeholder="담당자 이름" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+                </div>
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+                  <input v-model="form.manager_contact" type="text" placeholder="담당자 연락처" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간 사진</label>
+                <div class="relative group">
+                  <div v-if="previewUrl" class="relative w-full aspect-video rounded-3xl overflow-hidden border-2 border-slate-100">
                     <img :src="previewUrl" class="w-full h-full object-cover" />
-                    <button @click="previewUrl = null; selectedFile = null; form.image_url = null" class="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full text-slate-600 hover:text-red-600">
+                    <button type="button" @click="previewUrl = null; selectedFile = null; form.image_url = null" class="absolute top-3 right-3 p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-all shadow-lg">
                       <TrashIcon class="w-4 h-4" />
                     </button>
                   </div>
-                  <label class="block w-full cursor-pointer bg-white border-2 border-dashed border-slate-200 rounded-2xl py-4 px-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                  <label v-else class="flex flex-col items-center justify-center w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer">
+                    <PlusIcon class="w-8 h-8 text-slate-300 mb-2" />
+                    <span class="text-xs font-bold text-slate-400">사진 업로드 (선택)</span>
                     <input type="file" @change="onFileChange" accept="image/*" class="hidden" />
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ previewUrl ? '사진 변경' : '공간 사진 업로드' }}</span>
                   </label>
                 </div>
               </div>
             </div>
 
+            <div class="flex gap-4 pt-6">
+              <button type="button" @click="showModal = false" class="flex-1 py-5 bg-slate-100 text-slate-500 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">취소</button>
+              <button type="submit" class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl shadow-indigo-100 transition-all active:scale-[0.98]">
+                {{ editingRoom ? '정보 수정 완료' : '새 공간 등록 완료' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+    <!-- Blocked Times Modal -->
+    <Teleport to="body">
+      <div v-if="showBlockedModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-[3rem] shadow-2xl max-w-2xl w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300 overflow-y-auto max-h-[90vh] scrollbar-hide">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1">
+              <span class="text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">예약 불가 설정</span>
+              <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ currentRoomForBlocked?.room_name }}</h2>
+              <p class="text-slate-500 text-sm font-bold">정기적인 유지보수나 고정 업무 시간을 차단합니다.</p>
+            </div>
+            <button @click="showBlockedModal = false" class="p-2 text-slate-400 hover:text-slate-900 transition-colors"><PlusIcon class="w-6 h-6 rotate-45" /></button>
           </div>
 
-          <div class="flex gap-4">
-            <button @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">취소</button>
-            <button @click="saveRoom" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">등록 완료</button>
+          <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
+            <!-- Add Form -->
+            <div class="bg-slate-50 rounded-3xl p-8 space-y-6">
+              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">불가 시간 추가</h3>
+              <div class="space-y-4">
+                <!-- Row 1: Day and Times -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
+                    <select v-model="blockedForm.day_of_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
+                      <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
+                    </select>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">시작 시간</label>
+                    <div class="flex gap-2">
+                      <select v-model="startHour" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
+                        <option v-for="h in hours.slice(0, 24)" :key="'sh-'+h" :value="h">{{ h }}시</option>
+                      </select>
+                      <select v-model="startMin" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
+                        <option v-for="m in minutes" :key="'sm-'+m" :value="m">{{ m }}분</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">종료 시간</label>
+                    <div class="flex gap-2">
+                      <select v-model="endHour" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
+                        <option v-for="h in hours" :key="'eh-'+h" :value="h">{{ h }}시</option>
+                      </select>
+                      <select v-model="endMin" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
+                        <option v-for="m in minutes" :key="'em-'+m" :value="m">{{ m }}분</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Row 2: Reason -->
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">차단 사유</label>
+                  <div class="flex gap-4">
+                    <input v-model="blockedForm.reason" type="text" placeholder="점검, 행정 업무 등 사유를 입력하세요" class="flex-1 bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500" />
+                    <button @click="addBlockedTime" class="bg-rose-500 text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 active:scale-95 flex items-center gap-2">
+                      <PlusIcon class="w-5 h-5" />
+                      <span>추가</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- List -->
+            <div class="space-y-4">
+              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">등록된 불가 시간</h3>
+              <div v-if="blockedTimes.length === 0" class="text-center py-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <p class="text-slate-400 text-xs font-bold">등록된 예약 불가 시간이 없습니다.</p>
+              </div>
+              <div v-else class="space-y-2">
+                <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-rose-200 transition-all">
+                  <div class="flex items-center gap-4">
+                    <div class="bg-rose-50 text-rose-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">
+                      {{ getDayLabel(bt.day_of_week) }}
+                    </div>
+                    <div>
+                      <div class="text-sm font-black text-slate-900">{{ bt.start_time.slice(0,5) }} - {{ bt.end_time.slice(0,5) }}</div>
+                      <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ bt.reason || '사유 없음' }}</div>
+                    </div>
+                  </div>
+                  <button @click="deleteBlockedTime(bt.id)" class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                    <TrashIcon class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 flex justify-end">
+            <button @click="showBlockedModal = false" class="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200">설정 완료</button>
           </div>
         </div>
       </div>

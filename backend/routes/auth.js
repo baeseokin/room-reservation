@@ -4,6 +4,56 @@ const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 
 /**
+ * Register (ID + Password)
+ */
+router.post("/register", async (req, res) => {
+  const { userId, password, userName, phone, email, deptName } = req.body;
+  if (!userId || !password || !userName || !phone) {
+    return res.status(400).json({ success: false, message: "필수 정보를 모두 입력하세요." });
+  }
+
+  try {
+    const [existing] = await pool.query("SELECT id FROM users WHERE user_id = ?", [userId]);
+    if (existing.length > 0) {
+      return res.status(409).json({ success: false, message: "이미 존재하는 ID입니다." });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      "INSERT INTO users (user_id, user_name, password_hash, phone, email, dept_name, is_approved) VALUES (?, ?, ?, ?, ?, ?, FALSE)",
+      [userId, userName, hash, phone, email, deptName]
+    );
+
+    const newId = result.insertId;
+    // Assign '사용자' role by default
+    const [roleRows] = await pool.query("SELECT id FROM roles WHERE role_name = '사용자'");
+    if (roleRows.length > 0) {
+      await pool.query("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", [newId, roleRows[0].id]);
+    }
+
+    res.json({ success: true, message: "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인이 가능합니다." });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ success: false, message: "회원가입 중 오류가 발생했습니다." });
+  }
+});
+
+/**
+ * Check ID Duplication
+ */
+router.get("/check-id", async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ success: false, message: "ID를 입력하세요." });
+
+  try {
+    const [existing] = await pool.query("SELECT id FROM users WHERE user_id = ?", [userId]);
+    res.json({ success: true, available: existing.length === 0 });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "중복 체크 중 오류가 발생했습니다." });
+  }
+});
+
+/**
  * Admin Login (ID + Password)
  * 관리자만 로그인 가능
  */
@@ -19,6 +69,11 @@ router.post("/login", async (req, res) => {
 
     const user = users[0];
 
+    // Check approval
+    if (!user.is_approved) {
+      return res.status(403).json({ success: false, message: "관리자의 승인이 필요한 계정입니다. 잠시만 기다려주세요." });
+    }
+
     // Check password
     if (!user.password_hash)
       return res.status(401).json({ success: false, message: "비밀번호가 설정되지 않은 계정입니다." });
@@ -27,15 +82,12 @@ router.post("/login", async (req, res) => {
     if (!match)
       return res.status(401).json({ success: false, message: "ID 또는 비밀번호가 올바르지 않습니다." });
 
-    // Check admin role
+    // Check roles
     const [userRoles] = await pool.query(
       "SELECT r.role_name FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = ?",
       [user.id]
     );
     const roles = userRoles.map((r) => r.role_name);
-
-    if (!roles.includes("관리자"))
-      return res.status(403).json({ success: false, message: "관리자만 로그인할 수 있습니다." });
 
     req.session.user = {
       id: user.id,
@@ -48,7 +100,7 @@ router.post("/login", async (req, res) => {
 
     res.json({ success: true, user: req.session.user });
   } catch (error) {
-    console.error("Admin login error:", error);
+    console.error("Login error:", error);
     res.status(500).json({ success: false, message: "로그인 중 오류가 발생했습니다." });
   }
 });
@@ -90,10 +142,13 @@ router.post("/kakao", async (req, res) => {
 
     if (existing.length > 0) {
       user = existing[0];
+      if (!user.is_approved) {
+        return res.status(403).json({ success: false, message: "관리자의 승인이 필요한 계정입니다. 잠시만 기다려주세요." });
+      }
     } else {
-      // Create new user if not exists
+      // Create new user if not exists (Unapproved by default)
       const [result] = await pool.query(
-        "INSERT INTO users (user_id, user_name, kakao_id) VALUES (?, ?, ?)",
+        "INSERT INTO users (user_id, user_name, kakao_id, is_approved) VALUES (?, ?, ?, FALSE)",
         [`kakao_${kakaoId}`, userName, kakaoId]
       );
       const newId = result.insertId;
@@ -104,8 +159,7 @@ router.post("/kakao", async (req, res) => {
         await pool.query("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", [newId, roleRows[0].id]);
       }
 
-      const [newUser] = await pool.query("SELECT * FROM users WHERE id = ?", [newId]);
-      user = newUser[0];
+      return res.status(403).json({ success: false, message: "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인이 가능합니다." });
     }
 
     // 4. Set Session

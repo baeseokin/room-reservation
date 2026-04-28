@@ -60,16 +60,17 @@ router.get("/me", isLogged, async (req, res) => {
  * Update current user profile
  */
 router.put("/me", isLogged, async (req, res) => {
-  const { user_name, email, phone } = req.body;
+  const { user_name, email, phone, dept_name } = req.body;
   try {
     await pool.query(
-      "UPDATE users SET user_name = ?, email = ?, phone = ? WHERE id = ?",
-      [user_name, email, phone, req.session.user.id]
+      "UPDATE users SET user_name = ?, email = ?, phone = ?, dept_name = ? WHERE id = ?",
+      [user_name, email, phone, dept_name, req.session.user.id]
     );
     
     // Update session info if needed
     req.session.user.userName = user_name;
     req.session.user.phone = phone;
+    req.session.user.deptName = dept_name;
     
     res.json({ success: true });
   } catch (err) {
@@ -173,6 +174,53 @@ router.delete("/:id", isAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Delete User Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.patch("/:id/approve", isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { roleNames } = req.body; // Array of role names like ['사용자'] or ['관리자']
+  
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1. Approve User
+    await conn.query("UPDATE users SET is_approved = TRUE WHERE id = ?", [id]);
+
+    // 2. Assign Roles if provided
+    if (roleNames && roleNames.length > 0) {
+      // Get role IDs
+      const [roles] = await conn.query("SELECT id FROM roles WHERE role_name IN (?)", [roleNames]);
+      if (roles.length > 0) {
+        // Delete existing roles just in case
+        await conn.query("DELETE FROM user_roles WHERE user_id = ?", [id]);
+        const inserts = roles.map(r => [id, r.id]);
+        await conn.query("INSERT INTO user_roles (user_id, role_id) VALUES ?", [inserts]);
+      }
+    }
+
+    await conn.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await conn.rollback();
+    console.error("Approve User Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+router.post("/:id/reset-password", isAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash("woncheon1234!", saltRounds);
+    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [password_hash, id]);
+    res.json({ success: true, message: "비밀번호가 'woncheon1234!'로 초기화되었습니다." });
+  } catch (err) {
+    console.error("Reset Password Error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

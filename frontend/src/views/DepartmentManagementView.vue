@@ -7,7 +7,8 @@ import {
   PencilSquareIcon, 
   TrashIcon, 
   XMarkIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
 const departments = ref([])
@@ -84,73 +85,83 @@ onMounted(fetchDepartments)
 </script>
 
 <template>
-  <div class="p-8 max-w-5xl mx-auto space-y-10 min-h-screen font-sans">
+  <div class="p-6 max-w-7xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b-4 border-slate-900 pb-8">
-      <div class="space-y-1">
-        <h1 class="text-5xl font-black text-slate-900 tracking-tighter uppercase italic">부서 관리</h1>
-        <p class="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">조직도 구조 관리</p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-black text-slate-900">부서 관리</h1>
+        <p class="text-slate-500 text-sm font-medium mt-0.5">교회 조직 구조와 부서 정보를 관리하세요.</p>
       </div>
-      <button @click="openModal()" class="bg-slate-900 text-white px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all active:scale-95 shadow-2xl flex items-center gap-2">
-        <PlusIcon class="w-5 h-5" />
-        부서 추가
-      </button>
+      <div class="flex gap-2">
+        <button @click="fetchDepartments" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+          <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+          새로고침
+        </button>
+        <button @click="openModal()" class="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95">
+          <PlusIcon class="w-4 h-4" />
+          부서 추가
+        </button>
+      </div>
     </div>
 
-    <!-- Stats Row (Simple) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-       <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
-             <BuildingOfficeIcon class="w-6 h-6 text-indigo-600" />
-          </div>
-          <div>
-            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">전체 부서 수</div>
-            <div class="text-2xl font-black text-slate-900">{{ departments.length }}</div>
-          </div>
-       </div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
+        <div class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">전체 부서 수</div>
+        <div class="text-4xl font-black text-indigo-700">{{ departments.length }}</div>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">최상위 조직</div>
+        <div class="text-4xl font-black text-slate-600">{{ departments.filter(d => !d.parent_dept_id).length }}</div>
+      </div>
     </div>
 
-    <!-- Table Section -->
-    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-slate-50 border-b border-slate-100 font-black text-[10px] text-slate-400 uppercase tracking-widest">
-            <th class="px-8 py-6">부서명</th>
-            <th class="px-8 py-6">상위 부서</th>
-            <th class="px-8 py-6">등록일</th>
-            <th class="px-8 py-6 text-right">관리</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-50">
-          <tr v-if="loading" v-for="i in 3" class="animate-pulse">
-            <td colspan="4" class="px-8 py-10 bg-slate-50/50"></td>
-          </tr>
-          <tr v-for="dept in departments" :key="dept.id" class="group hover:bg-slate-50 transition-colors">
-            <td class="px-8 py-6">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-black text-slate-400">
-                  {{ dept.id }}
-                </div>
-                <span class="font-bold text-slate-800">{{ dept.dept_name }}</span>
-              </div>
-            </td>
-            <td class="px-8 py-6">
-              <div class="flex items-center gap-1.5 font-bold text-slate-400 text-sm">
-                {{ getParentName(dept.parent_dept_id) }}
-              </div>
-            </td>
-            <td class="px-8 py-6 text-xs font-bold text-slate-400">{{ new Date(dept.created_at).toLocaleDateString() }}</td>
-            <td class="px-8 py-6 text-right space-x-2">
-              <button @click="openModal(dept)" class="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl shadow-sm transition-all active:scale-90">
-                <PencilSquareIcon class="w-5 h-5" />
-              </button>
-              <button @click="deleteDepartment(dept.id)" class="p-2.5 bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-white rounded-xl shadow-sm transition-all active:scale-90">
-                <TrashIcon class="w-5 h-5" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Departments Table/List -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+      <div v-if="loading" class="flex justify-center py-16">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+      <div v-else-if="departments.length === 0" class="text-center py-16">
+        <BuildingOfficeIcon class="w-10 h-10 text-slate-200 mx-auto mb-3" />
+        <p class="text-slate-400 font-black text-sm uppercase tracking-widest">등록된 부서가 없습니다</p>
+      </div>
+
+      <div v-else class="divide-y divide-slate-100">
+        <div v-for="dept in departments" :key="dept.id"
+          class="p-5 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center gap-4">
+          
+          <!-- Icon Badge -->
+          <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center border border-slate-200 shrink-0">
+            <BuildingOfficeIcon class="w-6 h-6" />
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-black text-slate-900 text-sm">{{ dept.dept_name }}</span>
+              <span v-if="dept.parent_dept_id" class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">
+                {{ getParentName(dept.parent_dept_id) }} 소속
+              </span>
+            </div>
+            <div class="text-[10px] text-slate-400 font-bold mt-0.5">
+              ID: #{{ dept.id }} · 등록일: {{ new Date(dept.created_at).toLocaleDateString() }}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-2 shrink-0">
+            <button @click="openModal(dept)"
+              class="p-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95">
+              <PencilSquareIcon class="w-4 h-4" />
+            </button>
+            <button @click="deleteDepartment(dept.id)"
+              class="p-2.5 bg-white border border-slate-200 text-rose-500 rounded-xl hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95">
+              <TrashIcon class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal -->

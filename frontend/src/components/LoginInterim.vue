@@ -54,11 +54,16 @@ const handleLogin = async () => {
           </button>
         </form>
 
-        <div class="mt-8 pt-8 border-t border-slate-100 text-center">
+        <div class="mt-8 pt-8 border-t border-slate-100 text-center space-y-4">
           <p class="text-xs text-slate-400 leading-relaxed">
             현재는 카카오 로그인을 대신하여 ID만으로 로그인이 가능합니다.<br/>
             추후 정식 버전에서는 카카오 로그인이 적용됩니다.
           </p>
+          <div class="pt-4">
+            <router-link to="/admin/login" class="text-xs font-black text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">
+              관리자 로그인으로 이동 →
+            </router-link>
+          </div>
         </div>
       </div>
     </div>

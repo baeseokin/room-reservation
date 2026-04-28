@@ -28,7 +28,7 @@ const isAdmin = (req, res, next) => {
 };
 
 /**
- * List all rooms
+ * List all rooms with their blocked times
  */
 router.get("/", async (req, res) => {
   try {
@@ -39,8 +39,59 @@ router.get("/", async (req, res) => {
       query += " WHERE floor = ?";
       params.push(floor);
     }
-    const [rows] = await pool.query(query, params);
+    const [rooms] = await pool.query(query, params);
+    
+    // Fetch blocked times for all rooms
+    const [blockedTimes] = await pool.query("SELECT * FROM room_blocked_times");
+    
+    // Attach blocked times to each room
+    const roomsWithBlocked = rooms.map(room => ({
+      ...room,
+      blocked_times: blockedTimes.filter(bt => bt.room_id === room.id)
+    }));
+    
+    res.json(roomsWithBlocked);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Get blocked times for a specific room
+ */
+router.get("/:id/blocked-times", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM room_blocked_times WHERE room_id = ? ORDER BY day_of_week, start_time", [req.params.id]);
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Add a blocked time for a room
+ */
+router.post("/:id/blocked-times", isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { day_of_week, start_time, end_time, reason } = req.body;
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO room_blocked_times (room_id, day_of_week, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?)",
+      [id, day_of_week, start_time, end_time, reason]
+    );
+    res.json({ success: true, id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Delete a blocked time
+ */
+router.delete("/blocked-times/:blockedId", isAdmin, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM room_blocked_times WHERE id = ?", [req.params.blockedId]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

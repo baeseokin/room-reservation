@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { 
@@ -9,18 +9,38 @@ import {
   BuildingLibraryIcon,
   IdentificationIcon,
   CheckBadgeIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  BuildingOfficeIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const loading = ref(false)
 const saving = ref(false)
+const departments = ref([])
 const profile = ref({
   user_name: '',
   email: '',
   phone: '',
   user_id: '',
   dept_name: ''
+})
+
+const formatPhone = (val) => {
+  if (!val) return ''
+  const num = val.replace(/[^0-9]/g, '')
+  if (num.length <= 3) return num
+  if (num.length <= 7) return `${num.slice(0, 3)}-${num.slice(3)}`
+  return `${num.slice(0, 3)}-${num.slice(3, 7)}-${num.slice(7, 11)}`
+}
+
+watch(() => profile.value.phone, (newVal) => {
+  if (newVal) {
+    const formatted = formatPhone(newVal)
+    if (newVal !== formatted) {
+      profile.value.phone = formatted
+    }
+  }
 })
 
 const fetchProfile = async () => {
@@ -35,19 +55,30 @@ const fetchProfile = async () => {
   }
 }
 
+const fetchDepartments = async () => {
+  try {
+    const res = await axios.get('/api/departments')
+    departments.value = res.data
+  } catch (err) {
+    console.error('Fetch departments error:', err)
+  }
+}
+
 const updateProfile = async () => {
   saving.value = true
   try {
     await axios.put('/api/users/me', {
       user_name: profile.value.user_name,
       email: profile.value.email,
-      phone: profile.value.phone
+      phone: profile.value.phone,
+      dept_name: profile.value.dept_name
     })
     
     // Sync with auth store
     await auth.checkSession()
     
     alert('프로필이 성공적으로 업데이트되었습니다.')
+    fetchProfile()
   } catch (err) {
     alert('업데이트 중 오류가 발생했습니다.')
   } finally {
@@ -55,7 +86,10 @@ const updateProfile = async () => {
   }
 }
 
-onMounted(fetchProfile)
+onMounted(() => {
+  fetchProfile()
+  fetchDepartments()
+})
 </script>
 
 <template>
@@ -92,14 +126,6 @@ onMounted(fetchProfile)
              <p class="text-[10px] text-slate-500 font-bold leading-relaxed">계정 아이디는 수정할 수 없습니다. 변경이 필요한 경우 관리자에게 문의하세요.</p>
           </div>
         </div>
-
-        <div class="bg-indigo-600 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
-          <div class="flex items-center gap-3">
-            <BuildingLibraryIcon class="w-6 h-6 text-indigo-200" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-300">소속 부서</span>
-          </div>
-          <p class="text-xl font-black">{{ profile.dept_name || '미지정' }}</p>
-        </div>
       </div>
 
       <!-- Edit Form -->
@@ -112,6 +138,21 @@ onMounted(fetchProfile)
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <UserCircleIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.user_name" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0" placeholder="성함을 입력하세요" />
+              </div>
+            </div>
+
+            <!-- Department Combo Box -->
+            <div class="space-y-2 group">
+              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서</label>
+              <div class="relative">
+                <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
+                  <BuildingOfficeIcon class="w-6 h-6 text-slate-300" />
+                  <select v-model="profile.dept_name" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 appearance-none cursor-pointer">
+                    <option value="">부서 미지정</option>
+                    <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
+                  </select>
+                  <ChevronDownIcon class="w-5 h-5 text-slate-300 pointer-events-none" />
+                </div>
               </div>
             </div>
 

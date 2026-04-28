@@ -91,10 +91,10 @@ router.post("/", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Conflict check only against 'approved' reservations
+    // 1. Conflict check against 'approved' and 'pending' reservations
     const [conflicts] = await conn.query(
       `SELECT * FROM reservations 
-       WHERE room_id = ? AND reservation_date = ? AND status = 'approved'
+       WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending')
        AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
       [room_id, reservation_date, start_time, start_time, end_time, end_time, start_time, end_time]
     );
@@ -102,9 +102,27 @@ router.post("/", async (req, res) => {
     if (conflicts.length > 0) {
       await conn.rollback();
       return res.status(409).json({ 
-        success: false, 
-        message: "이미 해당 시간에 승인된 예약이 있습니다.",
+        success: false,         message: "이미 해당 시간에 승인되었거나 대기 중인 예약이 있습니다.",
         conflicts 
+      });
+    }
+
+    // 1b. Check against room_blocked_times
+    const d = new Date(reservation_date + 'T00:00:00');
+    const dayOfWeek = d.getDay();
+    const [blockedConflicts] = await conn.query(
+      `SELECT * FROM room_blocked_times
+       WHERE room_id = ? AND day_of_week = ?
+       AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+      [room_id, dayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+    );
+
+    if (blockedConflicts.length > 0) {
+      await conn.rollback();
+      return res.status(409).json({
+        success: false,
+        message: "해당 시간은 공간 관리자에 의해 예약이 불가한 시간으로 설정되어 있습니다.",
+        reason: blockedConflicts[0].reason
       });
     }
 
@@ -138,12 +156,21 @@ router.post("/", async (req, res) => {
 
         const [rConflicts] = await conn.query(
           `SELECT id FROM reservations 
-           WHERE room_id = ? AND reservation_date = ? AND status = 'approved'
+           WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending')
            AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
           [room_id, dateStr, start_time, start_time, end_time, end_time, start_time, end_time]
         );
 
-        if (rConflicts.length === 0) {
+        // Check against room_blocked_times for each instance
+        const rDayOfWeek = currentD.getDay();
+        const [rBlocked] = await conn.query(
+          `SELECT id FROM room_blocked_times
+           WHERE room_id = ? AND day_of_week = ?
+           AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+          [room_id, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+        );
+
+        if (rConflicts.length === 0 && rBlocked.length === 0) {
           const [result] = await conn.query(
             `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring, recurring_type, recurring_end_date)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -216,14 +243,71 @@ router.post("/", async (req, res) => {
 });
 
 /**
- * PATCH /api/reservations/:id/approve — 관리자 승인
+ * PATCH /api/reservations/bulk-approve — 관리자 일괄 승인
+ */
+router.patch("/bulk-approve", isLogged, isAdmin, async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No IDs provided" });
+  }
+
+  try {
+    await pool.query("UPDATE reservations SET status = 'approved' WHERE id IN (?)", [ids]);
+
+    // Send approval alimtalks
+    const [rows] = await pool.query(
+      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
+    );
+    for (const row of rows) {
+      if (row.requester_phone) {
+        sendApprovalAlimTalk(row).catch(e => console.error("Bulk Approval AlimTalk skip:", e.message));
+      }
+    }
+    res.json({ success: true, count: rows.length });
+  } catch (err) {
+    console.error("Bulk Approve Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * PATCH /api/reservations/bulk-reject — 관리자 일괄 거부
+ */
+router.patch("/bulk-reject", isLogged, isAdmin, async (req, res) => {
+  const { ids, reject_reason } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No IDs provided" });
+  }
+
+  try {
+    await pool.query(
+      "UPDATE reservations SET status = 'rejected', reject_reason = ? WHERE id IN (?)",
+      [reject_reason || null, ids]
+    );
+
+    // Send rejection alimtalks
+    const [rows] = await pool.query(
+      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
+    );
+    for (const row of rows) {
+      if (row.requester_phone) {
+        sendRejectionAlimTalk(row, reject_reason).catch(e => console.error("Bulk Rejection AlimTalk skip:", e.message));
+      }
+    }
+    res.json({ success: true, count: rows.length });
+  } catch (err) {
+    console.error("Bulk Reject Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * PATCH /api/reservations/:id/approve — 관리자 승인 (개별)
  */
 router.patch("/:id/approve", isLogged, isAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query("UPDATE reservations SET status = 'approved' WHERE id = ?", [id]);
-
-    // Send approval alimtalk to requester
     const [rows] = await pool.query(
       `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
     );
@@ -237,7 +321,7 @@ router.patch("/:id/approve", isLogged, isAdmin, async (req, res) => {
 });
 
 /**
- * PATCH /api/reservations/:id/reject — 관리자 거부
+ * PATCH /api/reservations/:id/reject — 관리자 거부 (개별)
  */
 router.patch("/:id/reject", isLogged, isAdmin, async (req, res) => {
   const { id } = req.params;
@@ -247,8 +331,6 @@ router.patch("/:id/reject", isLogged, isAdmin, async (req, res) => {
       "UPDATE reservations SET status = 'rejected', reject_reason = ? WHERE id = ?",
       [reject_reason || null, id]
     );
-
-    // Send rejection alimtalk to requester
     const [rows] = await pool.query(
       `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
     );
