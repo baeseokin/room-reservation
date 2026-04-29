@@ -110,11 +110,19 @@ router.post("/", async (req, res) => {
     // 1b. Check against room_blocked_times
     const d = new Date(reservation_date + 'T00:00:00');
     const dayOfWeek = d.getDay();
+    const dayOfMonth = d.getDate();
+    const nthWeek = Math.ceil(dayOfMonth / 7);
+
     const [blockedConflicts] = await conn.query(
       `SELECT * FROM room_blocked_times
-       WHERE room_id = ? AND day_of_week = ?
+       WHERE room_id = ?
+       AND (
+         (recurring_type = 'weekly' AND day_of_week = ?) OR
+         (recurring_type = 'monthly_date' AND day_of_month = ?) OR
+         (recurring_type = 'monthly_nth' AND nth_week = ? AND day_of_week = ?)
+       )
        AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
-      [room_id, dayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+      [room_id, dayOfWeek, dayOfMonth, nthWeek, dayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
     );
 
     if (blockedConflicts.length > 0) {
@@ -163,11 +171,19 @@ router.post("/", async (req, res) => {
 
         // Check against room_blocked_times for each instance
         const rDayOfWeek = currentD.getDay();
+        const rDayOfMonth = currentD.getDate();
+        const rNthWeek = Math.ceil(rDayOfMonth / 7);
+
         const [rBlocked] = await conn.query(
           `SELECT id FROM room_blocked_times
-           WHERE room_id = ? AND day_of_week = ?
+           WHERE room_id = ?
+           AND (
+             (recurring_type = 'weekly' AND day_of_week = ?) OR
+             (recurring_type = 'monthly_date' AND day_of_month = ?) OR
+             (recurring_type = 'monthly_nth' AND nth_week = ? AND day_of_week = ?)
+           )
            AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
-          [room_id, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+          [room_id, rDayOfWeek, rDayOfMonth, rNthWeek, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
         );
 
         if (rConflicts.length === 0 && rBlocked.length === 0) {

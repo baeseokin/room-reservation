@@ -1,20 +1,69 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import DeptTreeNode from '../components/DeptTreeNode.vue'
 import { 
   BuildingOfficeIcon, 
   PlusIcon, 
-  PencilSquareIcon, 
-  TrashIcon, 
-  XMarkIcon,
-  ChevronRightIcon,
-  ArrowPathIcon
+  ArrowPathIcon 
 } from '@heroicons/vue/24/outline'
 
 const departments = ref([])
 const loading = ref(false)
 const showModal = ref(false)
 const editingDept = ref(null)
+const searchQuery = ref('')
+
+const filteredDepartments = computed(() => {
+  if (!searchQuery.value.trim()) return departments.value
+  
+  const query = searchQuery.value.toLowerCase()
+  const matchedIds = new Set()
+  
+  // Find all matches and their ancestors to preserve tree context
+  departments.value.forEach(dept => {
+    if (dept.dept_name.toLowerCase().includes(query)) {
+      matchedIds.add(dept.id)
+      
+      // Trace back to root
+      let parentId = dept.parent_dept_id
+      while (parentId) {
+        if (matchedIds.has(parentId)) break
+        const parent = departments.value.find(d => d.id === parentId)
+        if (parent) {
+          matchedIds.add(parent.id)
+          parentId = parent.parent_dept_id
+        } else {
+          break
+        }
+      }
+    }
+  })
+  
+  return departments.value.filter(d => matchedIds.has(d.id))
+})
+
+const treeData = computed(() => {
+  const map = {}
+  const roots = []
+  const data = filteredDepartments.value
+  
+  data.forEach(dept => {
+    map[dept.id] = { ...dept, children: [] }
+  })
+  
+  data.forEach(dept => {
+    if (dept.parent_dept_id && map[dept.parent_dept_id]) {
+      map[dept.parent_dept_id].children.push(map[dept.id])
+    } else {
+      // Only push as root if it doesn't have a parent in the CURRENT filtered set
+      // or if it truly doesn't have a parent.
+      roots.push(map[dept.id])
+    }
+  })
+  
+  return roots
+})
 
 const form = ref({
   dept_name: '',
@@ -33,7 +82,7 @@ const fetchDepartments = async () => {
   }
 }
 
-const openModal = (dept = null) => {
+const openModal = (dept = null, parentId = null) => {
   if (dept) {
     editingDept.value = dept
     form.value = { 
@@ -42,7 +91,7 @@ const openModal = (dept = null) => {
     }
   } else {
     editingDept.value = null
-    form.value = { dept_name: '', parent_dept_id: null }
+    form.value = { dept_name: '', parent_dept_id: parentId }
   }
   showModal.value = true
 }
@@ -53,10 +102,8 @@ const saveDepartment = async () => {
   try {
     if (editingDept.value) {
       await axios.put(`/api/departments/${editingDept.value.id}`, form.value)
-      alert('부서 정보가 수정되었습니다.')
     } else {
       await axios.post('/api/departments', form.value)
-      alert('새 부서가 등록되었습니다.')
     }
     showModal.value = false
     fetchDepartments()
@@ -66,7 +113,7 @@ const saveDepartment = async () => {
 }
 
 const deleteDepartment = async (id) => {
-  if (confirm('이 부서를 삭제하시겠습니까? 연결된 사용자나 공간 정보에 영향을 줄 수 있습니다.')) {
+  if (confirm('이 부서를 삭제하시겠습니까? 하위 부서가 있는 경우 함께 확인이 필요할 수 있습니다.')) {
     try {
       await axios.delete(`/api/departments/${id}`)
       fetchDepartments()
@@ -76,90 +123,67 @@ const deleteDepartment = async (id) => {
   }
 }
 
-const getParentName = (parentId) => {
-  const parent = departments.value.find(d => d.id === parentId)
-  return parent ? parent.dept_name : '-'
-}
-
 onMounted(fetchDepartments)
 </script>
 
 <template>
-  <div class="p-6 max-w-7xl mx-auto space-y-6">
+  <div class="p-6 max-w-5xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-black text-slate-900">부서 관리</h1>
-        <p class="text-slate-500 text-sm font-medium mt-0.5">교회 조직 구조와 부서 정보를 관리하세요.</p>
+      <div class="flex-1">
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight">조직 체계 관리</h1>
+        <p class="text-slate-500 text-sm font-bold mt-0.5">부서 간의 계층 구조를 트리 형태로 관리합니다.</p>
       </div>
+      
+      <!-- Search Input -->
+      <div class="relative w-full sm:w-64 group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input v-model="searchQuery" type="text" placeholder="부서 이름으로 검색..." 
+          class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm group-hover:border-slate-300" />
+      </div>
+
       <div class="flex gap-2">
-        <button @click="fetchDepartments" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+        <button @click="fetchDepartments" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
           <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': loading }" />
           새로고침
         </button>
-        <button @click="openModal()" class="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95">
+        <button @click="openModal()" class="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-black hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100 active:scale-95">
           <PlusIcon class="w-4 h-4" />
-          부서 추가
+          추가
         </button>
       </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
-        <div class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">전체 부서 수</div>
-        <div class="text-4xl font-black text-indigo-700">{{ departments.length }}</div>
-      </div>
-      <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">최상위 조직</div>
-        <div class="text-4xl font-black text-slate-600">{{ departments.filter(d => !d.parent_dept_id).length }}</div>
-      </div>
-    </div>
-
-    <!-- Departments Table/List -->
-    <div class="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
-      <div v-if="loading" class="flex justify-center py-16">
-        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <!-- Tree Structure -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[400px]">
+      <div v-if="loading" class="flex flex-col items-center justify-center py-32 space-y-4">
+        <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-slate-400 font-black text-[10px] uppercase tracking-widest">조직도 불러오는 중...</p>
       </div>
 
-      <div v-else-if="departments.length === 0" class="text-center py-16">
-        <BuildingOfficeIcon class="w-10 h-10 text-slate-200 mx-auto mb-3" />
-        <p class="text-slate-400 font-black text-sm uppercase tracking-widest">등록된 부서가 없습니다</p>
+      <div v-else-if="treeData.length === 0" class="text-center py-32">
+        <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <BuildingOfficeIcon class="w-10 h-10 text-slate-200" />
+        </div>
+        <template v-if="searchQuery">
+          <p class="text-slate-400 font-black text-sm uppercase tracking-widest">"{{ searchQuery }}" 검색 결과가 없습니다</p>
+          <button @click="searchQuery = ''" class="mt-4 text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline">검색 초기화</button>
+        </template>
+        <template v-else>
+          <p class="text-slate-400 font-black text-sm uppercase tracking-widest">등록된 부서가 없습니다</p>
+          <button @click="openModal()" class="mt-4 text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline">첫 부서 등록하기</button>
+        </template>
       </div>
 
-      <div v-else class="divide-y divide-slate-100">
-        <div v-for="dept in departments" :key="dept.id"
-          class="p-5 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center gap-4">
-          
-          <!-- Icon Badge -->
-          <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center border border-slate-200 shrink-0">
-            <BuildingOfficeIcon class="w-6 h-6" />
-          </div>
-
-          <!-- Info -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-black text-slate-900 text-sm">{{ dept.dept_name }}</span>
-              <span v-if="dept.parent_dept_id" class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">
-                {{ getParentName(dept.parent_dept_id) }} 소속
-              </span>
-            </div>
-            <div class="text-[10px] text-slate-400 font-bold mt-0.5">
-              ID: #{{ dept.id }} · 등록일: {{ new Date(dept.created_at).toLocaleDateString() }}
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex gap-2 shrink-0">
-            <button @click="openModal(dept)"
-              class="p-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95">
-              <PencilSquareIcon class="w-4 h-4" />
-            </button>
-            <button @click="deleteDepartment(dept.id)"
-              class="p-2.5 bg-white border border-slate-200 text-rose-500 rounded-xl hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95">
-              <TrashIcon class="w-4 h-4" />
-            </button>
-          </div>
+      <div v-else class="p-8">
+        <div class="space-y-3">
+          <DeptTreeNode v-for="node in treeData" :key="node.id"
+            :node="node" :depth="0" 
+            @edit="openModal" @delete="deleteDepartment" @add-child="(id) => openModal(null, id)" />
         </div>
       </div>
     </div>
@@ -169,21 +193,21 @@ onMounted(fetchDepartments)
       <div v-if="showModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-lg w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
           <div class="space-y-1">
-            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">부서 설정</span>
-            <h2 class="text-3xl font-black text-slate-900 font-serif italic">{{ editingDept ? '부서 수정' : '새 부서 등록' }}</h2>
+            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
+            <h2 class="text-3xl font-black text-slate-900 font-serif italic">{{ editingDept ? '부서 정보 수정' : '새 부서 등록' }}</h2>
           </div>
 
           <div class="space-y-6">
             <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6">
               <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">부서명</label>
-                <input v-model="form.dept_name" type="text" placeholder="부서명 입력 (예: 재정부)" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">부서명</label>
+                <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 유치부 등" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
               </div>
 
               <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">상위 소속</label>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">상위 소속</label>
                 <select v-model="form.parent_dept_id" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                  <option :value="null">상위 소속 없음 (최상위)</option>
+                  <option :value="null">최상위 조직</option>
                   <option v-for="d in departments.filter(d => d.id !== editingDept?.id)" :key="d.id" :value="d.id">
                     {{ d.dept_name }}
                   </option>
@@ -194,7 +218,7 @@ onMounted(fetchDepartments)
 
           <div class="flex gap-4">
             <button @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">취소</button>
-            <button @click="saveDepartment" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">확인</button>
+            <button @click="saveDepartment" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">저장하기</button>
           </div>
         </div>
       </div>

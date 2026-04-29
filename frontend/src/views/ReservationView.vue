@@ -153,6 +153,11 @@ const floors = computed(() => {
   })
 })
 
+const isMyReservation = computed(() => {
+  if (!detailReservation.value || !authStore.user) return false
+  return detailReservation.value.requester_id === authStore.user.id
+})
+
 const roomsByFloor = computed(() => {
   const map = {}
   rooms.value.forEach(r => {
@@ -268,7 +273,19 @@ const getBlockedForRoomAndDate = (room, date) => {
   if (!room || !room.blocked_times) return []
   const d = new Date(date + 'T00:00:00')
   const dow = d.getDay()
-  return room.blocked_times.filter(bt => bt.day_of_week == dow)
+  const dom = d.getDate()
+  const nth = Math.ceil(dom / 7)
+  
+  return room.blocked_times.filter(bt => {
+    if (bt.recurring_type === 'monthly_date') {
+      return bt.day_of_month == dom
+    } else if (bt.recurring_type === 'monthly_nth') {
+      return bt.nth_week == nth && bt.day_of_week == dow
+    } else {
+      // Default to weekly
+      return bt.day_of_week == dow
+    }
+  })
 }
 
 const isSlotBlocked = (room, date, time) => {
@@ -805,7 +822,7 @@ onMounted(() => {
                            class="flex-1 min-w-[140px] border-r border-slate-100 p-2 space-y-1.5 overflow-hidden hover:bg-slate-50/50 transition-colors cursor-pointer">
                         <!-- Blocked Times in Week View -->
                         <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
-                             class="text-[8px] font-black px-1.5 py-1 rounded truncate bg-slate-100 text-slate-400 border border-dashed border-slate-300">
+                             class="text-[8px] font-black px-1.5 py-1 rounded truncate bg-orange-900/10 text-orange-900/60 border border-dashed border-orange-900/20">
                           <span class="mr-1">[불가]</span> {{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }} {{ bt.reason || '관리자 설정' }}
                         </div>
 
@@ -893,8 +910,8 @@ onMounted(() => {
                       <div class="absolute inset-0 pointer-events-none">
                         <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
                              :style="getBlockedStyle(bt)"
-                             class="absolute top-2 bottom-2 bg-slate-100/80 border border-slate-200 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
-                          <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">Reserved for maintenance</span>
+                             class="absolute top-2 bottom-2 bg-orange-900/10 border border-orange-900/20 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
+                          <span class="text-[9px] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">Reserved for maintenance</span>
                         </div>
                       </div>
 
@@ -979,23 +996,50 @@ onMounted(() => {
               <span class="bg-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg">{{ detailReservation.floor }}{{ detailReservation.floor.includes('B') ? '' : 'F' }}</span>
               <span class="text-indigo-400 text-sm font-black">{{ detailReservation.room_name }}</span>
             </div>
-            <h2 class="text-2xl font-black leading-tight tracking-tighter">{{ detailReservation.title || '공간 예약 상세' }}</h2>
+            
+            <template v-if="isEditing">
+              <input type="text" v-model="editForm.title" class="w-full bg-white/10 border-b border-white/20 focus:border-indigo-400 focus:outline-none text-2xl font-black leading-tight tracking-tighter placeholder:text-white/30 p-2 rounded" placeholder="신청명을 입력하세요" />
+            </template>
+            <h2 v-else class="text-2xl font-black leading-tight tracking-tighter">{{ detailReservation.title || '공간 예약 상세' }}</h2>
           </div>
-          <div class="px-10 py-8 space-y-8">
-            <!-- Time Info Moved to Top -->
-            <div class="p-6 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100">
-               <div class="flex items-center gap-4">
-                 <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><ClockIcon class="w-5 h-5 text-indigo-600" /></div>
-                 <div>
-                   <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Time</p>
-                   <p class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.start_time.slice(0,5) }} — {{ detailReservation.end_time.slice(0,5) }}</p>
+
+          <div class="px-10 py-8 space-y-8 overflow-y-auto max-h-[60vh]">
+            <!-- Time & Date Info -->
+            <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+               <!-- Date -->
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center gap-4">
+                   <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><CalendarIcon class="w-5 h-5 text-indigo-600" /></div>
+                   <div class="flex-1">
+                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Date</p>
+                     <input v-if="isEditing" type="date" v-model="editForm.reservation_date" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
+                     <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.reservation_date }} ({{ ['일','월','화','수','목','금','토'][new Date(detailReservation.reservation_date).getDay()] }})</p>
+                   </div>
+                 </div>
+                 <div :class="detailReservation.status === 'approved' ? 'bg-indigo-600' : 'bg-amber-500'" class="px-4 py-1.5 rounded-xl text-white text-[9px] font-black uppercase tracking-widest">
+                   {{ detailReservation.status === 'approved' ? 'Approved' : 'Pending' }}
                  </div>
                </div>
-               <div :class="detailReservation.status === 'approved' ? 'bg-indigo-600' : 'bg-amber-500'" class="px-4 py-1.5 rounded-xl text-white text-[9px] font-black uppercase tracking-widest">
-                 {{ detailReservation.status === 'approved' ? 'Approved' : 'Pending' }}
+               
+               <!-- Time -->
+               <div class="flex items-center gap-4 pt-4 border-t border-slate-200/50">
+                 <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><ClockIcon class="w-5 h-5 text-indigo-600" /></div>
+                 <div class="flex-1 grid grid-cols-2 gap-4">
+                   <div>
+                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Start</p>
+                     <input v-if="isEditing" type="time" v-model="editForm.start_time" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
+                     <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.start_time.slice(0,5) }}</p>
+                   </div>
+                   <div>
+                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">End</p>
+                     <input v-if="isEditing" type="time" v-model="editForm.end_time" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
+                     <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.end_time.slice(0,5) }}</p>
+                   </div>
+                 </div>
                </div>
             </div>
 
+            <!-- Requester Info -->
             <div class="grid grid-cols-2 gap-8">
               <div class="space-y-1">
                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">신청자</span>
@@ -1006,14 +1050,30 @@ onMounted(() => {
                 <p class="text-base font-black text-slate-900">{{ detailReservation.requester_phone || '미기재' }}</p>
               </div>
             </div>
+
+            <!-- Reason -->
             <div class="space-y-2">
               <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Reason / Purpose</span>
-              <p class="text-slate-900 font-bold leading-relaxed text-sm bg-slate-100 p-4 rounded-xl border border-slate-200/50">
+              <template v-if="isEditing">
+                <textarea v-model="editForm.reason" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]" placeholder="수정할 사유를 입력하세요"></textarea>
+              </template>
+              <p v-else class="text-slate-900 font-bold leading-relaxed text-sm bg-slate-100 p-4 rounded-xl border border-slate-200/50">
                 {{ detailReservation.reason || '신청 사유가 없습니다.' }}
               </p>
             </div>
           </div>
-          <div class="px-10 py-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+
+          <div class="px-10 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <template v-if="isMyReservation && !isEditing">
+                <button @click="startEdit" class="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors">수정하기</button>
+                <button @click="cancelReservation(detailReservation.id)" class="px-5 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-colors">삭제하기</button>
+              </template>
+              <template v-else-if="isEditing">
+                <button @click="updateReservation" class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">저장 완료</button>
+                <button @click="isEditing = false" class="px-6 py-2 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors">취소</button>
+              </template>
+            </div>
             <button @click="showDetailModal = false" class="px-8 py-3 rounded-xl text-xs font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Close Details</button>
           </div>
         </div>

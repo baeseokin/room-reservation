@@ -44,12 +44,12 @@ async function sendNewReservationToAdmin(reservation, adminPhone) {
       {
         phone: adminPhone.replace(/-/g, ""),
         variables: {
+          "#{진행상태}": "신청",
+          "#{예약일}": reservation.reservation_date,
+          "#{예약시작시간}": reservation.start_time,
+          "#{예약종료시간}": reservation.end_time,
           "#{공간명}": reservation.room_name,
-          "#{일자}": reservation.reservation_date,
-          "#{시간}": `${reservation.start_time} ~ ${reservation.end_time}`,
-          "#{신청자}": reservation.requester_name,
-          "#{신청명}": reservation.title || "없음",
-          "#{사유}": reservation.reason || "없음",
+          "#{층}": reservation.floor || "",
         },
       },
     ],
@@ -71,11 +71,12 @@ async function sendApprovalAlimTalk(reservation) {
       {
         phone: reservation.requester_phone.replace(/-/g, ""),
         variables: {
+          "#{진행상태}": "승인",
+          "#{예약일}": reservation.reservation_date,
+          "#{예약시작시간}": reservation.start_time,
+          "#{예약종료시간}": reservation.end_time,
           "#{공간명}": reservation.room_name,
-          "#{일자}": reservation.reservation_date,
-          "#{시간}": `${reservation.start_time} ~ ${reservation.end_time}`,
-          "#{신청자}": reservation.requester_name,
-          "#{신청명}": reservation.title || "없음",
+          "#{층}": reservation.floor || "",
         },
       },
     ],
@@ -97,34 +98,12 @@ async function sendRejectionAlimTalk(reservation, reason) {
       {
         phone: reservation.requester_phone.replace(/-/g, ""),
         variables: {
+          "#{진행상태}": "거절",
+          "#{예약일}": reservation.reservation_date,
+          "#{예약시작시간}": reservation.start_time,
+          "#{예약종료시간}": reservation.end_time,
           "#{공간명}": reservation.room_name,
-          "#{일자}": reservation.reservation_date,
-          "#{시간}": `${reservation.start_time} ~ ${reservation.end_time}`,
-          "#{신청자}": reservation.requester_name,
-          "#{거부사유}": reason || "사유 없음",
-        },
-      },
-    ],
-  });
-}
-
-/**
- * 예약 문의 알림톡 (기존 — 충돌 문의)
- */
-async function sendInquiryAlimTalk(originalReservation, inquirerName, content) {
-  const templateId = envPick("SENDON_TEMPLATE_INQUIRY", "");
-  if (!templateId || !originalReservation.requester_phone) return;
-  return sendAlimTalk({
-    templateId,
-    to: [
-      {
-        phone: originalReservation.requester_phone.replace(/-/g, ""),
-        variables: {
-          "#{공간명}": originalReservation.room_name,
-          "#{일자}": originalReservation.reservation_date,
-          "#{시간}": `${originalReservation.start_time} ~ ${originalReservation.end_time}`,
-          "#{문의자}": inquirerName,
-          "#{문의내용}": content,
+          "#{층}": reservation.floor || "",
         },
       },
     ],
@@ -135,5 +114,5 @@ module.exports = {
   sendNewReservationToAdmin,
   sendApprovalAlimTalk,
   sendRejectionAlimTalk,
-  sendInquiryAlimTalk,
+  sendAlimTalk,
 };

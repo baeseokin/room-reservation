@@ -73,11 +73,11 @@ router.get("/:id/blocked-times", async (req, res) => {
  */
 router.post("/:id/blocked-times", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const { day_of_week, start_time, end_time, reason } = req.body;
+  const { recurring_type, day_of_week, day_of_month, nth_week, start_time, end_time, reason } = req.body;
   try {
     const [result] = await pool.query(
-      "INSERT INTO room_blocked_times (room_id, day_of_week, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?)",
-      [id, day_of_week, start_time, end_time, reason]
+      "INSERT INTO room_blocked_times (room_id, recurring_type, day_of_week, day_of_month, nth_week, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, recurring_type || 'weekly', day_of_week, day_of_month, nth_week, start_time, end_time, reason]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) {

@@ -21,7 +21,10 @@ const showBlockedModal = ref(false)
 const currentRoomForBlocked = ref(null)
 const blockedTimes = ref([])
 const blockedForm = ref({
+  recurring_type: 'weekly',
   day_of_week: '1',
+  day_of_month: 1,
+  nth_week: 1,
   start_time: '09:00',
   end_time: '12:00',
   reason: ''
@@ -235,34 +238,68 @@ onMounted(() => {
 
           <div class="space-y-4">
             <div class="bg-slate-50 p-6 rounded-[2rem] space-y-4">
-              <div class="flex items-center gap-3">
+              <!-- Recurring Type -->
+              <div class="flex gap-1.5 p-1 bg-white rounded-2xl shadow-sm">
+                <button v-for="t in [['weekly','주간'], ['monthly_date','월간(일)'], ['monthly_nth','월간(요일)']]" :key="t[0]"
+                        @click="blockedForm.recurring_type = t[0]"
+                        :class="[blockedForm.recurring_type === t[0] ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400']"
+                        class="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                  {{ t[1] }}
+                </button>
+              </div>
+
+              <!-- Conditional Inputs -->
+              <div v-if="blockedForm.recurring_type === 'weekly'" class="flex items-center gap-3">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">요일</span>
-                <select v-model="blockedForm.day_of_week" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none">
+                <select v-model="blockedForm.day_of_week" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none shadow-sm">
                   <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
                 </select>
               </div>
 
-              <div class="flex items-center gap-3">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">시작</span>
-                <div class="flex-1 flex gap-2">
-                  <select v-model="startHour" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
-                    <option v-for="h in hours.slice(0, 24)" :key="'msh-'+h" :value="h">{{ h }}시</option>
+              <div v-if="blockedForm.recurring_type === 'monthly_date'" class="flex items-center gap-3">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">일자</span>
+                <select v-model="blockedForm.day_of_month" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none shadow-sm">
+                  <option v-for="n in 31" :key="n" :value="n">매월 {{ n }}일</option>
+                </select>
+              </div>
+
+              <div v-if="blockedForm.recurring_type === 'monthly_nth'" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">주차</span>
+                  <select v-model="blockedForm.nth_week" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none shadow-sm">
+                    <option v-for="n in 5" :key="n" :value="n">{{ n }}번째 주</option>
                   </select>
-                  <select v-model="startMin" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
-                    <option v-for="m in minutes" :key="'msm-'+m" :value="m">{{ m }}분</option>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">요일</span>
+                  <select v-model="blockedForm.day_of_week" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold appearance-none shadow-sm">
+                    <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
                   </select>
                 </div>
               </div>
 
-              <div class="flex items-center gap-3">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-10">종료</span>
-                <div class="flex-1 flex gap-2">
-                  <select v-model="endHour" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
-                    <option v-for="h in hours" :key="'meh-'+h" :value="h">{{ h }}시</option>
-                  </select>
-                  <select v-model="endMin" class="flex-1 bg-white border-none rounded-xl py-3 px-2 text-xs font-bold appearance-none text-center">
-                    <option v-for="m in minutes" :key="'mem-'+m" :value="m">{{ m }}분</option>
-                  </select>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">시작 시간</span>
+                  <div class="flex gap-1.5">
+                    <select v-model="startHour" class="flex-1 bg-white border-none rounded-xl py-3 px-1 text-[11px] font-bold appearance-none text-center shadow-sm">
+                      <option v-for="h in hours.slice(0, 24)" :key="'msh-'+h" :value="h">{{ h }}시</option>
+                    </select>
+                    <select v-model="startMin" class="flex-1 bg-white border-none rounded-xl py-3 px-1 text-[11px] font-bold appearance-none text-center shadow-sm">
+                      <option v-for="m in minutes" :key="'msm-'+m" :value="m">{{ m }}분</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">종료 시간</span>
+                  <div class="flex gap-1.5">
+                    <select v-model="endHour" class="flex-1 bg-white border-none rounded-xl py-3 px-1 text-[11px] font-bold appearance-none text-center shadow-sm">
+                      <option v-for="h in hours" :key="'meh-'+h" :value="h">{{ h }}시</option>
+                    </select>
+                    <select v-model="endMin" class="flex-1 bg-white border-none rounded-xl py-3 px-1 text-[11px] font-bold appearance-none text-center shadow-sm">
+                      <option v-for="m in minutes" :key="'mem-'+m" :value="m">{{ m }}분</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -278,7 +315,11 @@ onMounted(() => {
             <div class="space-y-2">
               <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div class="flex items-center gap-3">
-                  <span class="bg-rose-100 text-rose-600 text-[10px] font-black px-2 py-1 rounded-lg">{{ getDayLabel(bt.day_of_week) }}</span>
+                  <span class="bg-rose-100 text-rose-600 text-[10px] font-black px-2 py-1 rounded-lg">
+                    <template v-if="bt.recurring_type === 'monthly_date'">매월 {{ bt.day_of_month }}일</template>
+                    <template v-else-if="bt.recurring_type === 'monthly_nth'">매월 {{ bt.nth_week }}주 {{ getDayLabel(bt.day_of_week) }}</template>
+                    <template v-else>{{ getDayLabel(bt.day_of_week) }}</template>
+                  </span>
                   <div class="text-xs font-bold text-slate-900">{{ bt.start_time.slice(0,5) }} - {{ bt.end_time.slice(0,5) }}</div>
                 </div>
                 <button @click="deleteBlockedTime(bt.id)" class="p-2 text-slate-300"><TrashIcon class="w-4 h-4" /></button>

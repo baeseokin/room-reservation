@@ -22,7 +22,10 @@ const showBlockedModal = ref(false)
 const currentRoomForBlocked = ref(null)
 const blockedTimes = ref([])
 const blockedForm = ref({
+  recurring_type: 'weekly',
   day_of_week: '1',
+  day_of_month: 1,
+  nth_week: 1,
   start_time: '09:00',
   end_time: '12:00',
   reason: ''
@@ -372,14 +375,51 @@ onMounted(() => {
             <div class="bg-slate-50 rounded-3xl p-8 space-y-6">
               <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">불가 시간 추가</h3>
               <div class="space-y-4">
-                <!-- Row 1: Day and Times -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <!-- Row 1: Recurring Type -->
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 유형</label>
+                  <div class="flex gap-2">
+                    <button v-for="t in [['weekly','주 단위'], ['monthly_date','월 단위 (일자)'], ['monthly_nth','월 단위 (요일)']]" :key="t[0]"
+                            type="button" @click="blockedForm.recurring_type = t[0]"
+                            :class="[blockedForm.recurring_type === t[0] ? 'bg-rose-600 text-white shadow-lg shadow-rose-100' : 'bg-white text-slate-500 hover:bg-slate-100']"
+                            class="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                      {{ t[1] }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Selection (Day/Date/Nth) -->
+                <div v-if="blockedForm.recurring_type === 'weekly'" class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
+                  <select v-model="blockedForm.day_of_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
+                    <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
+                  </select>
+                </div>
+
+                <div v-else-if="blockedForm.recurring_type === 'monthly_date'" class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">매월 일자</label>
+                  <select v-model="blockedForm.day_of_month" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
+                    <option v-for="n in 31" :key="n" :value="n">매월 {{ n }}일</option>
+                  </select>
+                </div>
+
+                <div v-else-if="blockedForm.recurring_type === 'monthly_nth'" class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">주차</label>
+                    <select v-model="blockedForm.nth_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
+                      <option v-for="n in 5" :key="n" :value="n">{{ n }}번째 주</option>
+                    </select>
+                  </div>
                   <div class="space-y-1.5">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
                     <select v-model="blockedForm.day_of_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
                       <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
                     </select>
                   </div>
+                </div>
+
+                <!-- Row 3: Times (Same Row) -->
+                <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1.5">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">시작 시간</label>
                     <div class="flex gap-2">
@@ -427,8 +467,10 @@ onMounted(() => {
               <div v-else class="space-y-2">
                 <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-rose-200 transition-all">
                   <div class="flex items-center gap-4">
-                    <div class="bg-rose-50 text-rose-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">
-                      {{ getDayLabel(bt.day_of_week) }}
+                    <div class="bg-rose-50 text-rose-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest whitespace-nowrap">
+                      <template v-if="bt.recurring_type === 'monthly_date'">매월 {{ bt.day_of_month }}일</template>
+                      <template v-else-if="bt.recurring_type === 'monthly_nth'">매월 {{ bt.nth_week }}주차 {{ getDayLabel(bt.day_of_week) }}요일</template>
+                      <template v-else>{{ getDayLabel(bt.day_of_week) }}요일</template>
                     </div>
                     <div>
                       <div class="text-sm font-black text-slate-900">{{ bt.start_time.slice(0,5) }} - {{ bt.end_time.slice(0,5) }}</div>
