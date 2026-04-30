@@ -1,4 +1,5 @@
 <script setup>
+// MyReservationsView.vue - Optimized Layout & Custom Calendar
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
@@ -10,7 +11,11 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
@@ -32,8 +37,85 @@ const editForm = ref({
   reason: ''
 })
 
-const inquiries = ref([])
-const answerContents = ref({})
+// Custom Calendar Logic
+const showCalendar = ref(false)
+const calendarTarget = ref('edit') // 'edit', 'filter_start', 'filter_end'
+const calendarDate = ref(new Date())
+const calendarPosition = ref({ top: 0, left: 0 })
+
+const toggleCalendar = (event, target = 'edit') => {
+  const rect = event.currentTarget.getBoundingClientRect()
+  calendarPosition.value = {
+    top: rect.bottom + window.scrollY,
+    left: rect.left + window.scrollX
+  }
+  
+  calendarTarget.value = target
+  let initialDateStr = ''
+  if (target === 'edit') initialDateStr = editForm.value.reservation_date
+  else if (target === 'filter_start') initialDateStr = startDate.value
+  else if (target === 'filter_end') initialDateStr = endDate.value
+
+  if (!showCalendar.value && initialDateStr) {
+    const d = new Date(initialDateStr + 'T00:00:00')
+    if (!isNaN(d.getTime())) {
+      calendarDate.value = new Date(d.getFullYear(), d.getMonth(), 1)
+    }
+  }
+  
+  showCalendar.value = !showCalendar.value
+}
+
+const selectCalendarDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const dateStr = `${year}-${month}-${day}`
+  
+  if (calendarTarget.value === 'edit') editForm.value.reservation_date = dateStr
+  else if (calendarTarget.value === 'filter_start') startDate.value = dateStr
+  else if (calendarTarget.value === 'filter_end') endDate.value = dateStr
+  
+  showCalendar.value = false
+}
+
+const moveCalendarMonth = (offset) => {
+  const d = new Date(calendarDate.value)
+  d.setMonth(d.getMonth() + offset)
+  calendarDate.value = d
+}
+
+const moveCalendarYear = (offset) => {
+  const d = new Date(calendarDate.value)
+  d.setFullYear(d.getFullYear() + offset)
+  calendarDate.value = d
+}
+
+const calendarDays = computed(() => {
+  const year = calendarDate.value.getFullYear()
+  const month = calendarDate.value.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const startDate = new Date(firstDay)
+  startDate.setDate(1 - firstDay.getDay())
+  
+  const days = []
+  const tempDate = new Date(startDate)
+  const lastDay = new Date(year, month + 1, 0)
+  const totalDaysNeeded = lastDay.getDate() + firstDay.getDay()
+  const rowsNeeded = Math.ceil(totalDaysNeeded / 7)
+  const totalCells = rowsNeeded * 7
+  
+  for (let i = 0; i < totalCells; i++) {
+    days.push({
+      date: new Date(tempDate),
+      current: tempDate.getMonth() === month,
+      day: tempDate.getDate()
+    })
+    tempDate.setDate(tempDate.getDate() + 1)
+  }
+  return days
+})
+
 
 const fetchMyReservations = async () => {
   loading.value = true
@@ -47,30 +129,13 @@ const fetchMyReservations = async () => {
   }
 }
 
-const fetchInquiries = async (reservationId) => {
-  try {
-    const res = await axios.get(`/api/reservations/${reservationId}/inquiries`)
-    inquiries.value = res.data
-    res.data.forEach(inc => {
-      if (!answerContents.value[inc.id]) {
-        answerContents.value[inc.id] = inc.answer || ''
-      }
-    })
-  } catch (err) {
-    console.error('Failed to fetch inquiries:', err)
-  }
-}
 
-const submitAnswer = async (inquiryId) => {
-  const answer = answerContents.value[inquiryId]
-  if (!answer?.trim()) return
-  try {
-    await axios.put(`/api/reservations/inquiry/${inquiryId}`, { answer })
-    fetchInquiries(editingRes.value.id)
-    alert('답변이 등록되었습니다.')
-  } catch (err) {
-    alert('답변 등록 실패')
-  }
+const isSelectedDate = (date) => {
+  const dateStr = date.toISOString().split('T')[0]
+  if (calendarTarget.value === 'edit') return editForm.value.reservation_date === dateStr
+  if (calendarTarget.value === 'filter_start') return startDate.value === dateStr
+  if (calendarTarget.value === 'filter_end') return endDate.value === dateStr
+  return false
 }
 
 const openEditModal = (res) => {
@@ -83,8 +148,56 @@ const openEditModal = (res) => {
     reason: res.reason
   }
   showEditModal.value = true
-  fetchInquiries(res.id)
 }
+
+const ampmOptions = ['오전', '오후']
+const hourOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const minuteOptions = ['00', '30']
+
+const getAmPm = (time) => {
+  if (!time) return '오전'
+  const [h] = time.split(':').map(Number)
+  return h >= 12 ? '오후' : '오전'
+}
+const getHour12 = (time) => {
+  if (!time) return 9
+  let [h] = time.split(':').map(Number)
+  h = h % 12
+  return h === 0 ? 12 : h
+}
+const getMinute = (time) => {
+  if (!time) return '00'
+  return time.split(':')[1] || '00'
+}
+
+const updateTime = (target, type, val, current) => {
+  if (!current) current = '09:00'
+  let [h, m] = current.split(':').map(val => isNaN(parseInt(val)) ? 0 : parseInt(val))
+  let ampm = h >= 12 ? '오후' : '오전'
+  let h12 = h % 12
+  if (h12 === 0) h12 = 12
+  
+  if (type === 'ampm') ampm = val
+  if (type === 'hour') h12 = Number(val)
+  if (type === 'minute') m = Number(val)
+  
+  let newH = h12 % 12
+  if (ampm === '오후') newH += 12
+  
+  const timeStr = `${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+  if (target === 'start') editForm.value.start_time = timeStr
+  else editForm.value.end_time = timeStr
+}
+
+const allTimeSlots = computed(() => {
+  const slots = []
+  for (let h = 0; h < 24; h++) {
+    const hh = h.toString().padStart(2, '0')
+    slots.push(`${hh}:00`)
+    slots.push(`${hh}:30`)
+  }
+  return slots
+})
 
 const updateReservation = async () => {
   try {
@@ -132,11 +245,17 @@ onMounted(fetchMyReservations)
 
       <!-- Date Filter -->
       <div class="bg-white p-2 rounded-[2rem] border border-slate-200 shadow-xl flex items-center gap-2">
-         <div class="flex items-center gap-2 px-4">
-           <input type="date" v-model="startDate" class="bg-transparent border-none focus:ring-0 font-bold text-slate-700 text-sm" />
-           <span class="text-slate-300">~</span>
-           <input type="date" v-model="endDate" class="bg-transparent border-none focus:ring-0 font-bold text-slate-700 text-sm" />
-         </div>
+          <div class="flex items-center gap-3 px-6">
+            <div @click="e => toggleCalendar(e, 'filter_start')" class="flex items-center gap-2 cursor-pointer group">
+              <span class="font-black text-slate-700 text-sm group-hover:text-indigo-600 transition-colors">{{ startDate }}</span>
+              <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+            </div>
+            <span class="text-slate-300 font-black">~</span>
+            <div @click="e => toggleCalendar(e, 'filter_end')" class="flex items-center gap-2 cursor-pointer group">
+              <span class="font-black text-slate-700 text-sm group-hover:text-indigo-600 transition-colors">{{ endDate }}</span>
+              <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+            </div>
+          </div>
          <button @click="fetchMyReservations" class="bg-slate-900 text-white px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95">
            검색
          </button>
@@ -208,7 +327,6 @@ onMounted(fetchMyReservations)
             <div class="space-y-1">
               <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
               <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes.room_name }}</h2>
-              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ editingRes.room_name }} | {{ editingRes.reservation_date }}</p>
             </div>
             <button @click="showEditModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all">
               <XMarkIcon class="w-6 h-6" />
@@ -216,27 +334,56 @@ onMounted(fetchMyReservations)
           </div>
 
           <!-- Edit Form -->
-          <div class="grid grid-cols-2 gap-4">
-             <div class="space-y-4">
-                <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">신청명</label>
-                  <input type="text" v-model="editForm.title" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" />
+          <div class="space-y-4">
+            <!-- Date Row -->
+            <div class="bg-slate-50 p-4 rounded-3xl relative">
+              <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
+              <div @click="toggleCalendar" class="flex items-center justify-between cursor-pointer group">
+                <span class="font-black text-slate-700">{{ editForm.reservation_date }}</span>
+                <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+              </div>
+            </div>
+
+            <!-- Time Row (Start & End) -->
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Start Time -->
+              <div class="bg-slate-50 p-3 rounded-2xl">
+                <label class="block text-[8px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
+                <div class="flex items-center gap-1">
+                  <select :value="getAmPm(editForm.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, editForm.start_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                  <select :value="getHour12(editForm.start_time)" @change="e => updateTime('start', 'hour', e.target.value, editForm.start_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select :value="getMinute(editForm.start_time)" @change="e => updateTime('start', 'minute', e.target.value, editForm.start_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                  </select>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
-                  <input type="date" v-model="editForm.reservation_date" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
+              </div>
+
+              <!-- End Time -->
+              <div class="bg-slate-50 p-3 rounded-2xl">
+                <label class="block text-[8px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
+                <div class="flex items-center gap-1">
+                  <select :value="getAmPm(editForm.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, editForm.end_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                  <select :value="getHour12(editForm.end_time)" @change="e => updateTime('end', 'hour', e.target.value, editForm.end_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select :value="getMinute(editForm.end_time)" @change="e => updateTime('end', 'minute', e.target.value, editForm.end_time)" 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                  </select>
                 </div>
-             </div>
-             <div class="space-y-4">
-                <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">시작 시간</label>
-                  <input type="time" v-model="editForm.start_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
-                </div>
-                <div class="bg-slate-50 p-4 rounded-3xl">
-                  <label class="block text-[10px] font-black text-slate-300 mb-[5px] uppercase tracking-widest">종료 시간</label>
-                  <input type="time" v-model="editForm.end_time" class="w-full bg-transparent border-none p-0 font-black text-slate-700 focus:ring-0 font-sans" />
-                </div>
-             </div>
+              </div>
+            </div>
           </div>
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
@@ -244,54 +391,6 @@ onMounted(fetchMyReservations)
             <textarea v-model="editForm.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans" placeholder="목적을 입력하세요"></textarea>
           </div>
 
-          <!-- Inquiries & Answers Section -->
-          <div class="space-y-4 pt-4 border-t border-slate-100">
-            <div class="flex items-center justify-between px-1">
-              <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">받은 문의 내역</span>
-              <span class="text-[9px] font-black text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">{{ inquiries.length }} 메시지</span>
-            </div>
-
-            <!-- Inquiry List -->
-            <div class="space-y-4">
-              <div v-for="inc in inquiries" :key="inc.id" class="space-y-2">
-                <!-- Question -->
-                <div class="flex items-start gap-4">
-                  <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                    <span class="text-[10px] font-black text-slate-400">?</span>
-                  </div>
-                  <div class="flex-1 bg-slate-50 p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-1">
-                      <span class="text-[9px] font-black text-slate-800">{{ inc.inquirer_name }}</span>
-                      <span class="text-[8px] font-bold text-slate-300">{{ new Date(inc.created_at).toLocaleString() }}</span>
-                    </div>
-                    <p class="text-xs text-slate-600 font-bold">{{ inc.content }}</p>
-                  </div>
-                </div>
-
-                <!-- Answer Input (As the Owner) -->
-                <div v-if="!inc.answer" class="pl-12 flex gap-2">
-                   <input type="text" v-model="answerContents[inc.id]" placeholder="답변을 입력하여 예약자로서 응답하세요..." 
-                          class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold focus:ring-0 font-sans" />
-                   <button @click="submitAnswer(inc.id)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100 active:scale-95 transition-transform">답변전송</button>
-                </div>
-
-                <!-- Existing Answer -->
-                <div v-if="inc.answer" class="flex items-start gap-3 pl-12">
-                  <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                    <span class="text-[10px] font-black text-white">A</span>
-                  </div>
-                  <div class="flex-1 bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                    <div class="text-[9px] font-black text-indigo-600 mb-1">나의 답변</div>
-                    <p class="text-xs text-indigo-700 font-black">{{ inc.answer }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="inquiries.length === 0" class="text-center py-6">
-                <p class="text-[10px] text-slate-300 font-black uppercase tracking-widest">문의 내역이 없습니다.</p>
-              </div>
-            </div>
-          </div>
 
           <!-- Actions -->
           <div class="flex gap-4 pt-4 border-t border-slate-100">
@@ -301,6 +400,41 @@ onMounted(fetchMyReservations)
         </div>
       </div>
     </div>
+
+    <!-- Custom Calendar Dropdown (Global in this view) -->
+    <Teleport to="body">
+      <div v-if="showCalendar" 
+           :style="{ top: calendarPosition.top + 'px', left: calendarPosition.left + 'px' }"
+           class="fixed z-[9999] mt-2 bg-white rounded-3xl shadow-2xl border border-slate-100 p-5 w-[280px] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex gap-1">
+            <button @click="moveCalendarYear(-1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronDoubleLeftIcon class="w-3.5 h-3.5" /></button>
+            <button @click="moveCalendarMonth(-1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronLeftIcon class="w-3.5 h-3.5" /></button>
+          </div>
+          <span class="text-[11px] font-black text-slate-900 uppercase tracking-widest">
+            {{ calendarDate.getFullYear() }}. {{ (calendarDate.getMonth() + 1).toString().padStart(2, '0') }}
+          </span>
+          <div class="flex gap-1">
+            <button @click="moveCalendarMonth(1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronRightIcon class="w-3.5 h-3.5" /></button>
+            <button @click="moveCalendarYear(1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronDoubleRightIcon class="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-[9px] font-black text-slate-300 text-center uppercase">{{ d }}</span>
+        </div>
+        <div class="grid grid-cols-7 gap-1">
+          <button v-for="(day, idx) in calendarDays" :key="idx"
+                  @click="selectCalendarDate(day.date)"
+                  :class="[
+                    day.current ? 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600' : 'text-slate-200',
+                    isSelectedDate(day.date) ? 'bg-indigo-600 !text-white shadow-lg shadow-indigo-100' : ''
+                  ]"
+                  class="aspect-square flex items-center justify-center text-[10px] font-black rounded-lg transition-all">
+            {{ day.day }}
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

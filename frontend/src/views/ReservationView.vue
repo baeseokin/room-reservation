@@ -197,6 +197,55 @@ const weekDates = computed(() => {
   return dates
 })
 
+const ampmOptions = ['오전', '오후']
+const hourOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const minuteOptions = ['00', '30']
+
+const getAmPm = (time) => {
+  if (!time) return '오전'
+  const [h] = time.split(':').map(Number)
+  return h >= 12 ? '오후' : '오전'
+}
+const getHour12 = (time) => {
+  if (!time) return 9
+  let [h] = time.split(':').map(Number)
+  h = h % 12
+  return h === 0 ? 12 : h
+}
+const getMinute = (time) => {
+  if (!time) return '00'
+  return time.split(':')[1] || '00'
+}
+
+const updateTime = (target, type, val, current) => {
+  if (!current) current = '09:00'
+  let [h, m] = current.split(':').map(val => isNaN(parseInt(val)) ? 0 : parseInt(val))
+  let ampm = h >= 12 ? '오후' : '오전'
+  let h12 = h % 12
+  if (h12 === 0) h12 = 12
+  
+  if (type === 'ampm') ampm = val
+  if (type === 'hour') h12 = Number(val)
+  if (type === 'minute') m = Number(val)
+  
+  let newH = h12 % 12
+  if (ampm === '오후') newH += 12
+  
+  const timeStr = `${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+  if (target === 'start') form.value.start_time = timeStr
+  else form.value.end_time = timeStr
+}
+
+const allTimeSlots = computed(() => {
+  const slots = []
+  for (let h = 0; h < 24; h++) {
+    const hh = h.toString().padStart(2, '0')
+    slots.push(`${hh}:00`)
+    slots.push(`${hh}:30`)
+  }
+  return slots
+})
+
 const dayTimeSlots = computed(() => {
   const slots = []
   for (let h = 9; h <= 23; h++) {
@@ -1231,15 +1280,44 @@ onMounted(() => {
                      class="w-full bg-transparent border-none p-0 font-black text-lg text-slate-900 placeholder:text-slate-200 focus:ring-0" />
             </div>
 
-            <!-- Time Selection Grid -->
+            <!-- Time Selection Row -->
             <div class="grid grid-cols-2 gap-3">
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[9px] font-black text-slate-400 mb-1 block uppercase tracking-widest">시작 시간</label>
-                <input type="time" v-model="form.start_time" class="bg-transparent border-none p-0 font-black text-xl text-slate-800 focus:ring-0 w-full cursor-pointer" />
+              <!-- Start Time -->
+              <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
+                <label class="text-[8px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">시작 시간</label>
+                <div class="flex items-center gap-1">
+                  <select :value="getAmPm(form.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, form.start_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                  <select :value="getHour12(form.start_time)" @change="e => updateTime('start', 'hour', e.target.value, form.start_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select :value="getMinute(form.start_time)" @change="e => updateTime('start', 'minute', e.target.value, form.start_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                  </select>
+                </div>
               </div>
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[9px] font-black text-slate-400 mb-1 block uppercase tracking-widest">종료 시간</label>
-                <input type="time" v-model="form.end_time" class="bg-transparent border-none p-0 font-black text-xl text-slate-800 focus:ring-0 w-full cursor-pointer" />
+
+              <!-- End Time -->
+              <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
+                <label class="text-[8px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">종료 시간</label>
+                <div class="flex items-center gap-1">
+                  <select :value="getAmPm(form.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, form.end_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                  <select :value="getHour12(form.end_time)" @change="e => updateTime('end', 'hour', e.target.value, form.end_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                  </select>
+                  <select :value="getMinute(form.end_time)" @change="e => updateTime('end', 'minute', e.target.value, form.end_time)" 
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                  </select>
+                </div>
               </div>
             </div>
 
