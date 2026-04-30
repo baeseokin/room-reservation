@@ -1,8 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { UserPlusIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
+import { UserPlusIcon, ChevronLeftIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const isLoading = ref(false)
@@ -19,6 +19,18 @@ const form = ref({
 
 const idChecked = ref(false)
 const idAvailable = ref(false)
+const departments = ref([])
+
+const fetchDepartments = async () => {
+  try {
+    const res = await axios.get('/api/departments')
+    departments.value = res.data
+  } catch (err) {
+    console.error('Fetch departments error:', err)
+  }
+}
+
+onMounted(fetchDepartments)
 
 const checkId = async () => {
   if (!form.value.userId) {
@@ -154,11 +166,21 @@ const handleRegister = async () => {
                 <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">연락처 <span class="text-rose-500">*</span></label>
                 <input v-model="form.phone" type="text" placeholder="010-0000-0000" required
                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
+                <p class="text-[10px] text-indigo-500 font-bold ml-1 mt-1.5 leading-tight">
+                  ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
+                </p>
               </div>
               <div>
                 <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">담당부서 <span class="text-rose-500">*</span></label>
-                <input v-model="form.deptName" type="text" placeholder="예: 미디어팀" required
-                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
+                <div class="relative">
+                  <select v-model="form.deptName" required
+                          :class="[!form.deptName ? 'text-slate-400' : 'text-slate-900']"
+                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all appearance-none cursor-pointer">
+                    <option value="" disabled selected>부서 선택</option>
+                    <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name" class="text-slate-900">{{ dept.dept_name }}</option>
+                  </select>
+                  <ChevronDownIcon class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
             </div>
             <div>

@@ -14,7 +14,7 @@
           <div class="bg-white p-4 rounded-3xl mb-6 shadow-inner">
             <img src="../assets/logo_wonchon.png" alt="Wonchon Church Logo" class="h-14 object-contain" />
           </div>
-          <h1 class="text-2xl font-black text-slate-900 tracking-tight italic">공간 예약 시스템</h1>
+          <h1 class="text-2xl font-black text-slate-900 tracking-tight">공간 예약 시스템</h1>
           <p class="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-1.5">Wonchon Space Management</p>
         </div>
 
@@ -82,9 +82,13 @@
       </div>
 
       <!-- Footer Info -->
-      <div class="mt-10 text-center">
-        <p class="text-[12px] text-slate-400 font-bold uppercase tracking-widest">
-          © {{ new Date().getFullYear() }} Wonchon Presbyterian Church. All rights reserved.
+      <div class="mt-10 text-center space-y-2">
+        <div class="space-y-0.5">
+          <p class="text-[11px] text-slate-400 font-medium">(120-826) 서울특별시 서대문구 연희로 32길 19</p>
+          <p class="text-[11px] text-slate-400 font-medium">TEL. 02-337-5400 | FAX. 02-335-3576</p>
+        </div>
+        <p class="text-[11px] text-slate-300 font-bold uppercase tracking-widest">
+          © {{ new Date().getFullYear() }} Wonchon Church. All rights reserved.
         </p>
       </div>
     </div>

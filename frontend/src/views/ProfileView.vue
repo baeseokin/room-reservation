@@ -172,6 +172,9 @@ onMounted(() => {
                 <PhoneIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.phone" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="010-0000-0000" />
               </div>
+              <p class="text-[12px] text-indigo-500 font-bold ml-1 mt-1 leading-relaxed">
+                ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
+              </p>
             </div>
           </div>
 

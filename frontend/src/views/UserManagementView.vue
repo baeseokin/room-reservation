@@ -257,6 +257,9 @@ onMounted(() => {
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
               </div>
             </div>
+            <p class="text-[10px] text-indigo-500 font-bold ml-1 -mt-4 leading-tight">
+              ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
+            </p>
 
             <div class="space-y-2">
               <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>

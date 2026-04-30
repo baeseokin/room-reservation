@@ -5,14 +5,12 @@
       <div class="flex items-center gap-8">
         <router-link to="/home" class="flex items-center group transition-transform active:scale-95">
           <img src="../assets/logo_wonchon.png" alt="원천교회" class="h-8 object-contain" />
-          <div class="ml-3 h-6 w-px bg-slate-200 hidden sm:block"></div>
-          <span class="ml-3 text-sm font-black text-slate-900 tracking-tighter hidden sm:block">공간 예약</span>
         </router-link>
 
         <nav class="hidden md:flex items-center gap-1">
           <router-link v-for="item in navItems" :key="item.path" :to="item.path"
             exact-active-class="bg-slate-900 text-white shadow-lg shadow-slate-200"
-            class="px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all whitespace-nowrap">
+            class="px-4 py-2 rounded-xl text-[16px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all whitespace-nowrap">
             {{ item.name }}
           </router-link>
         </nav>
@@ -21,9 +19,11 @@
       <div class="flex items-center gap-3">
         <!-- User Info & Logout (if logged in) -->
         <template v-if="auth.user">
-          <div class="hidden lg:flex flex-col items-end mr-2">
-            <span class="text-[12px] font-black text-indigo-600 uppercase tracking-widest leading-none mb-1">성도님 환영합니다</span>
-            <span class="text-sm font-black text-slate-900 leading-none">{{ auth.user.userName }}님</span>
+          <div class="hidden lg:flex items-center px-2">
+            <span class="text-[13px] font-black text-slate-900 tracking-tight">
+              <span class="text-indigo-600 font-black mr-2 opacity-80">성도님 환영합니다</span>
+              {{ auth.user.userName }}님
+            </span>
           </div>
           <div class="w-px h-8 bg-slate-200 mx-2 hidden lg:block"></div>
           <button @click="auth.logout()" class="p-2.5 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all group" title="로그아웃">
@@ -80,12 +80,16 @@
     </main>
 
     <!-- Footer (Premium Clean) -->
-    <footer v-if="!$route.path.startsWith('/app/reservations')" class="bg-white border-t border-slate-100 py-12 mt-auto">
-      <div class="max-w-7xl mx-auto px-6 flex flex-col items-center space-y-4 text-center">
-        <img src="../assets/logo_wonchon.png" alt="원천교회" class="h-6 opacity-30 grayscale" />
-        <p class="text-[12px] text-slate-300 font-black uppercase tracking-[0.2em]">
-          WONCHEON BAPTIST CHURCH · SPACE RESERVATION SYSTEM
-        </p>
+    <footer v-if="!$route.path.startsWith('/app/reservations')" class="bg-white border-t border-slate-100 py-6 mt-auto">
+      <div class="max-w-7xl mx-auto px-6 flex flex-col items-center space-y-2 text-center">
+        <div class="space-y-1">
+          <p class="text-[12px] text-slate-400 font-medium">
+            (120-826) 서울특별시 서대문구 연희로 32길 19
+          </p>
+          <p class="text-[12px] text-slate-400 font-medium">
+            TEL. 02-337-5400 | FAX. 02-335-3576
+          </p>
+        </div>
         <p class="text-[12px] text-slate-400 font-bold">© 2024 WONCHEON CHURCH. ALL RIGHTS RESERVED.</p>
       </div>
     </footer>

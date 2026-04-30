@@ -544,11 +544,15 @@ const changeDate = (days) => {
 }
 
 const getReservationsForDate = (date) => {
-  return reservations.value.filter(r => r.reservation_date === date && (r.status === 'approved' || r.status === 'pending'))
+  return reservations.value
+    .filter(r => r.reservation_date === date && (r.status === 'approved' || r.status === 'pending'))
+    .sort((a, b) => a.start_time.localeCompare(b.start_time))
 }
 
 const getReservationsForRoomAndDate = (roomId, date) => {
-  return reservations.value.filter(r => r.room_id === roomId && r.reservation_date === date && (r.status === 'approved' || r.status === 'pending'))
+  return reservations.value
+    .filter(r => r.room_id === roomId && r.reservation_date === date && (r.status === 'approved' || r.status === 'pending'))
+    .sort((a, b) => a.start_time.localeCompare(b.start_time))
 }
 
 const getDayReservationStyle = (res) => {
@@ -618,7 +622,28 @@ const handleRoomMouseLeave = () => {
 }
 
 const updateRoomTooltipPos = (event) => {
-  roomTooltipPos.value = { x: event.clientX + 15, y: event.clientY - 20 }
+  let x = event.clientX + 15
+  let y = event.clientY - 20
+  
+  // Approximate tooltip dimensions (based on max-w-[320px] and estimated content height)
+  const tooltipWidth = 320
+  const tooltipHeight = 400
+  
+  // Check right edge
+  if (x + tooltipWidth > window.innerWidth) {
+    x = event.clientX - tooltipWidth - 15
+  }
+  
+  // Check bottom edge
+  if (y + tooltipHeight > window.innerHeight) {
+    y = event.clientY - tooltipHeight + 20
+  }
+  
+  // Safety check for top edge
+  if (y < 10) y = 10
+  if (x < 10) x = 10
+
+  roomTooltipPos.value = { x, y }
 }
 
 const isDragging = ref(false)
@@ -772,9 +797,17 @@ onMounted(() => {
   <div class="h-[calc(100vh-4rem)] flex flex-col bg-[#F8FAFC] font-sans tracking-tight overflow-hidden">
     <!-- Header: Ultra Condensed & High End -->
     <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-4 py-2 flex flex-col md:flex-row justify-between items-center shrink-0 z-30 gap-4">
-      <!-- Left: Date Picker & Navigation -->
+      <!-- Left: View Mode, Calendar SubMode, Date Picker -->
       <div class="flex items-center gap-2">
-        <!-- Month, Week, Day Toggles moved to far left -->
+        <!-- View Mode (Calendar/List) -->
+        <div class="bg-slate-100/80 p-0.5 rounded-xl flex gap-0.5 shadow-inner mr-1">
+          <button @click="viewMode = 'calendar'" :class="[viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400']" 
+                  class="p-2 rounded-lg transition-all"><CalendarIcon class="w-4 h-4" /></button>
+          <button @click="viewMode = 'list'" :class="[viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400']" 
+                  class="p-2 rounded-lg transition-all"><ListBulletIcon class="w-4 h-4" /></button>
+        </div>
+
+        <!-- Month, Week, Day Toggles -->
         <div class="bg-slate-100/80 p-0.5 rounded-xl flex gap-1 shadow-inner mr-1">
           <button v-for="m in ['month', 'week', 'day']" :key="m" @click="calendarSubMode = m"
                   :class="[calendarSubMode === m ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700']"
@@ -807,27 +840,15 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- Center: Title -->
-      <div class="hidden md:flex items-center gap-2.5">
-        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-100">
-          <SparklesIcon class="w-4 h-4 text-white" />
-        </div>
-        <h1 class="text-sm font-black text-slate-900 tracking-tighter uppercase">공간 예약 현황</h1>
-      </div>
+      <!-- Center: Empty (Space reserved for alignment) -->
+      <div class="hidden md:block flex-1"></div>
 
-      <!-- Right: Search & View Toggles -->
+      <!-- Right: Search -->
       <div class="flex items-center gap-2 w-full md:w-auto">
         <div class="relative flex-1 md:w-48 group">
           <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           <input type="text" v-model="searchQuery" placeholder="신청자명 또는 신청명으로 검색..." 
                  class="w-full bg-slate-50/50 border border-slate-200 rounded-xl py-1.5 pl-9 pr-3 text-xs font-bold text-slate-700 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
-        </div>
-
-        <div class="bg-slate-100/80 p-0.5 rounded-xl flex gap-0.5 shadow-inner">
-          <button @click="viewMode = 'calendar'" :class="[viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400']" 
-                  class="p-1.5 rounded-lg transition-all"><CalendarIcon class="w-4 h-4" /></button>
-          <button @click="viewMode = 'list'" :class="[viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400']" 
-                  class="p-1.5 rounded-lg transition-all"><ListBulletIcon class="w-4 h-4" /></button>
         </div>
       </div>
     </header>
@@ -843,11 +864,6 @@ onMounted(() => {
         </div>
       </div>
       
-      <!-- Drag Guide for Day View -->
-      <div v-if="calendarSubMode === 'day'" class="hidden md:flex items-center gap-2 text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
-        <SparklesIcon class="w-3 h-3" />
-        원하는 시간을 드래그하여 예약하세요
-      </div>
     </div>
 
     <!-- Main Content -->
@@ -855,7 +871,7 @@ onMounted(() => {
       <!-- Calendar View -->
       <div v-if="viewMode === 'calendar'" class="h-full flex flex-col">
         <!-- Month View -->
-        <div v-if="calendarSubMode === 'month'" class="flex-1 overflow-auto px-4 pb-4">
+        <div v-if="calendarSubMode === 'month'" class="flex-1 overflow-auto px-12 pb-4">
           <!-- Sticky Header Container to cover top padding area -->
           <div class="sticky top-0 z-30 bg-white pt-4">
             <div class="grid grid-cols-7 gap-px bg-slate-200 border-x border-t border-slate-200 rounded-t-3xl shadow-sm">
@@ -911,7 +927,7 @@ onMounted(() => {
         </div>
 
         <!-- Week View -->
-        <div v-else-if="calendarSubMode === 'week'" class="flex-1 overflow-hidden p-4">
+        <div v-else-if="calendarSubMode === 'week'" class="flex-1 overflow-hidden px-12 py-4">
           <div class="h-full border border-slate-200 rounded-3xl overflow-auto shadow-sm bg-white relative">
             <div class="inline-flex flex-col min-w-full">
               <!-- Sticky Header Row -->
@@ -939,13 +955,13 @@ onMounted(() => {
               <template v-for="floor in floors" :key="'week-floor-' + floor">
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-12 z-[50]">
-                  <div class="w-40 sticky left-0 z-[55] bg-slate-100 border-r border-b border-slate-200 h-10 px-4 flex items-center justify-between">
-                    <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
-                    <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/50 rounded transition-colors">
-                      <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-500 transition-transform" />
+                  <div class="w-40 sticky left-0 z-[55] bg-slate-900 border-r border-b border-slate-800 h-10 px-4 flex items-center justify-between shadow-lg">
+                    <span class="text-[12px] font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/10 rounded transition-colors group/floor">
+                      <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-400 transition-transform group-hover/floor:text-white" />
                     </button>
                   </div>
-                  <div class="flex-1 flex bg-slate-100/80 border-b border-slate-200 h-10">
+                  <div class="flex-1 flex bg-slate-50 border-b border-slate-200 h-10">
                     <div v-for="date in weekDates" :key="'floor-pad-' + date" class="flex-1 min-w-[140px] border-r border-slate-200/50"></div>
                   </div>
                 </div>
@@ -958,7 +974,7 @@ onMounted(() => {
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[12px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-[14px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Cells Grid -->
                     <div class="flex-1 flex">
@@ -994,7 +1010,7 @@ onMounted(() => {
         </div>
 
         <!-- Day View -->
-        <div v-else-if="calendarSubMode === 'day'" class="flex-1 overflow-hidden p-4">
+        <div v-else-if="calendarSubMode === 'day'" class="flex-1 overflow-hidden px-12 py-4">
           <div class="h-full border border-slate-200 rounded-3xl overflow-auto shadow-sm bg-white relative">
             <div class="inline-flex flex-col min-w-full">
               <!-- Sticky Header Row -->
@@ -1016,13 +1032,13 @@ onMounted(() => {
               <template v-for="floor in floors" :key="'day-floor-' + floor">
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-10 z-[50]">
-                  <div class="w-40 sticky left-0 z-[55] bg-slate-100 border-r border-b border-slate-200 h-10 px-4 flex items-center justify-between">
-                    <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
-                    <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/50 rounded transition-colors">
-                      <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-500 transition-transform" />
+                  <div class="w-40 sticky left-0 z-[55] bg-slate-900 border-r border-b border-slate-800 h-10 px-4 flex items-center justify-between shadow-lg">
+                    <span class="text-[12px] font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/10 rounded transition-colors group/floor">
+                      <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-400 transition-transform group-hover/floor:text-white" />
                     </button>
                   </div>
-                  <div class="flex-1 flex bg-slate-100/80 border-b border-slate-200 h-10">
+                  <div class="flex-1 flex bg-slate-50 border-b border-slate-200 h-10">
                     <div v-for="time in dayTimeSlots" :key="'day-floor-pad-' + time" class="w-[80px] shrink-0 border-r border-slate-200/50"></div>
                   </div>
                 </div>
@@ -1035,7 +1051,7 @@ onMounted(() => {
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[12px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-[14px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Timeline Grid Area -->
                     <div class="flex-1 relative h-28">
@@ -1267,7 +1283,7 @@ onMounted(() => {
                 <h2 class="text-xl font-black text-slate-900 tracking-tighter">공간 예약 신청</h2>
                 <div class="flex items-center gap-2">
                   <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">{{ selectedRoom?.floor }}{{ String(selectedRoom?.floor).includes('B') ? '' : 'F' }}</span>
-                  <p class="text-[12px] font-bold text-slate-400">{{ selectedRoom?.room_name }} | {{ selectedDate }}</p>
+                  <p class="text-[12px] font-black text-slate-900 uppercase tracking-tighter">{{ selectedRoom?.room_name }} | {{ selectedDate }}</p>
                 </div>
               </div>
             </div>
