@@ -10,6 +10,7 @@ const showModal = ref(false)
 const editingRoom = ref(null)
 const form = ref({
   room_name: '',
+  capacity: '',
   floor: '',
   dept_name: '',
   manager_name: '',
@@ -41,6 +42,18 @@ watch([startHour, startMin], () => {
 })
 watch([endHour, endMin], () => {
   blockedForm.value.end_time = `${endHour.value}:${endMin.value}`
+})
+
+watch(() => form.value.manager_contact, (val) => {
+  if (!val) return
+  const digits = val.replace(/\D/g, '')
+  if (digits.length <= 3) {
+    form.value.manager_contact = digits
+  } else if (digits.length <= 7) {
+    form.value.manager_contact = `${digits.slice(0, 3)}-${digits.slice(3)}`
+  } else {
+    form.value.manager_contact = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+  }
 })
 
 const hours = Array.from({ length: 25 }, (_, i) => String(i).padStart(2, '0'))
@@ -97,15 +110,19 @@ const openModal = (floor = '', room = null) => {
     previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', floor: floor || '3', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
+    form.value = { room_name: '', capacity: '', floor: floor || '3', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
 
 const saveRoom = async () => {
+  if (form.value.capacity && parseInt(form.value.capacity) <= 0) {
+    return alert('수용인원은 1명 이상의 양수만 입력 가능합니다.')
+  }
   try {
     const formData = new FormData()
     formData.append('room_name', form.value.room_name)
+    formData.append('capacity', form.value.capacity)
     formData.append('floor', form.value.floor)
     formData.append('dept_name', form.value.dept_name)
     formData.append('manager_name', form.value.manager_name)
@@ -166,6 +183,14 @@ const deleteBlockedTime = async (blockedId) => {
 }
 
 const getDayLabel = (val) => days.find(d => d.val == val)?.label || ''
+
+const formatPhone = (val) => {
+  if (!val) return '-'
+  const digits = val.replace(/\D/g, '')
+  if (digits.length <= 3) return digits
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+}
 
 onMounted(() => {
   fetchRooms()
@@ -246,7 +271,11 @@ onMounted(() => {
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">연락처</span>
-                <span class="text-xs font-bold text-slate-700">{{ room.manager_contact || '-' }}</span>
+                <span class="text-xs font-bold text-slate-700">{{ formatPhone(room.manager_contact) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">수용인원</span>
+                <span class="text-xs font-bold text-slate-700">{{ room.capacity ? room.capacity + '명' : '미지정' }}</span>
               </div>
               
               <!-- Blocked Times Badges -->
@@ -295,9 +324,15 @@ onMounted(() => {
 
           <form @submit.prevent="saveRoom" class="space-y-6">
             <div class="space-y-4">
-              <div class="space-y-1.5">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간명</label>
-                <input v-model="form.room_name" type="text" placeholder="예: 비전홀" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간명</label>
+                  <input v-model="form.room_name" type="text" placeholder="예: 비전홀" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+                </div>
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">수용인원 (명)</label>
+                  <input v-model="form.capacity" type="number" min="1" placeholder="예: 20" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
+                </div>
               </div>
               
               <div class="grid grid-cols-2 gap-4">

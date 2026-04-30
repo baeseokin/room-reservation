@@ -9,6 +9,7 @@ const showModal = ref(false)
 const editingRoom = ref(null)
 const form = ref({
   room_name: '',
+  capacity: '',
   floor: '',
   dept_name: '',
   manager_name: '',
@@ -40,6 +41,18 @@ watch([startHour, startMin], () => {
 })
 watch([endHour, endMin], () => {
   blockedForm.value.end_time = `${endHour.value}:${endMin.value}`
+})
+
+watch(() => form.value.manager_contact, (val) => {
+  if (!val) return
+  const digits = val.replace(/\D/g, '')
+  if (digits.length <= 3) {
+    form.value.manager_contact = digits
+  } else if (digits.length <= 7) {
+    form.value.manager_contact = `${digits.slice(0, 3)}-${digits.slice(3)}`
+  } else {
+    form.value.manager_contact = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+  }
 })
 
 const hours = Array.from({ length: 25 }, (_, i) => String(i).padStart(2, '0'))
@@ -83,16 +96,20 @@ const openModal = (room = null) => {
     previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', floor: '', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
+    form.value = { room_name: '', capacity: '', floor: '', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
 
 
 const saveRoom = async () => {
+  if (form.value.capacity && parseInt(form.value.capacity) <= 0) {
+    return alert('수용인원은 1명 이상의 양수만 입력 가능합니다.')
+  }
   try {
     const formData = new FormData()
     formData.append('room_name', form.value.room_name)
+    formData.append('capacity', form.value.capacity)
     formData.append('floor', form.value.floor)
     formData.append('dept_name', form.value.dept_name)
     formData.append('manager_name', form.value.manager_name)
@@ -146,6 +163,14 @@ const deleteBlockedTime = async (blockedId) => {
 }
 
 const getDayLabel = (val) => days.find(d => d.val == val)?.label || ''
+
+const formatPhone = (val) => {
+  if (!val) return '-'
+  const digits = val.replace(/\D/g, '')
+  if (digits.length <= 3) return digits
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+}
 onMounted(() => {
   fetchRooms()
   fetchDepartments()
@@ -171,7 +196,8 @@ onMounted(() => {
 
            <div>
              <h3 class="font-bold text-slate-900">{{ room.room_name }}</h3>
-             <p class="text-xs text-slate-400">{{ room.dept_name }} | {{ room.manager_name }}</p>
+             <p class="text-[10px] text-slate-400">{{ room.dept_name }} | {{ room.manager_name }} | {{ formatPhone(room.manager_contact) }}</p>
+             <p class="text-[10px] text-indigo-500 font-bold">수용인원: {{ room.capacity || '-' }}명</p>
              
              <!-- Blocked Times mini badges -->
              <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 mt-2">
@@ -194,7 +220,10 @@ onMounted(() => {
        <div class="bg-white rounded-t-[3rem] p-8 space-y-6 animate-slide-up">
           <h2 class="text-xl font-black">{{ editingRoom ? '공간 정보 수정' : '새 공간 등록' }}</h2>
           <div class="space-y-4">
-            <input v-model="form.room_name" type="text" class="input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="공간명" />
+            <div class="flex gap-4">
+              <input v-model="form.room_name" type="text" class="flex-[2] input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="공간명" />
+              <input v-model="form.capacity" type="number" min="1" class="flex-1 input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="인원" />
+            </div>
             <div class="flex gap-4">
                <input v-model="form.floor" type="text" class="flex-1 input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="층" />
                <select v-model="form.dept_name" class="flex-1 input-field p-4 bg-slate-50 border-none rounded-2xl">

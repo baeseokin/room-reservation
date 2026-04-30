@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 CREATE TABLE IF NOT EXISTS rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
   room_name VARCHAR(100) NOT NULL,
+  capacity INT DEFAULT NULL,
   floor VARCHAR(20) NOT NULL,
   dept_name VARCHAR(100), -- Managed department
   manager_name VARCHAR(100),

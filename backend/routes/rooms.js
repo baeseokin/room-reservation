@@ -101,12 +101,12 @@ router.delete("/blocked-times/:blockedId", isAdmin, async (req, res) => {
  * Add a new room
  */
 router.post("/", isAdmin, upload.single("image"), async (req, res) => {
-  const { room_name, floor, dept_name, manager_name, manager_contact } = req.body;
+  const { room_name, capacity, floor, dept_name, manager_name, manager_contact } = req.body;
   const image_url = req.file ? `/uploads/rooms/${req.file.filename}` : null;
   try {
     const [result] = await pool.query(
-      "INSERT INTO rooms (room_name, floor, dept_name, manager_name, manager_contact, image_url) VALUES (?, ?, ?, ?, ?, ?)",
-      [room_name, floor, dept_name, manager_name, manager_contact, image_url]
+      "INSERT INTO rooms (room_name, capacity, floor, dept_name, manager_name, manager_contact, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [room_name, capacity, floor, dept_name, manager_name, manager_contact, image_url]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) {
@@ -120,11 +120,11 @@ router.post("/", isAdmin, upload.single("image"), async (req, res) => {
  */
 router.put("/:id", isAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
-  const { room_name, floor, dept_name, manager_name, manager_contact, remove_image } = req.body;
+  const { room_name, capacity, floor, dept_name, manager_name, manager_contact, remove_image } = req.body;
   
   try {
-    let updateFields = "room_name = ?, floor = ?, dept_name = ?, manager_name = ?, manager_contact = ?";
-    let params = [room_name, floor, dept_name, manager_name, manager_contact];
+    let updateFields = "room_name = ?, capacity = ?, floor = ?, dept_name = ?, manager_name = ?, manager_contact = ?";
+    let params = [room_name, capacity, floor, dept_name, manager_name, manager_contact];
 
     if (req.file) {
       const image_url = `/uploads/rooms/${req.file.filename}`;
