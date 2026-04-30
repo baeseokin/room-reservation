@@ -223,9 +223,11 @@ const cancelReservation = async (id) => {
   }
 }
 
-const getStatusClass = (status) => {
-  if (status === 'cancelled') return 'bg-red-50 text-red-500'
-  return 'bg-green-50 text-green-600'
+const statusMap = {
+  pending: { label: '대기중', class: 'bg-amber-50 text-amber-600' },
+  approved: { label: '승인됨', class: 'bg-green-50 text-green-600' },
+  rejected: { label: '반려됨', class: 'bg-rose-50 text-rose-600' },
+  cancelled: { label: '취소됨', class: 'bg-red-50 text-red-500' }
 }
 
 onMounted(fetchMyReservations)
@@ -305,8 +307,8 @@ onMounted(fetchMyReservations)
               <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ res.reason }}</div>
             </td>
             <td class="px-8 py-6">
-              <span :class="getStatusClass(res.status)" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
-                {{ res.status === 'cancelled' ? '취소됨' : '승인됨' }}
+              <span :class="statusMap[res.status]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                {{ statusMap[res.status]?.label || res.status }}
               </span>
             </td>
             <td class="px-8 py-6 text-center">
