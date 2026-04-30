@@ -49,11 +49,11 @@ const isExpanded = ref(true)
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
           <span class="font-black text-slate-900" :class="depth === 0 ? 'text-base' : 'text-sm'">{{ node.dept_name }}</span>
-          <span v-if="node.children && node.children.length > 0" class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
+          <span v-if="node.children && node.children.length > 0" class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
             {{ node.children.length }}
           </span>
         </div>
-        <div class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">#{{ node.id }}</div>
+        <div class="text-[12px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">#{{ node.id }}</div>
       </div>
 
       <!-- Actions -->

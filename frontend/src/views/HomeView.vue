@@ -25,7 +25,7 @@ const auth = useAuthStore()
       <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28 relative">
         <div class="flex flex-col lg:flex-row items-center gap-16">
           <div class="flex-1 space-y-8 text-center lg:text-left">
-            <div class="inline-flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">
+            <div class="inline-flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full text-[12px] font-black text-indigo-600 uppercase tracking-[0.2em]">
               <SparklesIcon class="w-4 h-4" />
               Woncheon Space Reservation
             </div>

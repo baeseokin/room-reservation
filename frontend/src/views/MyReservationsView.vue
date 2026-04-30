@@ -240,7 +240,7 @@ onMounted(fetchMyReservations)
           <CalendarDaysIcon class="w-10 h-10 text-indigo-600" />
           나의 예약 현황
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">관리 및 예약 공간</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-[12px]">관리 및 예약 공간</p>
       </div>
 
       <!-- Date Filter -->
@@ -267,11 +267,11 @@ onMounted(fetchMyReservations)
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100">
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">신청명</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">상태</th>
-            <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
+            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
+            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
+            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">신청명</th>
+            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">상태</th>
+            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
           </tr>
         </thead>
         <tbody>
@@ -298,14 +298,14 @@ onMounted(fetchMyReservations)
             </td>
             <td class="px-8 py-6">
                <div class="font-bold text-slate-800">{{ res.reservation_date }}</div>
-               <div class="text-[10px] font-black text-indigo-400 mt-1 uppercase">{{ res.start_time }} - {{ res.end_time }}</div>
+               <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ res.start_time }} - {{ res.end_time }}</div>
             </td>
             <td class="px-8 py-6">
               <div class="font-black text-slate-900 leading-tight">{{ res.title || '신청명 없음' }}</div>
-              <div class="text-[10px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ res.reason }}</div>
+              <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ res.reason }}</div>
             </td>
             <td class="px-8 py-6">
-              <span :class="getStatusClass(res.status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
+              <span :class="getStatusClass(res.status)" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
                 {{ res.status === 'cancelled' ? '취소됨' : '승인됨' }}
               </span>
             </td>
@@ -325,7 +325,7 @@ onMounted(fetchMyReservations)
         <div class="p-10 space-y-8 text-left">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
+              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
               <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes.room_name }}</h2>
             </div>
             <button @click="showEditModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all">
@@ -337,7 +337,7 @@ onMounted(fetchMyReservations)
           <div class="space-y-4">
             <!-- Date Row -->
             <div class="bg-slate-50 p-4 rounded-3xl relative">
-              <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
+              <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
               <div @click="toggleCalendar" class="flex items-center justify-between cursor-pointer group">
                 <span class="font-black text-slate-700">{{ editForm.reservation_date }}</span>
                 <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
@@ -348,18 +348,18 @@ onMounted(fetchMyReservations)
             <div class="grid grid-cols-2 gap-4">
               <!-- Start Time -->
               <div class="bg-slate-50 p-3 rounded-2xl">
-                <label class="block text-[8px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
+                <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(editForm.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(editForm.start_time)" @change="e => updateTime('start', 'hour', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(editForm.start_time)" @change="e => updateTime('start', 'minute', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -367,18 +367,18 @@ onMounted(fetchMyReservations)
 
               <!-- End Time -->
               <div class="bg-slate-50 p-3 rounded-2xl">
-                <label class="block text-[8px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
+                <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(editForm.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(editForm.end_time)" @change="e => updateTime('end', 'hour', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(editForm.end_time)" @change="e => updateTime('end', 'minute', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -387,7 +387,7 @@ onMounted(fetchMyReservations)
           </div>
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
-            <label class="block text-[10px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
+            <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
             <textarea v-model="editForm.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans" placeholder="목적을 입력하세요"></textarea>
           </div>
 
@@ -420,7 +420,7 @@ onMounted(fetchMyReservations)
           </div>
         </div>
         <div class="grid grid-cols-7 gap-1 mb-2">
-          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-[9px] font-black text-slate-300 text-center uppercase">{{ d }}</span>
+          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-[12px] font-black text-slate-300 text-center uppercase">{{ d }}</span>
         </div>
         <div class="grid grid-cols-7 gap-1">
           <button v-for="(day, idx) in calendarDays" :key="idx"
@@ -429,7 +429,7 @@ onMounted(fetchMyReservations)
                     day.current ? 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600' : 'text-slate-200',
                     isSelectedDate(day.date) ? 'bg-indigo-600 !text-white shadow-lg shadow-indigo-100' : ''
                   ]"
-                  class="aspect-square flex items-center justify-center text-[10px] font-black rounded-lg transition-all">
+                  class="aspect-square flex items-center justify-center text-[12px] font-black rounded-lg transition-all">
             {{ day.day }}
           </button>
         </div>

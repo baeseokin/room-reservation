@@ -147,9 +147,13 @@ const timeSlots = computed(() => {
 
 const floors = computed(() => {
   const f = [...new Set(rooms.value.map(r => String(r.floor)))]
+  const order = ['3', '1', 'B1', 'B2', 'B3']
   return f.sort((a, b) => {
-    if (a.includes('B') && !b.includes('B')) return 1
-    if (!a.includes('B') && b.includes('B')) return -1
+    const idxA = order.indexOf(a)
+    const idxB = order.indexOf(b)
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB
+    if (idxA !== -1) return -1
+    if (idxB !== -1) return 1
     return b.localeCompare(a)
   })
 })
@@ -787,7 +791,7 @@ onMounted(() => {
           <button @click="toggleCalendar" class="px-4 py-1.5 flex items-center gap-3 group hover:bg-slate-50 rounded-lg transition-colors">
             <div class="flex items-center gap-2">
               <span class="text-sm font-black text-slate-800 group-hover:text-indigo-600">{{ formattedDisplayDate }}</span>
-              <span v-if="calendarSubMode === 'day' && getHoliday(selectedDate)" class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-md text-[10px] font-black uppercase">{{ getHoliday(selectedDate) }}</span>
+              <span v-if="calendarSubMode === 'day' && getHoliday(selectedDate)" class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-md text-[12px] font-black uppercase">{{ getHoliday(selectedDate) }}</span>
             </div>
             <CalendarIcon class="w-5 h-5 text-indigo-500/50 group-hover:text-indigo-600 transition-colors" />
           </button>
@@ -798,7 +802,7 @@ onMounted(() => {
         </div>
 
         <button @click="selectedDate = formatDate(new Date())" 
-                class="px-3 py-2 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 uppercase tracking-widest">
+                class="px-3 py-2 bg-indigo-50 text-indigo-600 text-[12px] font-black rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 uppercase tracking-widest">
           Today
         </button>
       </div>
@@ -831,16 +835,16 @@ onMounted(() => {
     <!-- Sub Header: Legend & Controls -->
     <div class="bg-white border-b border-slate-200/60 px-4 py-1.5 flex justify-between items-center shrink-0 z-20">
       <div class="flex gap-4">
-        <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+        <div class="flex items-center gap-1.5 text-[12px] font-bold text-slate-500">
           <span class="w-2.5 h-2.5 bg-indigo-600 rounded-sm shadow-sm"></span> 승인완료
         </div>
-        <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+        <div class="flex items-center gap-1.5 text-[12px] font-bold text-slate-500">
           <span class="w-2.5 h-2.5 bg-amber-400 rounded-sm shadow-sm"></span> 승인대기
         </div>
       </div>
       
       <!-- Drag Guide for Day View -->
-      <div v-if="calendarSubMode === 'day'" class="hidden md:flex items-center gap-2 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
+      <div v-if="calendarSubMode === 'day'" class="hidden md:flex items-center gap-2 text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
         <SparklesIcon class="w-3 h-3" />
         원하는 시간을 드래그하여 예약하세요
       </div>
@@ -861,7 +865,7 @@ onMounted(() => {
                      i === 6 ? 'text-blue-600 rounded-tr-[1.4rem]' : 
                      'text-slate-900'
                    ]"
-                   class="bg-violet-100 py-3 text-center text-[10px] font-black uppercase tracking-[0.2em] border-b border-violet-200/50 outline outline-1 outline-violet-100">
+                   class="bg-violet-100 py-3 text-center text-[12px] font-black uppercase tracking-[0.2em] border-b border-violet-200/50 outline outline-1 outline-violet-100">
                 {{ d }}
               </div>
             </div>
@@ -884,7 +888,7 @@ onMounted(() => {
                         class="text-xs font-black">{{ d.day }}</span>
                   <span v-if="getHoliday(formatDate(d.date))" 
                         :class="d.current ? 'text-rose-500' : 'text-rose-300'"
-                        class="text-[9px] font-black truncate max-w-[80px]">{{ getHoliday(formatDate(d.date)) }}</span>
+                        class="text-[12px] font-black truncate max-w-[80px]">{{ getHoliday(formatDate(d.date)) }}</span>
                 </div>
               </div>
               <div class="space-y-1">
@@ -894,11 +898,11 @@ onMounted(() => {
                        isEnded(res) ? 'bg-slate-200 text-slate-400 shadow-none' : 
                        res.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-600 text-white shadow-sm'
                      ]"
-                     class="text-[9px] font-bold px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-all">
-                  <span v-if="res.status === 'pending'" class="text-[8px] opacity-70">[대기]</span>
+                     class="text-[12px] font-bold px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-all">
+                  <span v-if="res.status === 'pending'" class="text-[12px] opacity-70">[대기]</span>
                   {{ res.start_time.slice(0,5) }} [{{ res.room_name.split(' ')[0] }}] {{ res.title || '예약' }}
                 </div>
-                <div v-if="getReservationsForDate(formatDate(d.date)).length > 4" class="text-[9px] font-black text-slate-400 pl-1 mt-1">
+                <div v-if="getReservationsForDate(formatDate(d.date)).length > 4" class="text-[12px] font-black text-slate-400 pl-1 mt-1">
                   + {{ getReservationsForDate(formatDate(d.date)).length - 4 }}개
                 </div>
               </div>
@@ -913,19 +917,20 @@ onMounted(() => {
               <!-- Sticky Header Row -->
               <div class="flex sticky top-0 z-[60]">
                 <!-- Corner Header -->
-                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center px-4 h-12">
-                  <span class="text-[9px] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
+                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center justify-center px-4 h-12">
+                  <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
                 </div>
                 <!-- Week Dates Header -->
                 <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-12">
                   <div v-for="(date, idx) in weekDates" :key="date" 
-                       class="flex-1 min-w-[140px] border-r border-slate-100 flex flex-col items-center justify-center">
-                    <span :class="[idx === 0 || getHoliday(date) ? 'text-rose-500' : idx === 6 ? 'text-blue-500' : 'text-slate-600']" 
-                          class="text-[9px] font-black uppercase tracking-widest mb-0.5">{{ ['일', '월', '화', '수', '목', '금', '토'][idx] }}</span>
-                    <div class="flex items-center gap-1">
-                      <span :class="[date === formatDate(new Date()) ? 'text-indigo-600' : idx === 0 || getHoliday(date) ? 'text-rose-500' : idx === 6 ? 'text-blue-500' : 'text-slate-900']" class="text-xs font-black">{{ date.split('-')[2] }}</span>
-                      <span v-if="getHoliday(date)" class="text-[9px] font-black text-rose-500 truncate max-w-[80px]">{{ getHoliday(date) }}</span>
+                       class="flex-1 min-w-[140px] border-r border-slate-100 flex items-center justify-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                      <span :class="[idx === 0 || getHoliday(date) ? 'text-rose-500' : idx === 6 ? 'text-blue-500' : 'text-slate-600']" 
+                            class="text-[12px] font-black uppercase">{{ ['일', '월', '화', '수', '목', '금', '토'][idx] }}</span>
+                      <span :class="[date === formatDate(new Date()) ? 'text-indigo-600' : idx === 0 || getHoliday(date) ? 'text-rose-500' : idx === 6 ? 'text-blue-500' : 'text-slate-900']" 
+                            class="text-[14px] font-black">{{ date.split('-')[2] }}</span>
                     </div>
+                    <span v-if="getHoliday(date)" class="text-[12px] font-black text-rose-500 truncate max-w-[60px]">{{ getHoliday(date) }}</span>
                   </div>
                 </div>
               </div>
@@ -935,7 +940,7 @@ onMounted(() => {
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-12 z-[50]">
                   <div class="w-40 sticky left-0 z-[55] bg-slate-100 border-r border-b border-slate-200 h-10 px-4 flex items-center justify-between">
-                    <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
                     <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/50 rounded transition-colors">
                       <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-500 transition-transform" />
                     </button>
@@ -949,11 +954,11 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'week-room-row-' + room.id" class="flex border-b border-slate-100 group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[10px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-[12px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Cells Grid -->
                     <div class="flex-1 flex">
@@ -962,7 +967,7 @@ onMounted(() => {
                            class="flex-1 min-w-[140px] border-r border-slate-100 p-2 space-y-1.5 overflow-hidden hover:bg-slate-50/50 transition-colors cursor-pointer">
                         <!-- Blocked Times in Week View -->
                         <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
-                             class="text-[8px] font-black px-1.5 py-1 rounded truncate bg-orange-900/10 text-orange-900/60 border border-dashed border-orange-900/20">
+                             class="text-[12px] font-black px-1.5 py-1 rounded truncate bg-orange-900/10 text-orange-900/60 border border-dashed border-orange-900/20">
                           <span class="mr-1">[불가]</span> {{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }} {{ bt.reason || '관리자 설정' }}
                         </div>
 
@@ -972,11 +977,11 @@ onMounted(() => {
                                isEnded(res) ? 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none' : 
                                res.status === 'pending' ? 'bg-amber-400 text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm'
                              ]"
-                             class="text-[8px] font-black px-1.5 py-1 rounded truncate transition-all">
+                             class="text-[12px] font-black px-1.5 py-1 rounded truncate transition-all">
                           <span v-if="res.status === 'pending'" class="mr-1 text-[7px] bg-white/30 px-1 rounded">대기</span>
                           ({{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }}) {{ res.title || '예약' }}
                         </div>
-                        <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 3" class="text-[8px] font-black text-slate-400 px-1">
+                        <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 3" class="text-[12px] font-black text-slate-400 px-1">
                           + {{ getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length - 2 }}개
                         </div>
                       </div>
@@ -995,14 +1000,14 @@ onMounted(() => {
               <!-- Sticky Header Row -->
               <div class="flex sticky top-0 z-[60]">
                 <!-- Corner Header -->
-                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center px-4 h-10">
-                  <span class="text-[9px] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
+                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center justify-center px-4 h-12">
+                  <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
                 </div>
                 <!-- Time Slots Header -->
-                <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-10">
+                <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-12">
                   <div v-for="time in dayTimeSlots" :key="'day-time-' + time" 
                        class="w-[80px] shrink-0 h-full flex items-center border-r border-slate-100">
-                     <span class="text-[9px] font-black text-slate-900 px-2">{{ time }}</span>
+                     <span class="text-[12px] font-black text-slate-900 px-2">{{ time }}</span>
                   </div>
                 </div>
               </div>
@@ -1012,7 +1017,7 @@ onMounted(() => {
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-10 z-[50]">
                   <div class="w-40 sticky left-0 z-[55] bg-slate-100 border-r border-b border-slate-200 h-10 px-4 flex items-center justify-between">
-                    <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <span class="text-[12px] font-black text-slate-900 uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
                     <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/50 rounded transition-colors">
                       <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-500 transition-transform" />
                     </button>
@@ -1026,11 +1031,11 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'day-room-row-' + room.id" class="flex border-b border-slate-100 relative group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[10px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-[12px] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Timeline Grid Area -->
                     <div class="flex-1 relative h-28">
@@ -1051,7 +1056,7 @@ onMounted(() => {
                         <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
                              :style="getBlockedStyle(bt)"
                              class="absolute top-2 bottom-2 bg-orange-900/10 border border-orange-900/20 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
-                          <span class="text-[9px] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">Reserved for maintenance</span>
+                          <span class="text-[12px] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">Reserved for maintenance</span>
                         </div>
                       </div>
 
@@ -1064,13 +1069,13 @@ onMounted(() => {
                                  isEnded(res) ? 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none' : 
                                  res.status === 'pending' ? 'bg-amber-400 text-white shadow-md' : 'bg-indigo-600 text-white shadow-sm'
                                ]"
-                               class="absolute h-7 rounded flex items-center px-2 text-[9px] font-black truncate z-20 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-transform">
-                            <span v-if="res.status === 'pending'" class="mr-1 text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full">대기</span>
+                               class="absolute h-7 rounded flex items-center px-2 text-[12px] font-black truncate z-20 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-transform">
+                            <span v-if="res.status === 'pending'" class="mr-1 text-[12px] bg-white/20 px-1.5 py-0.5 rounded-full">대기</span>
                             {{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }} | {{ res.title || '예약' }}
                           </div>
                         </template>
                         <div v-if="getReservationsForRoomAndDate(room.id, selectedDate).length > 3" 
-                             class="absolute bottom-1.5 right-4 text-[9px] font-black text-slate-400 bg-white/80 px-2 py-0.5 rounded-full border border-slate-100">
+                             class="absolute bottom-1.5 right-4 text-[12px] font-black text-slate-400 bg-white/80 px-2 py-0.5 rounded-full border border-slate-100">
                           + {{ getReservationsForRoomAndDate(room.id, selectedDate).length - 3 }}개
                         </div>
                       </div>
@@ -1091,7 +1096,7 @@ onMounted(() => {
              :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500']"
              class="px-5 py-1.5 rounded-lg text-xs font-black transition-all">{{ s.name }}</button>
            </div>
-           <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredReservations.length }}</span> items</div>
+           <div class="text-[12px] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredReservations.length }}</span> items</div>
         </div>
         <div v-if="filteredReservations.length === 0" class="py-24 text-center border-2 border-dashed border-slate-100 rounded-[3rem]">
            <CalendarIcon class="w-12 h-12 text-slate-200 mx-auto mb-4" />
@@ -1103,14 +1108,14 @@ onMounted(() => {
                class="border rounded-2xl p-5 transition-all cursor-pointer group h-full relative">
             <div class="flex justify-between items-start mb-3">
               <div class="flex items-center gap-2">
-                <span class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter">{{ res.floor }}{{ res.floor.includes('B') ? '' : 'F' }}</span>
+                <span class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[12px] font-black uppercase tracking-tighter">{{ res.floor }}{{ res.floor.includes('B') ? '' : 'F' }}</span>
                 <span class="text-xs font-black text-slate-900 group-hover:text-indigo-600">{{ res.room_name }}</span>
               </div>
-              <span :class="[res.status === 'approved' ? 'bg-indigo-600 text-white' : 'bg-amber-100 text-amber-700']" class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase shadow-sm">{{ res.status === 'approved' ? 'Approved' : 'Pending' }}</span>
+              <span :class="[res.status === 'approved' ? 'bg-indigo-600 text-white' : 'bg-amber-100 text-amber-700']" class="px-2 py-0.5 rounded-md text-[12px] font-black uppercase shadow-sm">{{ res.status === 'approved' ? 'Approved' : 'Pending' }}</span>
             </div>
             <div class="flex items-center gap-2 mb-3">
               <CalendarIcon class="w-3 h-3 text-indigo-500" />
-              <span class="text-[10px] font-black text-slate-500">{{ res.reservation_date }} ({{ ['일','월','화','수','목','금','토'][new Date(res.reservation_date).getDay()] }})</span>
+              <span class="text-[12px] font-black text-slate-500">{{ res.reservation_date }} ({{ ['일','월','화','수','목','금','토'][new Date(res.reservation_date).getDay()] }})</span>
             </div>
             <h3 class="text-base font-black text-slate-800 mb-4 leading-tight flex-1">{{ res.title || '신청명 없음' }}</h3>
             <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
@@ -1118,7 +1123,7 @@ onMounted(() => {
                 <ClockIcon class="w-3.5 h-3.5 text-slate-300" />
                 <span class="text-[11px] font-black text-slate-700">{{ res.start_time.slice(0,5) }} — {{ res.end_time.slice(0,5) }}</span>
               </div>
-              <span class="text-[10px] font-bold text-slate-400 italic">By {{ res.requester_name }}</span>
+              <span class="text-[12px] font-bold text-slate-400 italic">By {{ res.requester_name }}</span>
             </div>
           </div>
         </div>
@@ -1133,7 +1138,7 @@ onMounted(() => {
           <div class="bg-slate-900 px-10 py-10 text-white relative">
             <button @click="showDetailModal = false" class="absolute top-8 right-8 p-2 hover:bg-white/10 rounded-full transition-colors"><XMarkIcon class="w-6 h-6" /></button>
             <div class="flex items-center gap-3 mb-4">
-              <span class="bg-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg">{{ detailReservation.floor }}{{ detailReservation.floor.includes('B') ? '' : 'F' }}</span>
+              <span class="bg-indigo-600 px-3 py-1 rounded-lg text-[12px] font-black uppercase tracking-widest shadow-lg">{{ detailReservation.floor }}{{ detailReservation.floor.includes('B') ? '' : 'F' }}</span>
               <span class="text-indigo-400 text-sm font-black">{{ detailReservation.room_name }}</span>
             </div>
             
@@ -1151,12 +1156,12 @@ onMounted(() => {
                  <div class="flex items-center gap-4">
                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><CalendarIcon class="w-5 h-5 text-indigo-600" /></div>
                    <div class="flex-1">
-                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Date</p>
+                     <p class="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Date</p>
                      <input v-if="isEditing" type="date" v-model="editForm.reservation_date" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
                      <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.reservation_date }} ({{ ['일','월','화','수','목','금','토'][new Date(detailReservation.reservation_date).getDay()] }})</p>
                    </div>
                  </div>
-                 <div :class="detailReservation.status === 'approved' ? 'bg-indigo-600' : 'bg-amber-500'" class="px-4 py-1.5 rounded-xl text-white text-[9px] font-black uppercase tracking-widest">
+                 <div :class="detailReservation.status === 'approved' ? 'bg-indigo-600' : 'bg-amber-500'" class="px-4 py-1.5 rounded-xl text-white text-[12px] font-black uppercase tracking-widest">
                    {{ detailReservation.status === 'approved' ? 'Approved' : 'Pending' }}
                  </div>
                </div>
@@ -1166,12 +1171,12 @@ onMounted(() => {
                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><ClockIcon class="w-5 h-5 text-indigo-600" /></div>
                  <div class="flex-1 grid grid-cols-2 gap-4">
                    <div>
-                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Start</p>
+                     <p class="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Start</p>
                      <input v-if="isEditing" type="time" v-model="editForm.start_time" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
                      <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.start_time.slice(0,5) }}</p>
                    </div>
                    <div>
-                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">End</p>
+                     <p class="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-0.5">End</p>
                      <input v-if="isEditing" type="time" v-model="editForm.end_time" class="bg-transparent border-none p-0 font-black text-lg text-slate-900 focus:ring-0" />
                      <p v-else class="text-lg font-black text-slate-900 tracking-tighter">{{ detailReservation.end_time.slice(0,5) }}</p>
                    </div>
@@ -1182,18 +1187,18 @@ onMounted(() => {
             <!-- Requester Info -->
             <div class="grid grid-cols-2 gap-8">
               <div class="space-y-1">
-                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">신청자</span>
+                <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest">신청자</span>
                 <p class="text-base font-black text-slate-900">{{ detailReservation.requester_name }}</p>
               </div>
               <div class="space-y-1">
-                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">연락처</span>
+                <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest">연락처</span>
                 <p class="text-base font-black text-slate-900">{{ detailReservation.requester_phone || '미기재' }}</p>
               </div>
             </div>
 
             <!-- Reason -->
             <div class="space-y-2">
-              <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Reason / Purpose</span>
+              <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest">Reason / Purpose</span>
               <template v-if="isEditing">
                 <textarea v-model="editForm.reason" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]" placeholder="수정할 사유를 입력하세요"></textarea>
               </template>
@@ -1206,12 +1211,12 @@ onMounted(() => {
           <div class="px-10 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <template v-if="isMyReservation && !isEditing">
-                <button @click="startEdit" class="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors">수정하기</button>
-                <button @click="cancelReservation(detailReservation.id)" class="px-5 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-colors">삭제하기</button>
+                <button @click="startEdit" class="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors">수정하기</button>
+                <button @click="cancelReservation(detailReservation.id)" class="px-5 py-2 bg-rose-50 text-rose-600 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-rose-100 transition-colors">삭제하기</button>
               </template>
               <template v-else-if="isEditing">
-                <button @click="updateReservation" class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">저장 완료</button>
-                <button @click="isEditing = false" class="px-6 py-2 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors">취소</button>
+                <button @click="updateReservation" class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">저장 완료</button>
+                <button @click="isEditing = false" class="px-6 py-2 bg-slate-200 text-slate-600 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors">취소</button>
               </template>
             </div>
             <button @click="showDetailModal = false" class="px-8 py-3 rounded-xl text-xs font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Close Details</button>
@@ -1227,7 +1232,7 @@ onMounted(() => {
          <div class="flex justify-between items-center mb-6">
            <div class="flex items-center gap-2">
              <h4 class="text-sm font-black text-slate-900">{{ calendarDate.getFullYear() }}년 {{ calendarDate.getMonth() + 1 }}월</h4>
-             <button @click.stop="selectCalendarDate(new Date())" class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">TODAY</button>
+             <button @click.stop="selectCalendarDate(new Date())" class="text-[12px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">TODAY</button>
            </div>
            <div class="flex gap-1">
              <button @click.stop="moveCalendarYear(-1)" class="p-1.5 text-slate-300"><ChevronDoubleLeftIcon class="w-3.5 h-3.5" /></button>
@@ -1237,7 +1242,7 @@ onMounted(() => {
            </div>
          </div>
          <div class="grid grid-cols-7 gap-1 mb-2">
-           <div v-for="d in ['일', '월', '화', '수', '목', '금', '토']" :key="d" class="text-[9px] font-black text-slate-300 text-center uppercase tracking-widest">{{ d }}</div>
+           <div v-for="d in ['일', '월', '화', '수', '목', '금', '토']" :key="d" class="text-[12px] font-black text-slate-300 text-center uppercase tracking-widest">{{ d }}</div>
          </div>
          <div class="grid grid-cols-7 gap-1">
            <button v-for="(d, idx) in calendarDays" :key="idx" @click.stop="selectCalendarDate(d.date)"
@@ -1261,8 +1266,8 @@ onMounted(() => {
               <div>
                 <h2 class="text-xl font-black text-slate-900 tracking-tighter">공간 예약 신청</h2>
                 <div class="flex items-center gap-2">
-                  <span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">{{ selectedRoom?.floor }}{{ String(selectedRoom?.floor).includes('B') ? '' : 'F' }}</span>
-                  <p class="text-[10px] font-bold text-slate-400">{{ selectedRoom?.room_name }} | {{ selectedDate }}</p>
+                  <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">{{ selectedRoom?.floor }}{{ String(selectedRoom?.floor).includes('B') ? '' : 'F' }}</span>
+                  <p class="text-[12px] font-bold text-slate-400">{{ selectedRoom?.room_name }} | {{ selectedDate }}</p>
                 </div>
               </div>
             </div>
@@ -1272,7 +1277,7 @@ onMounted(() => {
           <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
             <!-- Application Title Input -->
             <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
-              <label class="flex items-center gap-1.5 text-[9px] font-black text-slate-400 mb-1 uppercase tracking-widest">
+              <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">
                 <SparklesIcon class="w-3 h-3" />
                 신청명
               </label>
@@ -1284,18 +1289,18 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-3">
               <!-- Start Time -->
               <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[8px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">시작 시간</label>
+                <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">시작 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(form.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(form.start_time)" @change="e => updateTime('start', 'hour', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(form.start_time)" @change="e => updateTime('start', 'minute', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -1303,18 +1308,18 @@ onMounted(() => {
 
               <!-- End Time -->
               <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[8px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">종료 시간</label>
+                <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">종료 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(form.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(form.end_time)" @change="e => updateTime('end', 'hour', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(form.end_time)" @change="e => updateTime('end', 'minute', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[9px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -1324,7 +1329,7 @@ onMounted(() => {
             <!-- Recurring Options -->
             <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-3 transition-all">
               <div class="flex items-center justify-between">
-                <label class="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 uppercase tracking-widest">
                   <ArrowPathIcon class="w-3 h-3" />
                   반복 예약 설정
                 </label>
@@ -1341,12 +1346,12 @@ onMounted(() => {
                   <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
                           @click="form.recurring_type = type[0]"
                           :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200']"
-                          class="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                          class="flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all">
                     {{ type[1] }}
                   </button>
                 </div>
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group cursor-pointer" @click="toggleRecurringCalendar">
-                  <label class="block text-[8px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
+                  <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
                   <div class="flex items-center justify-between">
                     <span class="font-black text-xs text-slate-700 group-hover:text-indigo-600 transition-colors">{{ form.recurring_end_date || '날짜 선택' }}</span>
                     <CalendarIcon class="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
@@ -1358,12 +1363,12 @@ onMounted(() => {
             <!-- Requester Info Grid -->
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <label class="block text-[9px] font-black text-slate-400 mb-1 uppercase tracking-widest">신청자 성함</label>
+                <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">신청자 성함</label>
                 <input type="text" v-model="form.requester_name" placeholder="홍길동" 
                        class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
               </div>
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <label class="block text-[9px] font-black text-slate-400 mb-1 uppercase tracking-widest">연락처</label>
+                <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">연락처</label>
                 <input type="tel" v-model="form.requester_phone" placeholder="010-0000-0000" 
                        class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
               </div>
@@ -1371,7 +1376,7 @@ onMounted(() => {
 
             <!-- Reason TextArea -->
             <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-              <label class="block text-[9px] font-black text-slate-400 mb-1 uppercase tracking-widest">예약 사유</label>
+              <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">예약 사유</label>
               <textarea v-model="form.reason" class="w-full bg-transparent border-none p-0 font-bold text-xs text-slate-700 placeholder:text-slate-200 focus:ring-0 h-16 resize-none" placeholder="사용 목적 입력..."></textarea>
             </div>
           </div>
@@ -1406,7 +1411,7 @@ onMounted(() => {
            </div>
          </div>
          <div class="grid grid-cols-7 gap-1 mb-2">
-           <div v-for="d in ['일', '월', '화', '수', '목', '금', '토']" :key="d" class="text-[9px] font-black text-slate-300 text-center uppercase tracking-widest">{{ d }}</div>
+           <div v-for="d in ['일', '월', '화', '수', '목', '금', '토']" :key="d" class="text-[12px] font-black text-slate-300 text-center uppercase tracking-widest">{{ d }}</div>
          </div>
          <div class="grid grid-cols-7 gap-1">
            <button v-for="(d, idx) in recurringCalendarDays" :key="idx" @click.stop="selectRecurringDate(d.date)"
@@ -1429,7 +1434,7 @@ onMounted(() => {
               <InformationCircleIcon class="w-4 h-4" />
               <span class="text-xs font-black uppercase tracking-widest">Space Info</span>
             </div>
-            <span class="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-full uppercase">{{ hoveredRoom.floor }}{{ String(hoveredRoom.floor).includes('B') ? '' : 'F' }}</span>
+            <span class="text-[12px] font-black bg-white/20 px-2 py-0.5 rounded-full uppercase">{{ hoveredRoom.floor }}{{ String(hoveredRoom.floor).includes('B') ? '' : 'F' }}</span>
           </div>
           
           <!-- Room Image -->
@@ -1437,7 +1442,7 @@ onMounted(() => {
             <img v-if="hoveredRoom.image_url" :src="hoveredRoom.image_url" class="w-full h-full object-cover" />
             <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-300">
               <LightBulbIcon class="w-8 h-8 mb-1 opacity-20" />
-              <span class="text-[8px] font-black uppercase tracking-widest opacity-40">No Image Available</span>
+              <span class="text-[12px] font-black uppercase tracking-widest opacity-40">No Image Available</span>
             </div>
             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
           </div>
@@ -1445,7 +1450,7 @@ onMounted(() => {
           <div class="p-4 space-y-4">
             <div>
               <h4 class="text-sm font-black text-slate-900 mb-1">{{ hoveredRoom.room_name }}</h4>
-              <p v-if="hoveredRoom.description" class="text-[10px] font-bold text-slate-500 leading-relaxed">{{ hoveredRoom.description }}</p>
+              <p v-if="hoveredRoom.description" class="text-[12px] font-bold text-slate-500 leading-relaxed">{{ hoveredRoom.description }}</p>
             </div>
             
             <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
@@ -1454,7 +1459,7 @@ onMounted(() => {
                   <UsersIcon class="w-3.5 h-3.5 text-violet-600" />
                 </div>
                 <div>
-                  <p class="text-[8px] font-black text-slate-400 uppercase">Capacity</p>
+                  <p class="text-[12px] font-black text-slate-400 uppercase">Capacity</p>
                   <p class="text-[11px] font-black text-slate-800">{{ hoveredRoom.capacity || 'N/A' }}명</p>
                 </div>
               </div>
@@ -1463,7 +1468,7 @@ onMounted(() => {
                   <MapPinIcon class="w-3.5 h-3.5 text-violet-600" />
                 </div>
                 <div>
-                  <p class="text-[8px] font-black text-slate-400 uppercase">Location</p>
+                  <p class="text-[12px] font-black text-slate-400 uppercase">Location</p>
                   <p class="text-[11px] font-black text-slate-800">{{ hoveredRoom.location || hoveredRoom.floor + '층' }}</p>
                 </div>
               </div>

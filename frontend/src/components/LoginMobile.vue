@@ -28,7 +28,7 @@ const loginWithKakao = () => {
         <img src="https://developers.kakao.com/assets/img/lib/logos/kakaotalksharing/kakaotalk_sharing_btn_medium.png" class="w-6 h-6" alt="Kakao" />
         카카오 로그인
       </button>
-      <p class="text-center text-[10px] text-slate-400">
+      <p class="text-center text-[12px] text-slate-400">
         로그인 시 이용약관 및 개인정보 처리방침에 동의하게 됩니다.
       </p>
     </div>

@@ -162,7 +162,7 @@ onMounted(fetchDepartments)
     <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[400px]">
       <div v-if="loading" class="flex flex-col items-center justify-center py-32 space-y-4">
         <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-slate-400 font-black text-[10px] uppercase tracking-widest">조직도 불러오는 중...</p>
+        <p class="text-slate-400 font-black text-[12px] uppercase tracking-widest">조직도 불러오는 중...</p>
       </div>
 
       <div v-else-if="treeData.length === 0" class="text-center py-32">
@@ -193,19 +193,19 @@ onMounted(fetchDepartments)
       <div v-if="showModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-lg w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
           <div class="space-y-1">
-            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
+            <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
             <h2 class="text-3xl font-black text-slate-900 font-serif italic">{{ editingDept ? '부서 정보 수정' : '새 부서 등록' }}</h2>
           </div>
 
           <div class="space-y-6">
             <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6">
               <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">부서명</label>
+                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">부서명</label>
                 <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 유치부 등" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
               </div>
 
               <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">상위 소속</label>
+                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">상위 소속</label>
                 <select v-model="form.parent_dept_id" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
                   <option :value="null">최상위 조직</option>
                   <option v-for="d in departments.filter(d => d.id !== editingDept?.id)" :key="d.id" :value="d.id">

@@ -190,7 +190,7 @@ onMounted(fetchReservations)
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-black text-slate-900 text-sm">{{ r.title || '(제목 없음)' }}</span>
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{{ r.room_name }}</span>
+              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{{ r.room_name }}</span>
             </div>
             <div class="text-xs text-slate-500 font-bold mt-0.5">
               {{ fmtDate(r.reservation_date) }} · {{ fmtTime(r.start_time) }} ~ {{ fmtTime(r.end_time) }}
@@ -237,7 +237,7 @@ onMounted(fetchReservations)
         </div>
 
         <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">거부 사유 입력 (선택)</label>
+          <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">거부 사유 입력 (선택)</label>
           <textarea v-model="rejectReason" rows="3"
             placeholder="예: 해당 시간에는 교회 행사가 예정되어 있습니다."
             class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-rose-500/10 focus:border-rose-300 outline-none resize-none transition-all">

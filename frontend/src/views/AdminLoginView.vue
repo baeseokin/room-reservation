@@ -26,7 +26,7 @@
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="space-y-5">
           <div class="space-y-1.5">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
+            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
             <input
               v-model="userId"
               type="text"
@@ -37,7 +37,7 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
+            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
             <div class="relative">
               <input
                 v-model="password"
@@ -67,7 +67,7 @@
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-slate-100"></div>
           </div>
-          <div class="relative flex justify-center text-[10px]">
+          <div class="relative flex justify-center text-[12px]">
             <span class="px-3 bg-white text-slate-300 font-black uppercase tracking-widest">or</span>
           </div>
         </div>
@@ -83,7 +83,7 @@
 
       <!-- Footer Info -->
       <div class="mt-10 text-center">
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+        <p class="text-[12px] text-slate-400 font-bold uppercase tracking-widest">
           © {{ new Date().getFullYear() }} Wonchon Presbyterian Church. All rights reserved.
         </p>
       </div>

@@ -22,7 +22,7 @@
         <!-- User Info & Logout (if logged in) -->
         <template v-if="auth.user">
           <div class="hidden lg:flex flex-col items-end mr-2">
-            <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none mb-1">성도님 환영합니다</span>
+            <span class="text-[12px] font-black text-indigo-600 uppercase tracking-widest leading-none mb-1">성도님 환영합니다</span>
             <span class="text-sm font-black text-slate-900 leading-none">{{ auth.user.userName }}님</span>
           </div>
           <div class="w-px h-8 bg-slate-200 mx-2 hidden lg:block"></div>
@@ -83,10 +83,10 @@
     <footer v-if="!$route.path.startsWith('/app/reservations')" class="bg-white border-t border-slate-100 py-12 mt-auto">
       <div class="max-w-7xl mx-auto px-6 flex flex-col items-center space-y-4 text-center">
         <img src="../assets/logo_wonchon.png" alt="원천교회" class="h-6 opacity-30 grayscale" />
-        <p class="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em]">
+        <p class="text-[12px] text-slate-300 font-black uppercase tracking-[0.2em]">
           WONCHEON BAPTIST CHURCH · SPACE RESERVATION SYSTEM
         </p>
-        <p class="text-[10px] text-slate-400 font-bold">© 2024 WONCHEON CHURCH. ALL RIGHTS RESERVED.</p>
+        <p class="text-[12px] text-slate-400 font-bold">© 2024 WONCHEON CHURCH. ALL RIGHTS RESERVED.</p>
       </div>
     </footer>
   </div>

@@ -74,7 +74,7 @@ const logout = () => auth.logout()
           </div>
           <div v-if="!isCollapsed" class="flex-1 overflow-hidden">
              <div class="text-sm font-bold truncate group-hover:text-indigo-400 transition-colors">{{ auth.user?.userName }}</div>
-             <div class="text-[10px] text-slate-500 truncate">{{ auth.user?.deptName || '미지정' }}</div>
+             <div class="text-[12px] text-slate-500 truncate">{{ auth.user?.deptName || '미지정' }}</div>
           </div>
         </router-link>
         <button @click="logout" 

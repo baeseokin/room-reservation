@@ -250,7 +250,7 @@ onMounted(() => {
             <div v-else class="w-full h-full flex items-center justify-center">
               <BuildingOffice2Icon class="w-8 h-8 text-slate-200" />
             </div>
-            <div class="absolute top-2 left-2 px-2 py-1 bg-slate-900/80 backdrop-blur text-white text-[9px] font-black rounded-lg uppercase tracking-tighter">
+            <div class="absolute top-2 left-2 px-2 py-1 bg-slate-900/80 backdrop-blur text-white text-[12px] font-black rounded-lg uppercase tracking-tighter">
               {{ room.floor }}층
             </div>
           </div>
@@ -259,32 +259,32 @@ onMounted(() => {
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-3 mb-1">
               <h3 class="text-lg font-black text-slate-900 tracking-tight">{{ room.room_name }}</h3>
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-widest">
+              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-widest">
                 {{ room.dept_name || '전체 공용' }}
               </span>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 mt-3">
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">담당자</span>
+                <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest w-12">담당자</span>
                 <span class="text-xs font-bold text-slate-700">{{ room.manager_name || '미지정' }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">연락처</span>
+                <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest w-12">연락처</span>
                 <span class="text-xs font-bold text-slate-700">{{ formatPhone(room.manager_contact) }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">수용인원</span>
+                <span class="text-[12px] font-black text-slate-400 uppercase tracking-widest w-12">수용인원</span>
                 <span class="text-xs font-bold text-slate-700">{{ room.capacity ? room.capacity + '명' : '미지정' }}</span>
               </div>
               
               <!-- Blocked Times Badges -->
               <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 col-span-full mt-2">
-                <span class="text-[10px] font-black text-rose-500 uppercase tracking-widest w-full mb-1">예약 불가 시간</span>
+                <span class="text-[12px] font-black text-rose-500 uppercase tracking-widest w-full mb-1">예약 불가 시간</span>
                 <div v-for="bt in room.blocked_times" :key="'list-bt-'+bt.id" 
                      class="flex items-center gap-1.5 px-2 py-1 bg-rose-50/50 border border-rose-100 rounded-lg">
-                  <span class="text-[9px] font-black text-rose-600">{{ getDayLabel(bt.day_of_week) }}</span>
-                  <span class="text-[9px] font-bold text-slate-600">{{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }}</span>
+                  <span class="text-[12px] font-black text-rose-600">{{ getDayLabel(bt.day_of_week) }}</span>
+                  <span class="text-[12px] font-bold text-slate-600">{{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }}</span>
                 </div>
               </div>
             </div>
@@ -316,7 +316,7 @@ onMounted(() => {
         <div class="bg-white rounded-[3rem] shadow-2xl max-w-lg w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300 overflow-y-auto max-h-[90vh] scrollbar-hide">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">시설 정보 설정</span>
+              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">시설 정보 설정</span>
               <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ editingRoom ? '공간 정보 수정' : '새 공간 등록' }}</h2>
             </div>
             <button @click="showModal = false" class="p-2 text-slate-400 hover:text-slate-900 transition-colors"><PlusIcon class="w-6 h-6 rotate-45" /></button>
@@ -326,24 +326,24 @@ onMounted(() => {
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간명</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">공간명</label>
                   <input v-model="form.room_name" type="text" placeholder="예: 비전홀" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
                 </div>
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">수용인원 (명)</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">수용인원 (명)</label>
                   <input v-model="form.capacity" type="number" min="1" placeholder="예: 20" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
                 </div>
               </div>
               
               <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">위치 (층)</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">위치 (층)</label>
                   <select v-model="form.floor" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 appearance-none">
                     <option v-for="f in floorOrder" :key="f" :value="f">{{ f }}층</option>
                   </select>
                 </div>
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
                   <select v-model="form.dept_name" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 appearance-none">
                     <option value="">전체 공용</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
@@ -355,17 +355,17 @@ onMounted(() => {
             <div class="space-y-4 pt-4 border-t border-slate-100">
               <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">담당자</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">담당자</label>
                   <input v-model="form.manager_name" type="text" placeholder="담당자 이름" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
                 </div>
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
                   <input v-model="form.manager_contact" type="text" placeholder="담당자 연락처" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all" />
                 </div>
               </div>
 
               <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">공간 사진</label>
+                <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">공간 사진</label>
                 <div class="relative group">
                   <div v-if="previewUrl" class="relative w-full aspect-video rounded-3xl overflow-hidden border-2 border-slate-100">
                     <img :src="previewUrl" class="w-full h-full object-cover" />
@@ -398,7 +398,7 @@ onMounted(() => {
         <div class="bg-white rounded-[3rem] shadow-2xl max-w-2xl w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300 overflow-y-auto max-h-[90vh] scrollbar-hide">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">예약 불가 설정</span>
+              <span class="text-[12px] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">예약 불가 설정</span>
               <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ currentRoomForBlocked?.room_name }}</h2>
               <p class="text-slate-500 text-sm font-bold">정기적인 유지보수나 고정 업무 시간을 차단합니다.</p>
             </div>
@@ -412,12 +412,12 @@ onMounted(() => {
               <div class="space-y-4">
                 <!-- Row 1: Recurring Type -->
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 유형</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 유형</label>
                   <div class="flex gap-2">
                     <button v-for="t in [['weekly','주 단위'], ['monthly_date','월 단위 (일자)'], ['monthly_nth','월 단위 (요일)']]" :key="t[0]"
                             type="button" @click="blockedForm.recurring_type = t[0]"
                             :class="[blockedForm.recurring_type === t[0] ? 'bg-rose-600 text-white shadow-lg shadow-rose-100' : 'bg-white text-slate-500 hover:bg-slate-100']"
-                            class="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                            class="flex-1 py-3 rounded-2xl text-[12px] font-black uppercase tracking-widest transition-all">
                       {{ t[1] }}
                     </button>
                   </div>
@@ -425,14 +425,14 @@ onMounted(() => {
 
                 <!-- Selection (Day/Date/Nth) -->
                 <div v-if="blockedForm.recurring_type === 'weekly'" class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
                   <select v-model="blockedForm.day_of_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
                     <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
                   </select>
                 </div>
 
                 <div v-else-if="blockedForm.recurring_type === 'monthly_date'" class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">매월 일자</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">매월 일자</label>
                   <select v-model="blockedForm.day_of_month" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
                     <option v-for="n in 31" :key="n" :value="n">매월 {{ n }}일</option>
                   </select>
@@ -440,13 +440,13 @@ onMounted(() => {
 
                 <div v-else-if="blockedForm.recurring_type === 'monthly_nth'" class="grid grid-cols-2 gap-4">
                   <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">주차</label>
+                    <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">주차</label>
                     <select v-model="blockedForm.nth_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
                       <option v-for="n in 5" :key="n" :value="n">{{ n }}번째 주</option>
                     </select>
                   </div>
                   <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
+                    <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">요일</label>
                     <select v-model="blockedForm.day_of_week" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none">
                       <option v-for="d in days" :key="d.val" :value="d.val">{{ d.label }}요일</option>
                     </select>
@@ -456,7 +456,7 @@ onMounted(() => {
                 <!-- Row 3: Times (Same Row) -->
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">시작 시간</label>
+                    <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">시작 시간</label>
                     <div class="flex gap-2">
                       <select v-model="startHour" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
                         <option v-for="h in hours.slice(0, 24)" :key="'sh-'+h" :value="h">{{ h }}시</option>
@@ -467,7 +467,7 @@ onMounted(() => {
                     </div>
                   </div>
                   <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">종료 시간</label>
+                    <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">종료 시간</label>
                     <div class="flex gap-2">
                       <select v-model="endHour" class="flex-1 bg-white border-none rounded-2xl py-4 px-3 font-bold shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none text-center">
                         <option v-for="h in hours" :key="'eh-'+h" :value="h">{{ h }}시</option>
@@ -481,7 +481,7 @@ onMounted(() => {
                 
                 <!-- Row 2: Reason -->
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">차단 사유</label>
+                  <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">차단 사유</label>
                   <div class="flex gap-4">
                     <input v-model="blockedForm.reason" type="text" placeholder="점검, 행정 업무 등 사유를 입력하세요" class="flex-1 bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-rose-500" />
                     <button @click="addBlockedTime" class="bg-rose-500 text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 active:scale-95 flex items-center gap-2">
@@ -502,14 +502,14 @@ onMounted(() => {
               <div v-else class="space-y-2">
                 <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-rose-200 transition-all">
                   <div class="flex items-center gap-4">
-                    <div class="bg-rose-50 text-rose-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest whitespace-nowrap">
+                    <div class="bg-rose-50 text-rose-600 text-[12px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest whitespace-nowrap">
                       <template v-if="bt.recurring_type === 'monthly_date'">매월 {{ bt.day_of_month }}일</template>
                       <template v-else-if="bt.recurring_type === 'monthly_nth'">매월 {{ bt.nth_week }}주차 {{ getDayLabel(bt.day_of_week) }}요일</template>
                       <template v-else>{{ getDayLabel(bt.day_of_week) }}요일</template>
                     </div>
                     <div>
                       <div class="text-sm font-black text-slate-900">{{ bt.start_time.slice(0,5) }} - {{ bt.end_time.slice(0,5) }}</div>
-                      <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ bt.reason || '사유 없음' }}</div>
+                      <div class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">{{ bt.reason || '사유 없음' }}</div>
                     </div>
                   </div>
                   <button @click="deleteBlockedTime(bt.id)" class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">

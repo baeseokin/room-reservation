@@ -106,8 +106,8 @@ onMounted(() => {
         <h1 class="text-4xl font-black text-slate-900 tracking-tight">마이 프로필</h1>
         <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">개인 정보 및 설정 관리</p>
         <div class="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
-          <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">{{ profile.dept_name || '부서 미지정' }}</span>
-          <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">{{ profile.user_id }}</span>
+          <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[12px] font-black uppercase tracking-widest">{{ profile.dept_name || '부서 미지정' }}</span>
+          <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[12px] font-black uppercase tracking-widest">{{ profile.user_id }}</span>
         </div>
       </div>
     </div>
@@ -119,11 +119,11 @@ onMounted(() => {
         <div class="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
           <div class="flex items-center gap-3">
             <IdentificationIcon class="w-6 h-6 text-indigo-400" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">계정 아이디</span>
+            <span class="text-[12px] font-black uppercase tracking-widest text-slate-500">계정 아이디</span>
           </div>
           <p class="text-xl font-black">{{ profile.user_id }}</p>
           <div class="pt-4 border-t border-slate-800">
-             <p class="text-[10px] text-slate-500 font-bold leading-relaxed">계정 아이디는 수정할 수 없습니다. 변경이 필요한 경우 관리자에게 문의하세요.</p>
+             <p class="text-[12px] text-slate-500 font-bold leading-relaxed">계정 아이디는 수정할 수 없습니다. 변경이 필요한 경우 관리자에게 문의하세요.</p>
           </div>
         </div>
       </div>
@@ -134,7 +134,7 @@ onMounted(() => {
           <div class="space-y-6">
             <!-- Name -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">이름</label>
+              <label class="block text-[12px] font-black text-slate-300 uppercase tracking-widest ml-1">이름</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <UserCircleIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.user_name" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0" placeholder="성함을 입력하세요" />
@@ -143,7 +143,7 @@ onMounted(() => {
 
             <!-- Department Combo Box -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서</label>
+              <label class="block text-[12px] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서</label>
               <div class="relative">
                 <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                   <BuildingOfficeIcon class="w-6 h-6 text-slate-300" />
@@ -158,7 +158,7 @@ onMounted(() => {
 
             <!-- Email -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">이메일 주소</label>
+              <label class="block text-[12px] font-black text-slate-300 uppercase tracking-widest ml-1">이메일 주소</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <EnvelopeIcon class="w-6 h-6 text-slate-300" />
                 <input type="email" v-model="profile.email" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="example@church.com" />
@@ -167,7 +167,7 @@ onMounted(() => {
 
             <!-- Phone -->
             <div class="space-y-2 group">
-              <label class="block text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">연락처</label>
+              <label class="block text-[12px] font-black text-slate-300 uppercase tracking-widest ml-1">연락처</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <PhoneIcon class="w-6 h-6 text-slate-300" />
                 <input type="text" v-model="profile.phone" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="010-0000-0000" />
