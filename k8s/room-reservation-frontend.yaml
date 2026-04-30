@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: room-reservation-frontend
+  namespace: room-reservation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: room-reservation-frontend
+  template:
+    metadata:
+      labels:
+        app: room-reservation-frontend
+    spec:
+      containers:
+      - name: room-reservation-frontend
+        image: baeseokin/room-reservation-frontend:0.2
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: room-reservation-frontend
+  namespace: room-reservation
+spec:
+  selector:
+    app: room-reservation-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30004
+  type: NodePort
