@@ -62,7 +62,7 @@
     </div>
 
     <!-- Banner / Info Section -->
-    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white relative overflow-hidden">
+    <div @click="$router.push('/m/guide')" class="bg-slate-900 p-8 rounded-[2.5rem] text-white relative overflow-hidden active:scale-95 transition-all">
       <div class="relative z-10 space-y-2">
         <h4 class="text-lg font-black tracking-tight leading-tight">원천교회 공간 사용 수칙을<br>확인해 주세요.</h4>
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] pt-2">이용 가이드 보기 →</p>

@@ -152,6 +152,12 @@ const router = createRouter({
           name: 'AdminUserApplicationsMobile',
           component: () => import('../views/mobile/admin/AdminUserApplicationsViewMobile.vue'),
           meta: { requiresAdmin: true }
+        },
+        {
+          path: 'guide',
+          name: 'GuideMobile',
+          component: () => import('../views/mobile/GuideViewMobile.vue'),
+          meta: { requiresAuth: true }
         }
       ]
     },
