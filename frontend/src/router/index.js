@@ -98,6 +98,73 @@ const router = createRouter({
           component: () => import('../views/AdminUserApplicationsView.vue')
         }
       ]
+    },
+
+    // ─── 모바일 전용 라우트 ( /m ) ──────────────────────────
+    {
+      path: '/m',
+      component: () => import('../layouts/MobileLayout.vue'),
+      children: [
+        {
+          path: 'home',
+          name: 'HomeMobile',
+          component: () => import('../views/mobile/HomeViewMobile.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations',
+          name: 'ReservationsMobile',
+          component: () => import('../views/mobile/ReservationViewMobile.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'my-reservations',
+          name: 'MyReservationsMobile',
+          component: () => import('../views/mobile/MyReservationsViewMobile.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'profile',
+          name: 'ProfileMobile',
+          component: () => import('../views/mobile/ProfileViewMobile.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'change-password',
+          name: 'ChangePasswordMobile',
+          component: () => import('../views/mobile/ChangePasswordViewMobile.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'admin',
+          name: 'AdminHomeMobile',
+          component: () => import('../views/mobile/admin/AdminHomeMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'admin/reservations',
+          name: 'AdminReservationsMobile',
+          component: () => import('../views/mobile/admin/AdminReservationsViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'admin/applications',
+          name: 'AdminUserApplicationsMobile',
+          component: () => import('../views/mobile/admin/AdminUserApplicationsViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        }
+      ]
+    },
+    // 모바일 전용 로그인/회원가입 (레이아웃 없음)
+    {
+      path: '/m/login',
+      name: 'LoginMobile',
+      component: () => import('../views/mobile/LoginViewMobile.vue')
+    },
+    {
+      path: '/m/register',
+      name: 'RegisterMobile',
+      component: () => import('../views/mobile/RegisterViewMobile.vue')
     }
   ]
 })
@@ -125,8 +192,29 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Mandatory password change check
-  if (auth.user?.mustChangePassword && to.name !== 'ChangePassword' && to.name !== 'Login') {
-    return next({ name: 'ChangePassword' })
+  if (auth.user?.mustChangePassword && !['ChangePassword', 'ChangePasswordMobile', 'Login', 'LoginMobile'].includes(to.name)) {
+    const target = to.path.startsWith('/m') ? 'ChangePasswordMobile' : 'ChangePassword'
+    return next({ name: target })
+  }
+
+  // Basic Mobile Detection Redirect
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  
+  if (isMobile && !to.path.startsWith('/m')) {
+    if (to.name === 'Login') return next({ name: 'LoginMobile' })
+    if (to.name === 'Register') return next({ name: 'RegisterMobile' })
+    if (to.name === 'ChangePassword') return next({ name: 'ChangePasswordMobile' })
+    
+    // For other protected routes, if user is already on /home, go to /m/home
+    if (to.path.startsWith('/home')) {
+      return next({ path: to.path.replace('/home', '/m/home') })
+    }
+    if (to.path.startsWith('/admin')) {
+      return next({ path: to.path.replace('/admin', '/m/admin') })
+    }
+    
+    // Default mobile entry
+    return next({ path: '/m/home' })
   }
 
   next()
