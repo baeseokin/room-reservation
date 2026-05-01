@@ -1,13 +1,14 @@
 <template>
   <div class="min-h-screen bg-slate-50 flex flex-col font-sans pb-24">
     <!-- Top Bar -->
-    <header class="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-white/80">
-      <div class="flex items-center gap-3">
-        <img src="../assets/logo_wonchon.png" alt="Logo" class="h-8 object-contain" />
-        <h1 class="text-lg font-black text-slate-900 tracking-tight">{{ pageTitle }}</h1>
+    <header class="bg-white border-b border-slate-50 px-6 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl bg-white/90">
+      <div class="flex items-center gap-4">
+        <img src="../assets/logo_wonchon.png" alt="Logo" class="h-7 object-contain opacity-90" />
+        <div class="w-px h-4 bg-slate-200"></div>
+        <h1 class="text-sm font-black text-slate-800 tracking-tight uppercase">{{ pageTitle }}</h1>
       </div>
-      <button @click="logout" class="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-        <ArrowRightOnRectangleIcon class="w-6 h-6" />
+      <button @click="logout" class="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
+        <ArrowRightOnRectangleIcon class="w-5 h-5" />
       </button>
     </header>
 
