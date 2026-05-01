@@ -96,6 +96,7 @@ router.post("/login", async (req, res) => {
       email: user.email,
       phone: user.phone,
       roles,
+      mustChangePassword: !!user.must_change_password
     };
 
     res.json({ success: true, user: req.session.user });
@@ -193,6 +194,41 @@ router.get("/session", (req, res) => {
     res.json({ success: true, user: req.session.user });
   } else {
     res.json({ success: false, user: null });
+  }
+});
+
+/**
+ * Change Password
+ */
+router.post("/change-password", async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const sessionUser = req.session.user;
+
+  if (!sessionUser) return res.status(401).json({ success: false, message: "Login required" });
+  if (!newPassword) return res.status(400).json({ success: false, message: "새 비밀번호를 입력하세요." });
+
+  try {
+    const [users] = await pool.query("SELECT password_hash FROM users WHERE id = ?", [sessionUser.id]);
+    if (users.length === 0) return res.status(404).json({ success: false });
+
+    const user = users[0];
+    
+    // If they have a password, check it
+    if (user.password_hash && currentPassword) {
+      const match = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!match) return res.status(401).json({ success: false, message: "현재 비밀번호가 일치하지 않습니다." });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?", [hash, sessionUser.id]);
+    
+    // Update session
+    req.session.user.mustChangePassword = false;
+    
+    res.json({ success: true, message: "비밀번호가 변경되었습니다." });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ success: false, message: "비밀번호 변경 중 오류가 발생했습니다." });
   }
 });
 

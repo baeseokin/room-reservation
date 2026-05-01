@@ -216,9 +216,9 @@ router.post("/:id/reset-password", isAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     const saltRounds = 10;
-    const password_hash = await bcrypt.hash("woncheon1234!", saltRounds);
-    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [password_hash, id]);
-    res.json({ success: true, message: "비밀번호가 'woncheon1234!'로 초기화되었습니다." });
+    const password_hash = await bcrypt.hash("room00!", saltRounds);
+    await pool.query("UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?", [password_hash, id]);
+    res.json({ success: true, message: "비밀번호가 'room00!'로 초기화되었습니다. 최초 로그인 시 비밀번호를 변경해야 합니다." });
   } catch (err) {
     console.error("Reset Password Error:", err);
     res.status(500).json({ success: false, error: err.message });

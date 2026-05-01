@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20),
   dept_name VARCHAR(100),
   kakao_id VARCHAR(50) UNIQUE,         -- Store Kakao unique identifier
+  must_change_password TINYINT(1) DEFAULT 0, -- Force password change after reset
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (dept_name) REFERENCES departments(dept_name) ON DELETE SET NULL

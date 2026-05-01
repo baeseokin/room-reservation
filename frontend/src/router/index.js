@@ -25,6 +25,12 @@ const router = createRouter({
       name: 'Register',
       component: () => import('../views/RegisterView.vue')
     },
+    {
+      path: '/change-password',
+      name: 'ChangePassword',
+      component: () => import('../views/ChangePasswordView.vue'),
+      meta: { requiresAuth: true }
+    },
 
     // ─── 보호된 라우트 (로그인 필요) ───────────────────────
     {
@@ -116,6 +122,11 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin) {
     if (!auth.user) return next({ name: 'Login' })
     if (!auth.isAdmin) return next({ path: '/home' })
+  }
+
+  // Mandatory password change check
+  if (auth.user?.mustChangePassword && to.name !== 'ChangePassword' && to.name !== 'Login') {
+    return next({ name: 'ChangePassword' })
   }
 
   next()

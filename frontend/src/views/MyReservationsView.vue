@@ -200,6 +200,11 @@ const allTimeSlots = computed(() => {
 })
 
 const updateReservation = async () => {
+  if (editForm.value.start_time >= editForm.value.end_time) {
+    alert('종료 시간은 시작 시간보다 늦어야 합니다.')
+    return
+  }
+
   try {
     await axios.put(`/api/reservations/${editingRes.value.id}`, editForm.value)
     alert('예약이 수정되었습니다.')

@@ -550,6 +550,49 @@ router.put("/:id", isLogged, async (req, res) => {
             return res.status(403).json({ success: false, message: "No permission" });
         }
 
+        const room_id = record[0].room_id;
+
+        // 1. Conflict check against other 'approved' and 'pending' reservations
+        const [conflicts] = await pool.query(
+            `SELECT * FROM reservations 
+             WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending') AND id != ?
+             AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+            [room_id, reservation_date, id, start_time, start_time, end_time, end_time, start_time, end_time]
+        );
+
+        if (conflicts.length > 0) {
+            return res.status(409).json({ 
+                success: false, 
+                message: "이미 해당 시간에 승인되었거나 대기 중인 다른 예약이 있습니다." 
+            });
+        }
+
+        // 2. Check against room_blocked_times
+        const d = new Date(reservation_date + 'T00:00:00');
+        const dayOfWeek = d.getDay();
+        const dayOfMonth = d.getDate();
+        const nthWeek = Math.ceil(dayOfMonth / 7);
+
+        const [blockedConflicts] = await pool.query(
+            `SELECT * FROM room_blocked_times
+             WHERE room_id = ?
+             AND (
+               (recurring_type = 'weekly' AND day_of_week = ?) OR
+               (recurring_type = 'monthly_date' AND day_of_month = ?) OR
+               (recurring_type = 'monthly_nth' AND nth_week = ? AND day_of_week = ?)
+             )
+             AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+            [room_id, dayOfWeek, dayOfMonth, nthWeek, dayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+        );
+
+        if (blockedConflicts.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: "해당 시간은 공간 관리자에 의해 예약이 불가한 시간으로 설정되어 있습니다.",
+                reason: blockedConflicts[0].reason
+            });
+        }
+
         await pool.query(
             "UPDATE reservations SET start_time = ?, end_time = ?, reason = ?, reservation_date = ?, title = ? WHERE id = ?",
             [start_time, end_time, reason, reservation_date, title, id]

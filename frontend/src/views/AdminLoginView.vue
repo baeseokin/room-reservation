@@ -121,11 +121,17 @@ const handleLogin = async () => {
   // adminLogin is still the generic login action in store
   const result = await auth.adminLogin(userId.value, password.value)
   if (result.success) {
+    // Check if password change is required
+    if (auth.user.mustChangePassword) {
+      router.push({ name: 'ChangePassword' })
+      return
+    }
+
     // Redirect based on role
     if (auth.isAdmin) {
       router.push('/admin')
     } else {
-      router.push('/home') // Or wherever general users should go
+      router.push('/home')
     }
   } else {
     errorMsg.value = result.message || '아이디 또는 비밀번호가 일치하지 않습니다.'

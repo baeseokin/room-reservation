@@ -101,7 +101,7 @@ const handleUpdate = async () => {
 }
 
 const resetPassword = async (user) => {
-  if (!confirm(`'${user.user_name}'님의 비밀번호를 'woncheon1234!'로 초기화하시겠습니까?`)) return
+  if (!confirm(`'${user.user_name}'님의 비밀번호를 'room00!'로 초기화하시겠습니까?`)) return
   try {
     const res = await axios.post(`/api/users/${user.id}/reset-password`)
     alert(res.data.message)
