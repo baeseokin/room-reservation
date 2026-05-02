@@ -60,6 +60,7 @@ async function sendNewReservationToAdmin(reservation, adminPhone) {
  * 예약 승인 → 신청자에게 알림
  */
 async function sendApprovalAlimTalk(reservation) {
+  console.log("✅ sendApprovalAlimTalk reservation :", reservation);
   const templateId = envPick("SENDON_TEMPLATE_APPROVED", "");
   if (!templateId || !reservation.requester_phone) {
     console.warn("⚠️  승인 알림톡 설정 미비 — 건너뜀");
