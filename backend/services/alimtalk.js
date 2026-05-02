@@ -33,6 +33,8 @@ async function sendAlimTalk(options) {
  * 새 예약 신청 → 관리자에게 알림
  */
 async function sendNewReservationToAdmin(reservation, adminPhone) {
+  console.log("✅ sendNewReservationToAdmin reservation :", reservation);
+  console.log("✅ sendNewReservationToAdmin adminPhone :", adminPhone);
   const templateId = envPick("SENDON_TEMPLATE_NEW_RESERVATION", "");
   if (!templateId) {
     console.warn("⚠️  SENDON_TEMPLATE_NEW_RESERVATION 미설정 — 알림톡 건너뜀");
@@ -88,6 +90,8 @@ async function sendApprovalAlimTalk(reservation) {
  * 예약 거부 → 신청자에게 알림
  */
 async function sendRejectionAlimTalk(reservation, reason) {
+  console.log("✅ sendRejectionAlimTalk reservation :", reservation);
+  console.log("✅ sendRejectionAlimTalk reason :", reason);
   const templateId = envPick("SENDON_TEMPLATE_REJECTED", "");
   if (!templateId || !reservation.requester_phone) {
     console.warn("⚠️  거부 알림톡 설정 미비 — 건너뜀");
