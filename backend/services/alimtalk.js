@@ -47,6 +47,7 @@ async function sendNewReservationToAdmin(reservation, adminPhone) {
         phone: adminPhone.replace(/-/g, ""),
         variables: {
           "#{진행상태}": "신청",
+          "#{예약자명}": reservation.requester_name,
           "#{예약일}": reservation.reservation_date,
           "#{예약시작시간}": reservation.start_time,
           "#{예약종료시간}": reservation.end_time,
@@ -75,6 +76,7 @@ async function sendApprovalAlimTalk(reservation) {
         phone: reservation.requester_phone.replace(/-/g, ""),
         variables: {
           "#{진행상태}": "승인",
+          "#{예약자명}": reservation.requester_name,
           "#{예약일}": reservation.reservation_date,
           "#{예약시작시간}": reservation.start_time,
           "#{예약종료시간}": reservation.end_time,
@@ -104,6 +106,7 @@ async function sendRejectionAlimTalk(reservation, reason) {
         phone: reservation.requester_phone.replace(/-/g, ""),
         variables: {
           "#{진행상태}": "거절",
+          "#{예약자명}": reservation.requester_name,
           "#{예약일}": reservation.reservation_date,
           "#{예약시작시간}": reservation.start_time,
           "#{예약종료시간}": reservation.end_time,

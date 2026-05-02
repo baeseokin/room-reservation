@@ -222,7 +222,7 @@ router.post("/", async (req, res) => {
     await conn.commit();
 
     // 3. Send AlimTalk to ALL admins
-    const [rooms] = await pool.query("SELECT room_name FROM rooms WHERE id = ?", [room_id]);
+    const [rooms] = await pool.query("SELECT room_name, floor FROM rooms WHERE id = ?", [room_id]);
     const roomInfo = rooms[0];
 
     if (roomInfo) {
@@ -237,6 +237,7 @@ router.post("/", async (req, res) => {
         for (const admin of admins) {
           await sendNewReservationToAdmin({
             room_name: roomInfo.room_name,
+            floor: roomInfo.floor,
             reservation_date,
             start_time,
             end_time,
@@ -272,7 +273,7 @@ router.patch("/bulk-approve", isLogged, isAdmin, async (req, res) => {
 
     // Send approval alimtalks
     const [rows] = await pool.query(
-      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
+      `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
     );
     for (const row of rows) {
       if (row.requester_phone) {
@@ -303,7 +304,7 @@ router.patch("/bulk-reject", isLogged, isAdmin, async (req, res) => {
 
     // Send rejection alimtalks
     const [rows] = await pool.query(
-      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
+      `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
     );
     for (const row of rows) {
       if (row.requester_phone) {
@@ -325,7 +326,7 @@ router.patch("/:id/approve", isLogged, isAdmin, async (req, res) => {
   try {
     await pool.query("UPDATE reservations SET status = 'approved' WHERE id = ?", [id]);
     const [rows] = await pool.query(
-      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
+      `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
     );
     if (rows.length > 0 && rows[0].requester_phone) {
       sendApprovalAlimTalk(rows[0]).catch(e => console.error("Approval AlimTalk skip:", e.message));
@@ -348,7 +349,7 @@ router.patch("/:id/reject", isLogged, isAdmin, async (req, res) => {
       [reject_reason || null, id]
     );
     const [rows] = await pool.query(
-      `SELECT r.*, rm.room_name FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
+      `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`, [id]
     );
     if (rows.length > 0 && rows[0].requester_phone) {
       sendRejectionAlimTalk(rows[0], reject_reason).catch(e => console.error("Rejection AlimTalk skip:", e.message));
@@ -375,7 +376,7 @@ router.post("/inquiry", isLogged, async (req, res) => {
 
     // 2. Send AlimTalk to original requester
     const [original] = await pool.query(
-      `SELECT r.*, rm.room_name FROM reservations r 
+      `SELECT r.*, rm.room_name, rm.floor FROM reservations r 
        JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`,
       [reservation_id]
     );
