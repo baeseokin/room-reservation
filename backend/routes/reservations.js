@@ -275,8 +275,14 @@ router.patch("/bulk-approve", isLogged, isAdmin, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
     );
+    const sentSignatures = new Set();
     for (const row of rows) {
       if (row.requester_phone) {
+        if (row.is_recurring) {
+          const signature = `${row.requester_phone}_${row.room_id}_${row.start_time}_${row.end_time}_${row.title}`;
+          if (sentSignatures.has(signature)) continue;
+          sentSignatures.add(signature);
+        }
         sendApprovalAlimTalk(row).catch(e => console.error("Bulk Approval AlimTalk skip:", e.message));
       }
     }
@@ -306,8 +312,14 @@ router.patch("/bulk-reject", isLogged, isAdmin, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT r.*, rm.room_name, rm.floor FROM reservations r JOIN rooms rm ON r.room_id = rm.id WHERE r.id IN (?)`, [ids]
     );
+    const sentSignatures = new Set();
     for (const row of rows) {
       if (row.requester_phone) {
+        if (row.is_recurring) {
+          const signature = `${row.requester_phone}_${row.room_id}_${row.start_time}_${row.end_time}_${row.title}`;
+          if (sentSignatures.has(signature)) continue;
+          sentSignatures.add(signature);
+        }
         sendRejectionAlimTalk(row, reject_reason).catch(e => console.error("Bulk Rejection AlimTalk skip:", e.message));
       }
     }
