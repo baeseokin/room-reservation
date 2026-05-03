@@ -5,7 +5,7 @@
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">나의 예약</h2>
         <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">내가 신청한 예약 목록입니다.</p>
       </div>
-      <button @click="fetchMyReservations" class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:rotate-180 transition-all duration-500">
+      <button @click="fetchMyReservations" class="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-400 active:rotate-180 transition-all duration-500">
         <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
       </button>
     </div>
@@ -21,7 +21,7 @@
     <div v-else class="space-y-4">
       <div v-for="res in reservations" :key="res.id" 
         @click="openDetail(res)"
-        class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4 active:scale-[0.98] transition-all">
+        class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-4 active:scale-[0.98] transition-all">
         <div class="flex justify-between items-start">
           <span :class="statusMap[getEffectiveStatus(res)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
             {{ statusMap[getEffectiveStatus(res)]?.label || getEffectiveStatus(res) }}
@@ -66,7 +66,7 @@
               </div>
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-[2rem] space-y-4">
+            <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-4">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-black text-slate-400 uppercase tracking-widest">사용 목적</span>
                 <span class="text-xs font-bold text-slate-700">{{ editingRes?.reason }}</span>

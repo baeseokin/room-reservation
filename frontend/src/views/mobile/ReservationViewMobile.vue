@@ -6,13 +6,19 @@
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">공간 예약</h2>
         <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">원하시는 방식으로 예약해 보세요.</p>
       </div>
-      
-      <!-- Calendar Trigger -->
-      <button @click="showCalendar = true" class="flex flex-col items-center justify-center bg-white border border-slate-100 shadow-xl shadow-slate-200/50 w-16 h-16 rounded-2xl active:scale-95 transition-all">
-        <CalendarIcon class="w-6 h-6 text-indigo-600" />
-        <span class="text-[10px] font-black text-slate-900 mt-1">{{ selectedDate.split('-')[2] }}일</span>
-      </button>
     </div>
+
+    <!-- Date Picker Trigger (Moved Above Switcher) -->
+    <button @click="showCalendar = true" 
+      class="w-full bg-indigo-50 border border-indigo-100 px-6 py-4 rounded-2xl flex items-center justify-between active:scale-[0.98] transition-all">
+       <div class="flex items-center gap-3">
+         <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+           <CalendarDaysIcon class="w-5 h-5 text-indigo-600" />
+         </div>
+         <span class="text-base font-black text-indigo-900">{{ formattedSelectedDate }}</span>
+       </div>
+       <ChevronDownIcon class="w-5 h-5 text-indigo-300" />
+    </button>
 
     <!-- Mode Switcher -->
     <div class="bg-slate-100 p-1.5 rounded-[2rem] flex items-center gap-1">
@@ -24,22 +30,13 @@
       </button>
     </div>
 
-    <!-- Selected Date Display (Mini) -->
-    <div class="bg-indigo-50 px-6 py-3 rounded-2xl flex items-center justify-between">
-       <div class="flex items-center gap-2">
-         <CalendarDaysIcon class="w-4 h-4 text-indigo-400" />
-         <span class="text-sm font-black text-indigo-900">{{ formattedSelectedDate }}</span>
-       </div>
-       <span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">선택된 일자</span>
-    </div>
-
     <!-- Mode: By Room -->
     <div v-if="mode === 'room'" class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <!-- Floor Selector -->
       <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button v-for="f in floorOptions" :key="f"
           @click="selectedFloor = f"
-          :class="[selectedFloor === f ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-100']"
+          :class="[selectedFloor === f ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-200']"
           class="px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all shrink-0">
           {{ f }}
         </button>
@@ -49,7 +46,7 @@
       <div class="space-y-4">
         <div v-for="room in filteredRooms" :key="room.id" 
           @click="openRoomDetail(room)"
-          class="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
+          class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400">
               {{ room.floor }}
@@ -69,17 +66,17 @@
 
     <!-- Mode: By Time -->
     <div v-else class="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
-       <div class="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+       <div class="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
           <div class="grid grid-cols-2 gap-4">
              <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">시작 시간</label>
-                <select v-model="searchForm.start_time" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-2 font-black text-center text-slate-700">
+                <select v-model="searchForm.start_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                 </select>
              </div>
              <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">종료 시간</label>
-                <select v-model="searchForm.end_time" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-2 font-black text-center text-slate-700">
+                <select v-model="searchForm.end_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                 </select>
              </div>
@@ -96,7 +93,7 @@
           </div>
           <div v-for="room in availableRooms" :key="room.id"
             @click="openReservationForm(room)"
-            class="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
+            class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
             <div class="flex items-center gap-4">
                <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center font-black text-indigo-400">
                  {{ room.floor }}
@@ -202,13 +199,13 @@
 
             <!-- Time Selection (In form) -->
             <div class="grid grid-cols-2 gap-4">
-              <div class="bg-slate-50 p-5 rounded-[2rem] space-y-1">
+              <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
                 <label class="text-[10px] font-black text-slate-400 uppercase text-center block tracking-widest">시작 시간</label>
                 <select v-model="form.start_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                 </select>
               </div>
-              <div class="bg-slate-50 p-5 rounded-[2rem] space-y-1">
+              <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
                 <label class="text-[10px] font-black text-slate-400 uppercase text-center block tracking-widest">종료 시간</label>
                 <select v-model="form.end_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
@@ -216,12 +213,12 @@
               </div>
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-[2rem] space-y-2">
+            <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">신청 명칭</label>
               <input v-model="form.title" type="text" placeholder="예: 청년부 모임" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 focus:ring-0" />
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-[2rem] space-y-2">
+            <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">상세 내용</label>
               <textarea v-model="form.reason" placeholder="사용 목적을 입력하세요" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 h-24 resize-none focus:ring-0"></textarea>
             </div>

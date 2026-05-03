@@ -6,7 +6,7 @@
     </div>
 
     <!-- Profile Header -->
-    <div class="flex flex-col items-center gap-4 py-8 bg-white rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+    <div class="flex flex-col items-center gap-4 py-8 bg-white rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50">
       <div class="w-24 h-24 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 text-3xl font-black">
         {{ auth.user?.userName.charAt(0) }}
       </div>
@@ -18,7 +18,7 @@
 
     <!-- Info List -->
     <div class="space-y-4">
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 flex items-center justify-between">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <div class="p-3 bg-slate-50 rounded-2xl text-slate-400"><BuildingOfficeIcon class="w-5 h-5" /></div>
           <div>
@@ -28,7 +28,7 @@
         </div>
       </div>
 
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 flex items-center justify-between">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <div class="p-3 bg-slate-50 rounded-2xl text-slate-400"><PhoneIcon class="w-5 h-5" /></div>
           <div>

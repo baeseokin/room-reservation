@@ -29,13 +29,13 @@
         <div class="space-y-1.5">
           <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
           <input v-model="userId" type="text" placeholder="아이디 입력" 
-            class="w-full bg-slate-50 border-none rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
         </div>
 
         <div class="space-y-1.5">
           <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
           <input v-model="password" type="password" placeholder="비밀번호 입력" 
-            class="w-full bg-slate-50 border-none rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
         </div>
 
         <button :disabled="isLoading" type="submit" 

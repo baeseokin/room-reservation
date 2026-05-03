@@ -17,8 +17,8 @@
           <div class="text-3xl font-black">{{ myResCount }}건</div>
         </div>
       </div>
-      <div @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
-        <div class="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center">
+      <div @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+        <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
           <PlusIcon class="w-6 h-6 text-indigo-600" />
         </div>
         <div>
@@ -35,9 +35,9 @@
         <router-link to="/m/my-reservations" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">전체보기</router-link>
       </div>
 
-      <div v-if="upcomingRes" class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col gap-4">
+      <div v-if="upcomingRes" class="bg-white p-6 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col gap-4">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+          <div class="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
             <MapPinIcon class="w-6 h-6" />
           </div>
           <div>
@@ -45,7 +45,7 @@
             <div class="text-lg font-black text-slate-900">{{ upcomingRes.title || '공간 사용' }}</div>
           </div>
         </div>
-        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+        <div class="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-2xl">
           <div class="flex items-center gap-2">
             <CalendarDaysIcon class="w-4 h-4 text-slate-400" />
             <span class="text-xs font-bold text-slate-600">{{ upcomingRes.reservation_date }}</span>
