@@ -3,6 +3,9 @@ import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 import { PlusIcon, PencilIcon, TrashIcon, BuildingOffice2Icon, HomeIcon, ArrowPathIcon, ClockIcon, NoSymbolIcon } from '@heroicons/vue/24/outline'
 
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 const rooms = ref([])
 const departments = ref([])
 const isLoading = ref(false)
@@ -117,7 +120,7 @@ const openModal = (floor = '', room = null) => {
 
 const saveRoom = async () => {
   if (form.value.capacity && parseInt(form.value.capacity) <= 0) {
-    return alert('수용인원은 1명 이상의 양수만 입력 가능합니다.')
+    return modal.showAlert('수용인원은 1명 이상의 양수만 입력 가능합니다.')
   }
   try {
     const formData = new FormData()
@@ -143,12 +146,12 @@ const saveRoom = async () => {
     showModal.value = false
     fetchRooms()
   } catch (err) {
-    alert('저장에 실패했습니다: ' + (err.response?.data?.error || err.message))
+    modal.showAlert('저장에 실패했습니다: ' + (err.response?.data?.error || err.message))
   }
 }
 
 const deleteRoom = async (id) => {
-  if (confirm('정말 삭제하시겠습니까?')) {
+  if (await modal.showConfirm('정말 삭제하시겠습니까?')) {
     await axios.delete(`/api/rooms/${id}`)
     fetchRooms()
   }
@@ -171,12 +174,12 @@ const addBlockedTime = async () => {
     blockedForm.value.reason = ''
     fetchBlockedTimes(currentRoomForBlocked.value.id)
   } catch (err) {
-    alert('등록 실패: ' + (err.response?.data?.error || err.message))
+    modal.showAlert('등록 실패: ' + (err.response?.data?.error || err.message))
   }
 }
 
 const deleteBlockedTime = async (blockedId) => {
-  if (confirm('삭제하시겠습니까?')) {
+  if (await modal.showConfirm('삭제하시겠습니까?')) {
     await axios.delete(`/api/rooms/blocked-times/${blockedId}`)
     fetchBlockedTimes(currentRoomForBlocked.value.id)
   }

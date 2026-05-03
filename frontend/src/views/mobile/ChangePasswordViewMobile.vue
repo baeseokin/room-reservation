@@ -43,6 +43,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../store/auth'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -66,7 +69,7 @@ const handleSubmit = async () => {
   try {
     const res = await axios.post('/api/auth/change-password', form.value)
     if (res.data.success) {
-      alert('비밀번호가 변경되었습니다. 다시 로그인해 주세요.')
+      await modal.showAlert('비밀번호가 변경되었습니다. 다시 로그인해 주세요.')
       auth.logout()
     }
   } catch (e) {

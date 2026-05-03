@@ -23,8 +23,8 @@
         @click="openDetail(res)"
         class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4 active:scale-[0.98] transition-all">
         <div class="flex justify-between items-start">
-          <span :class="statusMap[res.status]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
-            {{ statusMap[res.status]?.label || res.status }}
+          <span :class="statusMap[getEffectiveStatus(res)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
+            {{ statusMap[getEffectiveStatus(res)]?.label || getEffectiveStatus(res) }}
           </span>
           <div class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">{{ res.floor }} / {{ res.room_name }}</div>
         </div>
@@ -57,7 +57,7 @@
           <div class="space-y-8">
             <div class="flex justify-between items-start">
               <div>
-                <span :class="statusMap[editingRes?.status]?.class" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">{{ statusMap[editingRes?.status]?.label }}</span>
+                <span :class="statusMap[getEffectiveStatus(editingRes)]?.class" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">{{ statusMap[getEffectiveStatus(editingRes)]?.label }}</span>
                 <h3 class="text-2xl font-black text-slate-900 pt-3">{{ editingRes?.title || '예약 상세' }}</h3>
               </div>
               <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex flex-col items-center justify-center">
@@ -94,6 +94,9 @@ import axios from 'axios'
 import { useAuthStore } from '../../store/auth'
 import { ArrowPathIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 const auth = useAuthStore()
 const reservations = ref([])
 const loading = ref(false)
@@ -104,7 +107,17 @@ const statusMap = {
   pending: { label: '대기중', class: 'bg-amber-50 text-amber-600' },
   approved: { label: '승인됨', class: 'bg-green-50 text-green-600' },
   rejected: { label: '반려됨', class: 'bg-rose-50 text-rose-600' },
-  cancelled: { label: '취소됨', class: 'bg-slate-100 text-slate-400' }
+  cancelled: { label: '취소됨', class: 'bg-slate-100 text-slate-400' },
+  finished: { label: '종료됨', class: 'bg-slate-100 text-slate-400' }
+}
+
+const getEffectiveStatus = (res) => {
+  if (!res) return ''
+  if (res.status === 'approved') {
+    const end = new Date(`${res.reservation_date}T${res.end_time}`)
+    if (new Date() > end) return 'finished'
+  }
+  return res.status
 }
 
 const fetchMyReservations = async () => {
@@ -124,14 +137,14 @@ const openDetail = (res) => {
 }
 
 const cancelReservation = async () => {
-  if (!confirm('정말 예약을 취소하시겠습니까?')) return
+  if (!await modal.showConfirm('정말 예약을 취소하시겠습니까?')) return
   try {
     await axios.delete(`/api/reservations/${editingRes.value.id}`)
-    alert('취소되었습니다.')
+    modal.showAlert('취소되었습니다.')
     showDetail.value = false
     fetchMyReservations()
   } catch (e) {
-    alert('취소 실패')
+    modal.showAlert('취소 실패')
   }
 }
 </script>

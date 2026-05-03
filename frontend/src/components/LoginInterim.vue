@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { useAuthStore } from '../store/auth'
 import { useRouter } from 'vue-router'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const userId = ref('')
 const authStore = useAuthStore()
@@ -15,7 +18,7 @@ const handleLogin = async () => {
   if (success) {
     router.push('/')
   } else {
-    alert('로그인에 실패했습니다.')
+    modal.showAlert('로그인에 실패했습니다.')
   }
   isLoading.value = false
 }

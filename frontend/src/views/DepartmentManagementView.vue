@@ -2,11 +2,14 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import DeptTreeNode from '../components/DeptTreeNode.vue'
+import { useModalStore } from '@/stores/useModalStore'
 import { 
   BuildingOfficeIcon, 
   PlusIcon, 
   ArrowPathIcon 
 } from '@heroicons/vue/24/outline'
+
+const modal = useModalStore()
 
 const departments = ref([])
 const loading = ref(false)
@@ -97,7 +100,7 @@ const openModal = (dept = null, parentId = null) => {
 }
 
 const saveDepartment = async () => {
-  if (!form.value.dept_name) return alert('부서명을 입력하세요.')
+  if (!form.value.dept_name) return modal.showAlert('부서명을 입력하세요.')
   
   try {
     if (editingDept.value) {
@@ -108,17 +111,17 @@ const saveDepartment = async () => {
     showModal.value = false
     fetchDepartments()
   } catch (error) {
-    alert(error.response?.data?.message || '저장 중 오류가 발생했습니다.')
+    modal.showAlert(error.response?.data?.message || '저장 중 오류가 발생했습니다.')
   }
 }
 
 const deleteDepartment = async (id) => {
-  if (confirm('이 부서를 삭제하시겠습니까? 하위 부서가 있는 경우 함께 확인이 필요할 수 있습니다.')) {
+  if (await modal.showConfirm('이 부서를 삭제하시겠습니까? 하위 부서가 있는 경우 함께 확인이 필요할 수 있습니다.')) {
     try {
       await axios.delete(`/api/departments/${id}`)
       fetchDepartments()
     } catch (error) {
-      alert('삭제 중 오류가 발생했습니다.')
+      modal.showAlert('삭제 중 오류가 발생했습니다.')
     }
   }
 }

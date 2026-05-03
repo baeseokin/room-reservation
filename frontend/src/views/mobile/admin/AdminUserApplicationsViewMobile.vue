@@ -41,6 +41,9 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { BuildingOfficeIcon, PhoneIcon } from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const apps = ref([])
 const loading = ref(false)
@@ -57,13 +60,13 @@ const fetchApps = async () => {
 onMounted(fetchApps)
 
 const approve = async (app) => {
-  if (!confirm('승인하시겠습니까?')) return
+  if (!await modal.showConfirm('승인하시겠습니까?')) return
   await axios.patch(`/api/users/${app.id}/approve`, { roleNames: ['사용자'] })
   fetchApps()
 }
 
 const reject = async (app) => {
-  if (!confirm('신청을 거절하고 삭제하시겠습니까?')) return
+  if (!await modal.showConfirm('신청을 거절하고 삭제하시겠습니까?')) return
   await axios.delete(`/api/users/${app.id}`)
   fetchApps()
 }

@@ -1,20 +1,30 @@
 <template>
   <div class="min-h-screen bg-white flex flex-col p-8 font-sans overflow-hidden relative">
-    <!-- Decor -->
+    <!-- Decor Blobs -->
     <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-60"></div>
     <div class="absolute top-1/2 -left-24 w-64 h-64 bg-blue-50 rounded-full blur-3xl opacity-60"></div>
 
     <div class="relative z-10 flex flex-col h-full">
-      <div class="mt-12 mb-16 text-center">
-        <img src="../../assets/logo_wonchon.png" alt="Logo" class="h-16 mx-auto mb-6 drop-shadow-sm" />
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">공간 예약 시스템</h1>
-        <p class="text-slate-400 text-sm font-bold uppercase tracking-widest mt-2">Mobile Portal</p>
+      <!-- Premium Header (Kept from new design) -->
+      <div class="mt-8 mb-12 text-center relative">
+        <div class="relative inline-block mb-2">
+          <img src="../../assets/login_bg.png" alt="Wonchon Church" class="w-48 mx-auto opacity-70 mix-blend-multiply" />
+          <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
+        </div>
+        
+        <div class="space-y-0.5 relative -mt-10">
+          <h1 class="text-3xl font-black text-slate-800 tracking-tighter leading-tight">원천교회</h1>
+          <h2 class="text-3xl font-black text-indigo-600 tracking-tighter leading-tight">공간예약 시스템</h2>
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] pt-3">Wonchon Space Reservation System</p>
+        </div>
       </div>
 
+      <!-- Form Error Message -->
       <div v-if="errorMsg" class="bg-rose-50 text-rose-500 text-xs font-black p-4 rounded-2xl mb-6 text-center border border-rose-100 animate-in fade-in slide-in-from-top-2">
         {{ errorMsg }}
       </div>
 
+      <!-- Restored Original Form Design -->
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-1.5">
           <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
@@ -35,7 +45,7 @@
       </form>
 
       <div class="mt-8 flex justify-center gap-6">
-        <router-link to="/register" class="text-xs font-black text-indigo-600 uppercase tracking-widest">신규 회원가입</router-link>
+        <router-link to="/m/register" class="text-xs font-black text-indigo-600 uppercase tracking-widest">신규 회원가입</router-link>
       </div>
 
       <div class="mt-auto pt-12 text-center">
@@ -79,3 +89,20 @@ const handleLogin = async () => {
   isLoading.value = false
 }
 </script>
+
+<style scoped>
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInFromTop {
+  from { transform: translateY(-0.5rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+.fade-in { animation-name: fadeIn; }
+.slide-in-from-top-2 { animation-name: slideInFromTop; }
+</style>

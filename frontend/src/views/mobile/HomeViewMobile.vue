@@ -92,12 +92,45 @@ const myResCount = ref(0)
 onMounted(async () => {
   try {
     const today = new Date().toISOString().split('T')[0]
-    const res = await axios.get(`/api/reservations?user_id=${auth.user.id}&start_date=${today}`)
+    // Fetch user's reservations from today onwards
+    const res = await axios.get(`/api/reservations`, { 
+      params: { 
+        user_id: auth.user.id,
+        status: 'all'
+      } 
+    })
     const all = res.data
-    myResCount.value = all.length
-    if (all.length > 0) {
-      upcomingRes.value = all[0]
+    
+    // Count only active/approved reservations that are NOT finished
+    const now = new Date()
+    const activeReservations = all.filter(r => {
+      if (r.status === 'rejected' || r.status === 'cancelled') return false
+      
+      // Check if finished
+      const endTime = new Date(`${r.reservation_date}T${r.end_time}`)
+      return endTime > now
+    })
+    
+    myResCount.value = activeReservations.length
+
+    // Find upcoming reservation (future only, closest to now)
+    const futureOnly = activeReservations.filter(r => {
+      const startTime = new Date(`${r.reservation_date}T${r.start_time}`)
+      return startTime > now
+    })
+
+    // Sort by date and then start time
+    futureOnly.sort((a, b) => {
+      const timeA = new Date(`${a.reservation_date}T${a.start_time}`).getTime()
+      const timeB = new Date(`${b.reservation_date}T${b.start_time}`).getTime()
+      return timeA - timeB
+    })
+
+    if (futureOnly.length > 0) {
+      upcomingRes.value = futureOnly[0]
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('Home stats fetch error:', e)
+  }
 })
 </script>

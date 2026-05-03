@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { CheckCircleIcon, XCircleIcon, ClockIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
 
+const modal = useModalStore()
 const allReservations = ref([])
 const isLoading = ref(false)
 const filterStatus = ref('pending')
@@ -51,22 +52,30 @@ const fetchReservations = async () => {
 }
 
 const approve = async (id) => {
-  if (!confirm('이 예약을 승인하시겠습니까? 신청자에게 알림톡이 발송됩니다.')) return
-  await axios.patch(`/api/reservations/${id}/approve`)
-  await fetchReservations()
+  if (!await modal.showConfirm('이 예약을 승인하시겠습니까? 신청자에게 알림톡이 발송됩니다.')) return
+  isLoading.value = true
+  try {
+    await axios.patch(`/api/reservations/${id}/approve`)
+    modal.showAlert('예약이 승인되었습니다.')
+    await fetchReservations()
+  } catch (e) {
+    modal.showAlert(e.response?.data?.message || '승인 처리 중 오류가 발생했습니다.')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const bulkApprove = async () => {
   if (selectedIds.value.length === 0) return
-  if (!confirm(`선택한 ${selectedIds.value.length}건의 예약을 일괄 승인하시겠습니까?`)) return
+  if (!await modal.showConfirm(`선택한 ${selectedIds.value.length}건의 예약을 일괄 승인하시겠습니까?`)) return
   
   isLoading.value = true
   try {
     await axios.patch('/api/reservations/bulk-approve', { ids: selectedIds.value })
-    alert('일괄 승인되었습니다.')
+    modal.showAlert('일괄 승인되었습니다.')
     await fetchReservations()
   } catch (e) {
-    alert('일괄 처리 중 오류가 발생했습니다.')
+    modal.showAlert('일괄 처리 중 오류가 발생했습니다.')
   } finally {
     isLoading.value = false
   }
@@ -91,7 +100,7 @@ const confirmReject = async () => {
         ids: selectedIds.value,
         reject_reason: rejectReason.value
       })
-      alert('일괄 거부되었습니다.')
+      modal.showAlert('일괄 거부되었습니다.')
     } else {
       await axios.patch(`/api/reservations/${selectedReservation.value.id}/reject`, {
         reject_reason: rejectReason.value
@@ -100,7 +109,7 @@ const confirmReject = async () => {
     showRejectModal.value = false
     await fetchReservations()
   } catch (e) {
-    alert('처리 중 오류가 발생했습니다.')
+    modal.showAlert('처리 중 오류가 발생했습니다.')
   } finally {
     isLoading.value = false
   }

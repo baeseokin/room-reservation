@@ -1,19 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
-import { 
-  UserIcon, 
-  MagnifyingGlassIcon, 
-  PencilIcon, 
-  KeyIcon, 
-  TrashIcon, 
-  ShieldCheckIcon,
-  XMarkIcon,
-  ArrowPathIcon,
-  BuildingOfficeIcon,
-  PhoneIcon
-} from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
+import { MagnifyingGlassIcon, ArrowPathIcon, UserIcon, BuildingOfficeIcon, PhoneIcon, PencilSquareIcon, KeyIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
+const modal = useModalStore()
 const users = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -92,32 +83,32 @@ const openEdit = (user) => {
 const handleUpdate = async () => {
   try {
     await axios.put(`/api/users/${selectedUser.value.id}`, form.value)
-    alert('사용자 정보가 성공적으로 수정되었습니다.')
+    modal.showAlert('사용자 정보가 성공적으로 수정되었습니다.')
     showEditModal.value = false
     fetchUsers()
   } catch (error) {
-    alert('수정 중 오류가 발생했습니다.')
+    modal.showAlert('수정 중 오류가 발생했습니다.')
   }
 }
 
 const resetPassword = async (user) => {
-  if (!confirm(`'${user.user_name}'님의 비밀번호를 'room00!'로 초기화하시겠습니까?`)) return
+  if (!await modal.showConfirm(`'${user.user_name}'님의 비밀번호를 'room00!'로 초기화하시겠습니까?`)) return
   try {
     const res = await axios.post(`/api/users/${user.id}/reset-password`)
-    alert(res.data.message)
+    modal.showAlert(res.data.message)
   } catch (error) {
-    alert('비밀번호 초기화 실패')
+    modal.showAlert('비밀번호 초기화 실패')
   }
 }
 
 const deleteUser = async (user) => {
-  if (!confirm(`'${user.user_name}'님을 강제 탈퇴시키겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return
+  if (!await modal.showConfirm(`'${user.user_name}'님을 강제 탈퇴시키겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return
   try {
     await axios.delete(`/api/users/${user.id}`)
-    alert('탈퇴 처리가 완료되었습니다.')
+    modal.showAlert('탈퇴 처리가 완료되었습니다.')
     fetchUsers()
   } catch (error) {
-    alert(error.response?.data?.message || '삭제 실패')
+    modal.showAlert(error.response?.data?.message || '삭제 실패')
   }
 }
 

@@ -1,20 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import { 
-  UserPlusIcon, 
-  CheckCircleIcon, 
-  XCircleIcon,
-  PhoneIcon,
-  BuildingOfficeIcon,
-  EnvelopeIcon,
-  ClockIcon,
-  XMarkIcon,
-  ShieldCheckIcon,
-  UserIcon,
-  ArrowPathIcon
-} from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
 
+const modal = useModalStore()
 const applications = ref([])
 const loading = ref(false)
 const showApproveModal = ref(false)
@@ -49,21 +38,21 @@ const handleApprove = async () => {
         await axios.patch(`/api/users/${selectedUser.value.id}/approve`, {
             roleNames: selectedRoles.value
         })
-        alert(`${selectedUser.value.user_name}님의 가입이 승인되었습니다.`)
+        modal.showAlert(`${selectedUser.value.user_name}님의 가입이 승인되었습니다.`)
         showApproveModal.value = false
         fetchApplications()
     } catch (error) {
-        alert(error.response?.data?.message || '승인 처리 중 오류가 발생했습니다.')
+        modal.showAlert(error.response?.data?.message || '승인 처리 중 오류가 발생했습니다.')
     }
 }
 
 const rejectUser = async (user) => {
-    if (!confirm(`${user.user_name}님의 가입 신청을 거절하시겠습니까?`)) return
+    if (!await modal.showConfirm(`${user.user_name}님의 가입 신청을 거절하시겠습니까?`)) return
     try {
         await axios.delete(`/api/users/${user.id}`)
         fetchApplications()
     } catch (error) {
-        alert('거절 처리 중 오류가 발생했습니다.')
+        modal.showAlert('거절 처리 중 오류가 발생했습니다.')
     }
 }
 

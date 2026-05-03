@@ -76,6 +76,9 @@ import { useAuthStore } from '../store/auth'
 import { useRouter } from 'vue-router'
 import { LockClosedIcon } from '@heroicons/vue/24/outline'
 import axios from 'axios'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -110,7 +113,7 @@ const handleChangePassword = async () => {
     })
     
     if (res.data.success) {
-      alert('비밀번호가 성공적으로 변경되었습니다.')
+      await modal.showAlert('비밀번호가 성공적으로 변경되었습니다.')
       auth.user.mustChangePassword = false
       if (auth.isAdmin) {
         router.push('/admin')

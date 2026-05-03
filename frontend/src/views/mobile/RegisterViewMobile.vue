@@ -10,7 +10,12 @@
       <button @click="$router.push('/login')" class="mt-4 text-xs font-black uppercase tracking-widest bg-green-600 text-white px-6 py-3 rounded-xl">로그인하러 가기</button>
     </div>
 
-    <form v-else @submit.prevent="handleRegister" class="space-y-6 pb-12">
+    <template v-else>
+      <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-black px-6 py-4 rounded-2xl mb-6 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+        {{ errorMsg }}
+      </div>
+
+      <form @submit.prevent="handleRegister" class="space-y-6 pb-12">
       <div class="space-y-1.5">
         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디 <span class="text-rose-500">*</span></label>
         <div class="flex gap-2">
@@ -66,7 +71,6 @@
           class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
       </div>
 
-      <div v-if="errorMsg" class="text-rose-500 text-xs font-black text-center">{{ errorMsg }}</div>
 
       <button :disabled="isLoading" type="submit" 
         class="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-100 active:scale-95 transition-all mt-4 uppercase tracking-widest text-sm">
@@ -77,7 +81,8 @@
         <router-link to="/login" class="text-xs font-black text-slate-400 uppercase tracking-widest">이미 계정이 있으신가요? 로그인</router-link>
       </div>
     </form>
-  </div>
+  </template>
+</div>
 </template>
 
 <script setup>

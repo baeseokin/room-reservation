@@ -18,6 +18,9 @@ import {
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 const auth = useAuthStore()
 const reservations = ref([])
 const loading = ref(false)
@@ -201,29 +204,29 @@ const allTimeSlots = computed(() => {
 
 const updateReservation = async () => {
   if (editForm.value.start_time >= editForm.value.end_time) {
-    alert('종료 시간은 시작 시간보다 늦어야 합니다.')
+    modal.showAlert('종료 시간은 시작 시간보다 늦어야 합니다.')
     return
   }
 
   try {
     await axios.put(`/api/reservations/${editingRes.value.id}`, editForm.value)
-    alert('예약이 수정되었습니다.')
+    modal.showAlert('예약이 수정되었습니다.')
     showEditModal.value = false
     fetchMyReservations()
   } catch (error) {
-    alert(error.response?.data?.message || '수정 중 오류가 발생했습니다.')
+    modal.showAlert(error.response?.data?.message || '수정 중 오류가 발생했습니다.')
   }
 }
 
 const cancelReservation = async (id) => {
-  if (confirm('정말 예약을 취소하시겠습니까?')) {
+  if (await modal.showConfirm('정말 예약을 취소하시겠습니까?')) {
     try {
       await axios.delete(`/api/reservations/${id}`)
-      alert('예약이 취소되었습니다.')
+      modal.showAlert('예약이 취소되었습니다.')
       showEditModal.value = false
       fetchMyReservations()
     } catch (error) {
-      alert('취소 중 오류가 발생했습니다.')
+      modal.showAlert('취소 중 오류가 발생했습니다.')
     }
   }
 }
@@ -232,7 +235,16 @@ const statusMap = {
   pending: { label: '대기중', class: 'bg-amber-50 text-amber-600' },
   approved: { label: '승인됨', class: 'bg-green-50 text-green-600' },
   rejected: { label: '반려됨', class: 'bg-rose-50 text-rose-600' },
-  cancelled: { label: '취소됨', class: 'bg-red-50 text-red-500' }
+  cancelled: { label: '취소됨', class: 'bg-red-50 text-red-500' },
+  finished: { label: '종료됨', class: 'bg-slate-100 text-slate-400' }
+}
+
+const getEffectiveStatus = (res) => {
+  if (res.status === 'approved') {
+    const end = new Date(`${res.reservation_date}T${res.end_time}`)
+    if (new Date() > end) return 'finished'
+  }
+  return res.status
 }
 
 onMounted(fetchMyReservations)
@@ -312,8 +324,8 @@ onMounted(fetchMyReservations)
               <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ res.reason }}</div>
             </td>
             <td class="px-8 py-6">
-              <span :class="statusMap[res.status]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
-                {{ statusMap[res.status]?.label || res.status }}
+              <span :class="statusMap[getEffectiveStatus(res)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                {{ statusMap[getEffectiveStatus(res)]?.label || getEffectiveStatus(res) }}
               </span>
             </td>
             <td class="px-8 py-6 text-center">

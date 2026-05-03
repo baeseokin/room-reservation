@@ -1,11 +1,12 @@
 <template>
   <div id="app">
     <router-view />
+    <GlobalModal />
   </div>
 </template>
 
 <script setup>
-// Main entry component
+import GlobalModal from '@/components/GlobalModal.vue'
 </script>
 
 <style>

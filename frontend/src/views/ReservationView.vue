@@ -13,6 +13,9 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import { getHoliday } from '@/utils/holidays'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const formatDate = (date) => {
   if (!date) return ''
@@ -505,19 +508,19 @@ const recurringCalendarDays = computed(() => {
 })
 
 const submitBooking = async () => {
-  if (!form.value.requester_name?.trim()) return alert('신청자 이름을 입력해주세요.')
-  if (!form.value.requester_phone?.trim()) return alert('연락처를 입력해주세요.')
+  if (!form.value.requester_name?.trim()) return modal.showAlert('신청자 이름을 입력해주세요.')
+  if (!form.value.requester_phone?.trim()) return modal.showAlert('연락처를 입력해주세요.')
   try {
     await axios.post('/api/reservations', {
       ...form.value,
       room_id: selectedRoom.value.id,
       reservation_date: selectedDate.value
     })
-    alert('예약 신청이 완료되었습니다.')
+    modal.showAlert('예약 신청이 완료되었습니다.')
     showBookingModal.value = false
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || '예약 중 오류가 발생했습니다.')
+    modal.showAlert(e.response?.data?.message || '예약 중 오류가 발생했습니다.')
   }
 }
 
@@ -526,7 +529,7 @@ const submitInquiry = async () => {
     reservation_id: selectedReservation.value.id,
     content: inquiryContent.value
   })
-  alert('문의가 전송되었습니다.')
+  modal.showAlert('문의가 전송되었습니다.')
   showInquiryModal.value = false
 }
 
@@ -733,8 +736,8 @@ const submitInquiryInDetail = async () => {
     })
     newInquiryContent.value = ''
     fetchInquiries(detailReservation.value.id)
-    alert('문의가 등록되었습니다.')
-  } catch (err) { alert('문의 등록 실패') }
+    modal.showAlert('문의가 등록되었습니다.')
+  } catch (err) { modal.showAlert('문의 등록 실패') }
 }
 
 const submitAnswer = async (inquiryId) => {
@@ -743,8 +746,8 @@ const submitAnswer = async (inquiryId) => {
   try {
     await axios.put(`/api/reservations/inquiry/${inquiryId}`, { answer })
     fetchInquiries(detailReservation.value.id)
-    alert('답변이 등록되었습니다.')
-  } catch (err) { alert('답변 등록 실패') }
+    modal.showAlert('답변이 등록되었습니다.')
+  } catch (err) { modal.showAlert('답변 등록 실패') }
 }
 
 const openDetail = (res) => {
@@ -768,22 +771,22 @@ const startEdit = () => {
 const updateReservation = async () => {
   try {
     await axios.put(`/api/reservations/${detailReservation.value.id}`, editForm.value)
-    alert('예약이 수정되었습니다.')
+    modal.showAlert('예약이 수정되었습니다.')
     isEditing.value = false
     fetchData()
     detailReservation.value = { ...detailReservation.value, ...editForm.value }
-  } catch (err) { alert('수정 실패') }
+  } catch (err) { modal.showAlert('수정 실패') }
 }
 
 const cancelReservation = async (id) => {
-  if (!confirm('정말 이 예약을 취소(삭제)하시겠습니까?')) return
+  if (!await modal.showConfirm('정말 이 예약을 취소(삭제)하시겠습니까?')) return
   try {
     await axios.delete(`/api/reservations/${id}`)
-    alert('예약이 취소되었습니다.')
+    modal.showAlert('예약이 취소되었습니다.')
     showDetailModal.value = false
     fetchData()
   } catch (err) {
-    alert('취소 실패: ' + (err.response?.data?.message || '알 수 없는 오류'))
+    modal.showAlert('취소 실패: ' + (err.response?.data?.message || '알 수 없는 오류'))
   }
 }
 

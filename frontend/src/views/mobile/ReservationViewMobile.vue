@@ -252,6 +252,9 @@ import {
   ChevronDownIcon 
 } from '@heroicons/vue/24/outline'
 
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 const auth = useAuthStore()
 const mode = ref('room') // 'room' or 'time'
 const rooms = ref([])
@@ -411,8 +414,8 @@ const searchAvailableRooms = () => {
 }
 
 const submitReservation = async () => {
-  if (!form.value.title) { alert('신청 명칭을 입력해 주세요.'); return; }
-  if (form.value.start_time >= form.value.end_time) { alert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
+  if (!form.value.title) { modal.showAlert('신청 명칭을 입력해 주세요.'); return; }
+  if (form.value.start_time >= form.value.end_time) { modal.showAlert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
   
   try {
     const payload = {
@@ -423,12 +426,12 @@ const submitReservation = async () => {
       requester_phone: auth.user.phone
     }
     await axios.post('/api/reservations', payload)
-    alert('예약 신청이 완료되었습니다.')
+    modal.showAlert('예약 신청이 완료되었습니다.')
     showReservationForm.value = false
     fetchReservations()
     hasSearched.value = false
   } catch (e) {
-    alert(e.response?.data?.message || '예약 실패')
+    modal.showAlert(e.response?.data?.message || '예약 실패')
   }
 }
 

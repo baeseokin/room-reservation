@@ -13,6 +13,9 @@ import {
   BuildingOfficeIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const auth = useAuthStore()
 const loading = ref(false)
@@ -77,10 +80,10 @@ const updateProfile = async () => {
     // Sync with auth store
     await auth.checkSession()
     
-    alert('프로필이 성공적으로 업데이트되었습니다.')
+    modal.showAlert('프로필이 성공적으로 업데이트되었습니다.')
     fetchProfile()
   } catch (err) {
-    alert('업데이트 중 오류가 발생했습니다.')
+    modal.showAlert('업데이트 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }

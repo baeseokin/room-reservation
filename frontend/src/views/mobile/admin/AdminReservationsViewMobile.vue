@@ -62,6 +62,9 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { UserIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { useModalStore } from '@/stores/useModalStore'
+
+const modal = useModalStore()
 
 const allReservations = ref([])
 const loading = ref(false)
@@ -91,14 +94,26 @@ const filteredReservations = computed(() => {
 onMounted(fetchReservations)
 
 const approve = async (res) => {
-  if (!confirm('승인하시겠습니까?')) return
-  await axios.patch(`/api/reservations/${res.id}/approve`)
-  fetchReservations()
+  if (!await modal.showConfirm('승인하시겠습니까? 신청자에게 알림톡이 발송됩니다.')) return
+  try {
+    await axios.patch(`/api/reservations/${res.id}/approve`)
+    modal.showAlert('승인되었습니다.')
+    fetchReservations()
+  } catch (e) {
+    modal.showAlert(e.response?.data?.message || '처리 중 오류가 발생했습니다.')
+  }
 }
 
 const reject = async (res) => {
-  const reason = prompt('거부 사유를 입력하세요 (선택)')
-  await axios.patch(`/api/reservations/${res.id}/reject`, { reject_reason: reason })
-  fetchReservations()
+  const reason = await modal.showPrompt('거부 사유를 입력하세요 (선택)', '예: 해당 시간에는 교회 행사가 예정되어 있습니다.')
+  if (reason === null) return // User cancelled
+  
+  try {
+    await axios.patch(`/api/reservations/${res.id}/reject`, { reject_reason: reason })
+    modal.showAlert('반려 처리되었습니다.')
+    fetchReservations()
+  } catch (e) {
+    modal.showAlert('반려 처리 중 오류가 발생했습니다.')
+  }
 }
 </script>

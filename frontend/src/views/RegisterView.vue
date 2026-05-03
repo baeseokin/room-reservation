@@ -2,9 +2,11 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useModalStore } from '@/stores/useModalStore'
 import { UserPlusIcon, ChevronLeftIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
+const modal = useModalStore()
 const isLoading = ref(false)
 const errorMsg = ref('')
 
@@ -111,7 +113,7 @@ const handleRegister = async () => {
   try {
     const res = await axios.post('/api/auth/register', form.value)
     if (res.data.success) {
-      alert(res.data.message)
+      await modal.showAlert(res.data.message, '가입 신청 완료')
       router.push('/')
     }
   } catch (error) {
