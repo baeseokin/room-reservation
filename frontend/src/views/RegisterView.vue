@@ -11,6 +11,7 @@ const errorMsg = ref('')
 const form = ref({
   userId: '',
   password: '',
+  passwordConfirm: '',
   userName: '',
   phone: '',
   email: '',
@@ -82,8 +83,13 @@ watch(() => form.value.phone, (newVal) => {
 })
 
 const handleRegister = async () => {
-  if (!form.value.userId || !form.value.password || !form.value.userName || !form.value.phone || !form.value.deptName) {
+  if (!form.value.userId || !form.value.password || !form.value.passwordConfirm || !form.value.userName || !form.value.phone || !form.value.deptName) {
     errorMsg.value = '아이디, 비밀번호, 성함, 연락처, 담당부서는 필수 입력 항목입니다.'
+    return
+  }
+
+  if (form.value.password !== form.value.passwordConfirm) {
+    errorMsg.value = '비밀번호가 일치하지 않습니다.'
     return
   }
 
@@ -154,6 +160,11 @@ const handleRegister = async () => {
             <div>
               <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 <span class="text-rose-500">*</span></label>
               <input v-model="form.password" type="password" placeholder="비밀번호 입력" required
+                     class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
+              <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 재입력" required
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
             </div>
             <div>
