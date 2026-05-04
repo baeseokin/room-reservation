@@ -267,8 +267,21 @@ const filteredReservations = computed(() => {
     const matchesSearch = !searchQuery.value || 
       res.requester_name.includes(searchQuery.value) || 
       (res.title && res.title.includes(searchQuery.value))
-    const matchesStatus = statusFilter.value === 'all' || res.status === statusFilter.value
-    return matchesSearch && matchesStatus
+    
+    if (statusFilter.value !== 'all' && res.status !== statusFilter.value) return false
+    
+    // 목록형일 경우 종료된 예약은 제외
+    if (viewMode.value === 'list') {
+      const datePart = String(res.reservation_date).substring(0, 10)
+      const resEndStr = `${datePart} ${res.end_time}`
+      
+      const now = currentTime.value
+      const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      
+      if (resEndStr < nowStr) return false
+    }
+
+    return matchesSearch
   }).sort((a, b) => {
     if (a.reservation_date !== b.reservation_date) {
       return a.reservation_date.localeCompare(b.reservation_date)
@@ -305,7 +318,8 @@ const fetchData = async () => {
     reservations.value = resvRes.data
     
     if (expandedFloors.value.length === 0 && roomsRes.data.length > 0) {
-      expandedFloors.value = floors.value.slice(0, 3)
+      // 3층은 접고, B3 포함 나머지 층은 펼침
+      expandedFloors.value = floors.value.filter(f => f !== '3')
     }
   } catch (err) {
     console.error('Failed to fetch data:', err)
@@ -871,7 +885,7 @@ onMounted(() => {
       <div class="hidden md:block flex-1"></div>
 
       <!-- Right: Search -->
-      <div class="flex items-center gap-2 w-full md:w-auto">
+      <div v-if="viewMode === 'list'" class="flex items-center gap-2 w-full md:w-auto">
         <div class="relative flex-1 md:w-48 group">
           <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           <input type="text" v-model="searchQuery" placeholder="신청자명 또는 신청명으로 검색..." 
