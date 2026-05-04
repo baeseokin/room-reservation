@@ -154,6 +154,24 @@ const router = createRouter({
           meta: { requiresAdmin: true }
         },
         {
+          path: 'admin/users',
+          name: 'UserManagementMobile',
+          component: () => import('../views/mobile/admin/UserManagementViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'admin/rooms',
+          name: 'RoomManagementMobileView',
+          component: () => import('../views/mobile/admin/RoomManagementViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'admin/departments',
+          name: 'DepartmentManagementMobile',
+          component: () => import('../views/mobile/admin/DepartmentManagementViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
           path: 'guide',
           name: 'GuideMobile',
           component: () => import('../views/mobile/GuideViewMobile.vue'),
