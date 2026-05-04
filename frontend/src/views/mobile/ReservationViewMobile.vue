@@ -22,50 +22,16 @@
 
     <!-- Mode Switcher -->
     <div class="bg-slate-100 p-1.5 rounded-[2rem] flex items-center gap-1">
-      <button v-for="m in ['room', 'time']" :key="m"
+      <button v-for="m in ['time', 'room']" :key="m"
         @click="mode = m"
         :class="[mode === m ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400']"
         class="flex-1 py-3.5 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all">
-        {{ m === 'room' ? '공간별 예약' : '시간별 예약' }}
+        {{ m === 'time' ? '시간별 예약' : '공간별 예약' }}
       </button>
     </div>
 
-    <!-- Mode: By Room -->
-    <div v-if="mode === 'room'" class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <!-- Floor Selector -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <button v-for="f in floorOptions" :key="f"
-          @click="selectedFloor = f"
-          :class="[selectedFloor === f ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-200']"
-          class="px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all shrink-0">
-          {{ f }}
-        </button>
-      </div>
-
-      <!-- Room List -->
-      <div class="space-y-4">
-        <div v-for="room in filteredRooms" :key="room.id" 
-          @click="openRoomDetail(room)"
-          class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400">
-              {{ room.floor }}
-            </div>
-            <div>
-              <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
-              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">정원 {{ room.capacity }}명</div>
-            </div>
-          </div>
-          <div class="flex flex-col items-end gap-1">
-             <ChevronRightIcon class="w-5 h-5 text-slate-300" />
-             <span class="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">현황보기</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Mode: By Time -->
-    <div v-else class="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+    <div v-if="mode === 'time'" class="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
        <div class="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
           <div class="grid grid-cols-2 gap-4">
              <div class="space-y-2">
@@ -106,6 +72,40 @@
             <div class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">선택</div>
           </div>
        </div>
+    </div>
+
+    <!-- Mode: By Room -->
+    <div v-else class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <!-- Floor Selector -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <button v-for="f in floorOptions" :key="f"
+          @click="selectedFloor = f"
+          :class="[selectedFloor === f ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-200']"
+          class="px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all shrink-0">
+          {{ f }}
+        </button>
+      </div>
+
+      <!-- Room List -->
+      <div class="space-y-4">
+        <div v-for="room in filteredRooms" :key="room.id" 
+          @click="openRoomDetail(room)"
+          class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400">
+              {{ room.floor }}
+            </div>
+            <div>
+              <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">정원 {{ room.capacity }}명</div>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+             <ChevronRightIcon class="w-5 h-5 text-slate-300" />
+             <span class="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">현황보기</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Room Detail Bottom Sheet (Timeline) -->
@@ -253,12 +253,21 @@ import { useModalStore } from '@/stores/useModalStore'
 
 const modal = useModalStore()
 const auth = useAuthStore()
-const mode = ref('room') // 'room' or 'time'
+const mode = ref('time') // 'time' or 'room'
 const rooms = ref([])
 const reservations = ref([]) // All reservations for selected date
 const roomReservations = ref([]) // Reservations for selected room on selected date
 
-const selectedDate = ref(new Date().toISOString().split('T')[0])
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const selectedDate = ref(formatDate(new Date()))
 const selectedFloor = ref('전체')
 const selectedRoom = ref(null)
 
@@ -292,9 +301,11 @@ const filteredRooms = computed(() => {
 })
 
 const formattedSelectedDate = computed(() => {
-  const d = new Date(selectedDate.value)
+  if (!selectedDate.value) return ''
+  const [y, m, d] = selectedDate.value.split('-').map(Number)
+  const dateObj = new Date(y, m - 1, d)
   const days = ['일','월','화','수','목','금','토']
-  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`
+  return `${y}년 ${m}월 ${d}일 (${days[dateObj.getDay()]})`
 })
 
 const timeSlots = computed(() => {
@@ -347,7 +358,7 @@ const fetchReservations = async () => {
 
 const selectDate = (date) => {
   if (!date) return
-  selectedDate.value = date.toISOString().split('T')[0]
+  selectedDate.value = formatDate(date)
   showCalendar.value = false
   fetchReservations()
   hasSearched.value = false
@@ -361,12 +372,12 @@ const moveMonth = (offset) => {
 
 const isToday = (date) => {
   if (!date) return false
-  return date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]
+  return formatDate(date) === formatDate(new Date())
 }
 
 const isSelected = (date) => {
   if (!date) return false
-  return date.toISOString().split('T')[0] === selectedDate.value
+  return formatDate(date) === selectedDate.value
 }
 
 const openRoomDetail = async (room) => {
