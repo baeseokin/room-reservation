@@ -334,7 +334,9 @@ const getBlockedForRoomAndDate = (room, date) => {
   const nth = Math.ceil(dom / 7)
   
   return room.blocked_times.filter(bt => {
-    if (bt.recurring_type === 'monthly_date') {
+    if (bt.recurring_type === 'daily') {
+      return true
+    } else if (bt.recurring_type === 'monthly_date') {
       return bt.day_of_month == dom
     } else if (bt.recurring_type === 'monthly_nth') {
       return bt.nth_week == nth && bt.day_of_week == dow

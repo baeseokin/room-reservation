@@ -2,6 +2,13 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useModalStore } from '@/stores/useModalStore'
+import { 
+  CheckCircleIcon, 
+  XCircleIcon, 
+  ArrowPathIcon, 
+  ClockIcon,
+  MagnifyingGlassIcon 
+} from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
 const allReservations = ref([])
@@ -12,6 +19,7 @@ const showRejectModal = ref(false)
 const rejectReason = ref('')
 const selectedIds = ref([])
 const isBulkAction = ref(false)
+const searchQuery = ref('')
 
 const statusMap = {
   pending:  { label: '대기중',  color: 'amber', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
@@ -21,7 +29,17 @@ const statusMap = {
 }
 
 const filteredReservations = computed(() => {
-  const list = filterStatus.value === 'all' ? allReservations.value : allReservations.value.filter(r => r.status === filterStatus.value)
+  let list = filterStatus.value === 'all' ? allReservations.value : allReservations.value.filter(r => r.status === filterStatus.value)
+  
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(r => 
+      r.title?.toLowerCase().includes(q) || 
+      r.room_name?.toLowerCase().includes(q) || 
+      r.requester_name?.toLowerCase().includes(q)
+    )
+  }
+  
   return list
 })
 
@@ -115,7 +133,15 @@ const confirmReject = async () => {
   }
 }
 
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : ''
+const fmtDate = (d) => {
+  if (!d) return ''
+  const date = new Date(d)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
+  return `${year}-${month}-${day}(${dayOfWeek})`
+}
 const fmtTime = (t) => t?.slice(0, 5)
 
 onMounted(fetchReservations)
@@ -137,23 +163,30 @@ onMounted(fetchReservations)
 
     <!-- Filter Tabs & Bulk Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl p-1.5 w-fit shadow-sm">
+      <div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl p-1.5 shadow-sm">
         <button v-for="s in ['all','pending','approved','rejected','cancelled']" :key="s"
           @click="filterStatus = s"
           :class="filterStatus === s ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'"
-          class="px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest">
+          class="px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest shrink-0">
           {{ { all:'전체', pending:'대기', approved:'승인', rejected:'거부', cancelled:'취소' }[s] }}
         </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md">
+        <input v-model="searchQuery" type="text" placeholder="신청명, 공간명, 신청자 검색..." 
+               class="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-300 outline-none transition-all shadow-sm" />
+        <MagnifyingGlassIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
       </div>
 
       <!-- Bulk Action Bar (Animated) -->
       <transition enter-active-class="transition duration-300 ease-out" enter-from-class="transform translate-y-4 opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-4 opacity-0">
         <div v-if="selectedIds.length > 0" class="flex items-center gap-3 bg-indigo-600 p-2 pl-4 rounded-2xl shadow-xl shadow-indigo-100">
           <span class="text-xs font-black text-white mr-2">{{ selectedIds.length }}건 선택됨</span>
-          <button @click="bulkApprove" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5">
+          <button @click="bulkApprove" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5">
             <CheckCircleIcon class="w-4 h-4" /> 일괄 승인
           </button>
-          <button @click="openRejectModal()" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5">
+          <button @click="openRejectModal()" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5">
             <XCircleIcon class="w-4 h-4" /> 일괄 거부
           </button>
         </div>
@@ -213,11 +246,11 @@ onMounted(fetchReservations)
           <!-- Individual Actions (Visible on Hover/Always on Mobile) -->
           <div v-if="r.status === 'pending'" class="flex gap-2 shrink-0">
             <button @click="approve(r.id)"
-              class="hidden md:flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-lg shadow-emerald-100">
+              class="hidden md:flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-lg shadow-emerald-100">
               <CheckCircleIcon class="w-4 h-4" />승인
             </button>
             <button @click="openRejectModal(r)"
-              class="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-500 border border-rose-200 px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95">
+              class="flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-500 border border-rose-200 px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95">
               <XCircleIcon class="w-4 h-4" />거부
             </button>
           </div>

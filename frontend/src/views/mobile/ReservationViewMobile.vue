@@ -123,20 +123,33 @@
                 <p class="text-slate-400 text-xs font-bold">{{ selectedDate }} 예약 현황</p>
              </div>
 
-             <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                <div v-if="roomReservations.length === 0" class="py-12 text-center bg-slate-50 rounded-3xl">
+              <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                <div v-if="roomReservations.length === 0 && currentRoomBlockedTimes.length === 0" class="py-12 text-center bg-slate-50 rounded-3xl">
                    <p class="text-sm font-bold text-slate-400">당일 예약 내역이 없습니다.<br>원하시는 시간에 예약해 보세요!</p>
                 </div>
-                <div v-else v-for="res in roomReservations" :key="res.id" class="flex gap-4 items-start">
-                   <div class="w-16 text-[10px] font-black text-slate-300 uppercase py-1 border-r border-slate-100">
-                      {{ res.start_time.slice(0, 5) }}
+                <template v-else>
+                   <!-- Blocked Times -->
+                   <div v-for="bt in currentRoomBlockedTimes" :key="'bt-'+bt.id" class="flex gap-4 items-start opacity-70">
+                      <div class="w-16 text-[10px] font-black text-rose-300 uppercase py-1 border-r border-rose-100">
+                         {{ bt.start_time.slice(0, 5) }}
+                      </div>
+                      <div class="flex-1 bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                         <div class="text-sm font-black text-rose-800">{{ bt.reason || '관리자 설정 예약 불가' }}</div>
+                         <div class="text-[10px] font-bold text-rose-400 uppercase mt-0.5">{{ bt.start_time.slice(0, 5) }} - {{ bt.end_time.slice(0, 5) }}</div>
+                      </div>
                    </div>
-                   <div class="flex-1 bg-slate-50 p-4 rounded-2xl">
-                      <div class="text-sm font-black text-slate-800">{{ res.title || '공간 사용' }}</div>
-                      <div class="text-[10px] font-bold text-indigo-400 uppercase mt-0.5">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
+                   <!-- Actual Reservations -->
+                   <div v-for="res in roomReservations" :key="res.id" class="flex gap-4 items-start">
+                      <div class="w-16 text-[10px] font-black text-slate-300 uppercase py-1 border-r border-slate-100">
+                         {{ res.start_time.slice(0, 5) }}
+                      </div>
+                      <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                         <div class="text-sm font-black text-slate-800">{{ res.title || '공간 사용' }}</div>
+                         <div class="text-[10px] font-bold text-indigo-400 uppercase mt-0.5">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
+                      </div>
                    </div>
-                </div>
-             </div>
+                </template>
+              </div>
 
              <div class="pt-8 shrink-0">
                 <button @click="openReservationForm(selectedRoom)" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
@@ -292,11 +305,11 @@
                 <!-- End Date Selection -->
                 <div class="space-y-2">
                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 종료일</label>
-                   <div class="relative">
-                      <input type="date" v-model="form.recurring_end_date" 
-                             class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 px-6 font-black text-slate-700 focus:ring-0 focus:border-indigo-500 transition-all" />
-                      <CalendarIcon class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none" />
-                   </div>
+                   <button @click="showRecurringEndCalendar = true" 
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 px-6 font-black text-slate-700 flex items-center justify-between active:scale-[0.98] transition-all">
+                      <span>{{ form.recurring_end_date || '날짜 선택' }}</span>
+                      <CalendarIcon class="w-5 h-5 text-slate-300" />
+                   </button>
                 </div>
               </div>
             </div>
@@ -308,6 +321,43 @@
           </div>
         </div>
       </div>
+    </Teleport>
+    
+    <!-- Recurring End Date Calendar Bottom Sheet -->
+    <Teleport to="body">
+       <div v-if="showRecurringEndCalendar" class="fixed inset-0 z-[250] flex flex-col justify-end">
+          <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRecurringEndCalendar = false"></div>
+          <div class="relative bg-white rounded-t-[3rem] p-8 animate-in slide-in-from-bottom-full duration-300">
+             <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8"></div>
+             
+             <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-slate-900 tracking-tight">반복 종료일 선택</h3>
+                <div class="flex gap-1">
+                   <button @click="moveRecurringMonth(-1)" class="p-2 hover:bg-slate-50 rounded-xl"><ChevronLeftIcon class="w-5 h-5 text-slate-400" /></button>
+                   <span class="text-sm font-black text-slate-900 w-24 text-center py-2">{{ recurringEndCalDate.getFullYear() }}.{{ String(recurringEndCalDate.getMonth() + 1).padStart(2, '0') }}</span>
+                   <button @click="moveRecurringMonth(1)" class="p-2 hover:bg-slate-50 rounded-xl"><ChevronRightIcon class="w-5 h-5 text-slate-400" /></button>
+                </div>
+             </div>
+ 
+             <div class="grid grid-cols-7 gap-2 mb-2">
+                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[10px] font-black text-slate-300 uppercase">{{ d }}</span>
+             </div>
+             <div class="grid grid-cols-7 gap-2">
+                <button v-for="(day, idx) in recurringEndCalendarDays" :key="idx"
+                  @click="selectRecurringEndDate(day.date)"
+                  :disabled="!day.current"
+                  :class="[
+                    day.current ? 'text-slate-700' : 'text-slate-100',
+                    isToday(day.date) ? 'text-indigo-600' : '',
+                    form.recurring_end_date === formatDate(day.date) ? 'bg-indigo-600 !text-white shadow-lg' : ''
+                  ]"
+                  class="aspect-square flex items-center justify-center text-xs font-black rounded-xl transition-all active:scale-90">
+                  {{ day.day }}
+                </button>
+             </div>
+             <button @click="showRecurringEndCalendar = false" class="w-full mt-8 py-5 bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-widest rounded-3xl">닫기</button>
+          </div>
+       </div>
     </Teleport>
   </div>
 </template>
@@ -335,6 +385,7 @@ const mode = ref('time') // 'time' or 'room'
 const rooms = ref([])
 const reservations = ref([]) // All reservations for selected date
 const roomReservations = ref([]) // Reservations for selected room on selected date
+const currentRoomBlockedTimes = ref([]) // Blocked times for selected room on selected date
 
 const formatDate = (date) => {
   if (!date) return ''
@@ -352,8 +403,10 @@ const selectedRoom = ref(null)
 const showCalendar = ref(false)
 const showRoomDetail = ref(false)
 const showReservationForm = ref(false)
+const showRecurringEndCalendar = ref(false)
 
 const currentCalDate = ref(new Date())
+const recurringEndCalDate = ref(new Date())
 const hasSearched = ref(false)
 
 const form = ref({
@@ -404,8 +457,16 @@ const timeSlots = computed(() => {
 })
 
 const calendarDays = computed(() => {
-  const year = currentCalDate.value.getFullYear()
-  const month = currentCalDate.value.getMonth()
+  return generateCalendarDays(currentCalDate.value)
+})
+
+const recurringEndCalendarDays = computed(() => {
+  return generateCalendarDays(recurringEndCalDate.value)
+})
+
+const generateCalendarDays = (baseDate) => {
+  const year = baseDate.getFullYear()
+  const month = baseDate.getMonth()
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
   
@@ -413,7 +474,7 @@ const calendarDays = computed(() => {
   const totalDays = lastDay.getDate()
   
   const days = []
-  // Fill empty slots from prev month (just placeholders)
+  // Fill empty slots from prev month
   for (let i = 0; i < startOffset; i++) {
     days.push({ day: '', date: null, current: false })
   }
@@ -423,7 +484,7 @@ const calendarDays = computed(() => {
     days.push({ day: i, date: d, current: true })
   }
   return days
-})
+}
 
 const availableRooms = ref([])
 
@@ -456,6 +517,18 @@ const moveMonth = (offset) => {
   currentCalDate.value = d
 }
 
+const moveRecurringMonth = (offset) => {
+  const d = new Date(recurringEndCalDate.value)
+  d.setMonth(d.getMonth() + offset)
+  recurringEndCalDate.value = d
+}
+
+const selectRecurringEndDate = (date) => {
+  if (!date) return
+  form.value.recurring_end_date = formatDate(date)
+  showRecurringEndCalendar.value = false
+}
+
 const isToday = (date) => {
   if (!date) return false
   return formatDate(date) === formatDate(new Date())
@@ -466,9 +539,31 @@ const isSelected = (date) => {
   return formatDate(date) === selectedDate.value
 }
 
+const getBlockedForRoomAndDate = (room, date) => {
+  if (!room || !room.blocked_times) return []
+  const d = new Date(date + 'T00:00:00')
+  const dow = d.getDay()
+  const dom = d.getDate()
+  const nth = Math.ceil(dom / 7)
+  
+  return room.blocked_times.filter(bt => {
+    if (bt.recurring_type === 'daily') {
+      return true
+    } else if (bt.recurring_type === 'monthly_date') {
+      return bt.day_of_month == dom
+    } else if (bt.recurring_type === 'monthly_nth') {
+      return bt.nth_week == nth && bt.day_of_week == dow
+    } else {
+      // Default to weekly
+      return bt.day_of_week == dow
+    }
+  })
+}
+
 const openRoomDetail = async (room) => {
   selectedRoom.value = room
   roomReservations.value = reservations.value.filter(r => r.room_id === room.id)
+  currentRoomBlockedTimes.value = getBlockedForRoomAndDate(room, selectedDate.value)
   showRoomDetail.value = true
 }
 
@@ -486,24 +581,30 @@ const searchAvailableRooms = () => {
   hasSearched.value = true
   const { start_time, end_time } = searchForm.value
   
-  // Logic to find rooms with no reservations in this range
   availableRooms.value = rooms.value.filter(room => {
-    const resList = reservations.value.filter(r => r.room_id === room.id)
-    const hasOverlap = resList.some(r => {
-      // Overlap logic: max(start) < min(end)
-      return Math.max(r.start_time.slice(0,5).localeCompare(start_time), 0) < 
-             Math.min(r.end_time.slice(0,5).localeCompare(end_time), 0) || 
-             (r.start_time.slice(0,5) < end_time && r.end_time.slice(0,5) > start_time)
-    })
-    // Simpler overlap check
-    const isConflict = resList.some(r => {
+    // 1. Check reservation conflicts
+    const resList = reservations.value.filter(r => r.room_id === room.id && r.status !== 'rejected')
+    const isResConflict = resList.some(r => {
       const s1 = r.start_time.slice(0,5)
       const e1 = r.end_time.slice(0,5)
       const s2 = start_time
       const e2 = end_time
       return (s1 < e2 && e1 > s2)
     })
-    return !isConflict
+    
+    if (isResConflict) return false
+
+    // 2. Check blocked time conflicts
+    const blocked = getBlockedForRoomAndDate(room, selectedDate.value)
+    const isBlockedConflict = blocked.some(bt => {
+      const s1 = bt.start_time.slice(0,5)
+      const e1 = bt.end_time.slice(0,5)
+      const s2 = start_time
+      const e2 = end_time
+      return (s1 < e2 && e1 > s2)
+    })
+
+    return !isBlockedConflict
   })
 }
 

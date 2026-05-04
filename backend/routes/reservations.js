@@ -197,6 +197,7 @@ router.post("/", async (req, res) => {
             String(currentD.getDate()).padStart(2, '0')
           ].join('-');
 
+          // Individual occurrence conflict check
           const [rConflicts] = await conn.query(
             `SELECT id FROM reservations 
              WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending')
@@ -204,7 +205,6 @@ router.post("/", async (req, res) => {
             [room_id, dateStr, start_time, start_time, end_time, end_time, start_time, end_time]
           );
 
-          // Check against room_blocked_times for each instance
           const rDayOfWeek = currentD.getDay();
           const rDayOfMonth = currentD.getDate();
           const rNthWeek = Math.ceil(rDayOfMonth / 7);
@@ -221,16 +221,28 @@ router.post("/", async (req, res) => {
             [room_id, rDayOfWeek, rDayOfMonth, rNthWeek, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
           );
 
-          if (rConflicts.length === 0 && rBlocked.length === 0) {
-            const [result] = await conn.query(
-              `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring, recurring_type, recurring_end_date)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-              [room_id, requester_id, requester_name, requester_phone, title, dateStr, start_time, end_time, reason, true, recurring_type, recurring_end_date]
-            );
-            reservationIds.push(result.insertId);
-          } else {
-            console.log(`Conflict on ${dateStr}, skipping.`);
+          if (rConflicts.length > 0 || rBlocked.length > 0) {
+            await conn.rollback();
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            const dayStr = days[currentD.getDay()];
+            const displayDate = `${dateStr}(${dayStr})`;
+            
+            const message = rBlocked.length > 0 
+              ? `${displayDate}는 공간 관리자에 의해 예약 불가로 설정된 시간입니다.`
+              : `${displayDate}에 이미 예약이 존재하여 전체 반복 예약을 진행할 수 없습니다.`;
+
+            return res.status(409).json({
+              success: false,
+              message: message
+            });
           }
+
+          const [result] = await conn.query(
+            `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring, recurring_type, recurring_end_date)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [room_id, requester_id, requester_name, requester_phone, title, dateStr, start_time, end_time, reason, true, recurring_type, recurring_end_date]
+          );
+          reservationIds.push(result.insertId);
         }
 
         currentD.setDate(currentD.getDate() + 1);
