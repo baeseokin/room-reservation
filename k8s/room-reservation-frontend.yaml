@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: room-reservation-frontend
-        image: baeseokin/room-reservation-frontend:0.2
+        image: baeseokin/room-reservation-frontend:0.3
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
 ---

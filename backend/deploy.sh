@@ -35,15 +35,11 @@ fi
 # 4. Kubernetes Deployment 업데이트
 echo "📡 Kubernetes 배포 업데이트..."
 
-# Deployment가 존재하는지 확인
-if ! kubectl get deployment room-reservation-backend -n room-reservation >/dev/null 2>&1; then
-  echo "✨ Deployment가 존재하지 않습니다. 최초 배포를 진행합니다..."
-  # 매니페스트 파일의 이미지를 현재 버전으로 변경하여 배포
-  sed "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$VERSION|g" ../k8s/room-reservation-backend.yaml | kubectl apply -f -
-else
-  echo "🔄 기존 Deployment의 이미지를 업데이트합니다..."
-  kubectl set image deployment/room-reservation-backend room-reservation-backend=$IMAGE_NAME:$VERSION -n room-reservation
-fi
+# 매니페스트 파일의 이미지를 현재 버전으로 변경하여 배포 (항상 apply 수행하여 YAML 변경사항 반영)
+sed "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$VERSION|g" ../k8s/room-reservation-backend.yaml | kubectl apply -f -
+
+# 같은 태그일 경우 이미지가 갱신되지 않을 수 있으므로 재시작 강제 수행
+kubectl rollout restart deployment/room-reservation-backend -n room-reservation
 
 # 5. 롤아웃 확인
 #kubectl rollout status deployment/room-reservation-backend -n room-reservation
