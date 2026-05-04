@@ -36,8 +36,8 @@
 
         <div class="flex items-center gap-6 pt-2 border-t border-slate-50">
            <div class="flex items-center gap-2">
-             <CalendarDaysIcon class="w-4 h-4 text-slate-300" />
-             <span class="text-xs font-bold text-slate-600">{{ res.reservation_date }}</span>
+              <CalendarDaysIcon class="w-4 h-4 text-slate-300" />
+              <span class="text-xs font-bold text-slate-600">{{ formatDateWithDay(res.reservation_date) }}</span>
            </div>
            <div class="flex items-center gap-2">
              <ClockIcon class="w-4 h-4 text-slate-300" />
@@ -73,7 +73,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-black text-slate-400 uppercase tracking-widest">일시</span>
-                <span class="text-xs font-bold text-slate-900">{{ editingRes?.reservation_date }} {{ editingRes?.start_time.slice(0, 5) }}~</span>
+                <span class="text-xs font-bold text-slate-900">{{ formatDateWithDay(editingRes?.reservation_date) }} {{ editingRes?.start_time.slice(0, 5) }}~</span>
               </div>
             </div>
 
@@ -127,6 +127,13 @@ const fetchMyReservations = async () => {
     reservations.value = res.data
   } catch (e) {}
   finally { loading.value = false }
+}
+
+const formatDateWithDay = (dateStr) => {
+  if (!dateStr) return ''
+  const days = ['일', '월', '화', '수', '목', '금', '토']
+  const d = new Date(dateStr + 'T00:00:00')
+  return `${dateStr}(${days[d.getDay()]})`
 }
 
 onMounted(fetchMyReservations)

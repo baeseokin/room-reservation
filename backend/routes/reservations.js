@@ -137,6 +137,14 @@ router.post("/", async (req, res) => {
     // 2. Insert Reservation(s)
     let reservationIds = [];
     if (is_recurring) {
+      const { 
+        recurring_days, 
+        recurring_month_option, 
+        recurring_month_date, 
+        recurring_month_nth_week, 
+        recurring_month_nth_day 
+      } = req.body;
+
       let currentD = new Date(reservation_date + 'T00:00:00');
       
       // Fallback for end date if missing (legacy support or missing input)
@@ -155,57 +163,77 @@ router.post("/", async (req, res) => {
       console.log(`Starting recurrence loop: type=${recurring_type}, start=${reservation_date}, end=${endD.toLocaleDateString()}`);
 
       while (currentD <= endD && count < MAX_RECURRENCE) {
-        // Robust YYYY-MM-DD formatting in local time
-        const dateStr = [
-          currentD.getFullYear(),
-          String(currentD.getMonth() + 1).padStart(2, '0'),
-          String(currentD.getDate()).padStart(2, '0')
-        ].join('-');
-
-        const [rConflicts] = await conn.query(
-          `SELECT id FROM reservations 
-           WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending')
-           AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
-          [room_id, dateStr, start_time, start_time, end_time, end_time, start_time, end_time]
-        );
-
-        // Check against room_blocked_times for each instance
-        const rDayOfWeek = currentD.getDay();
-        const rDayOfMonth = currentD.getDate();
-        const rNthWeek = Math.ceil(rDayOfMonth / 7);
-
-        const [rBlocked] = await conn.query(
-          `SELECT id FROM room_blocked_times
-           WHERE room_id = ?
-           AND (
-             (recurring_type = 'weekly' AND day_of_week = ?) OR
-             (recurring_type = 'monthly_date' AND day_of_month = ?) OR
-             (recurring_type = 'monthly_nth' AND nth_week = ? AND day_of_week = ?)
-           )
-           AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
-          [room_id, rDayOfWeek, rDayOfMonth, rNthWeek, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
-        );
-
-        if (rConflicts.length === 0 && rBlocked.length === 0) {
-          const [result] = await conn.query(
-            `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring, recurring_type, recurring_end_date)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [room_id, requester_id, requester_name, requester_phone, title, dateStr, start_time, end_time, reason, true, recurring_type, recurring_end_date]
-          );
-          reservationIds.push(result.insertId);
-        } else {
-          console.log(`Conflict on ${dateStr}, skipping.`);
-        }
-
-
+        // Check if currentD matches the pattern
+        let matches = false;
         if (recurring_type === 'daily') {
-          currentD.setDate(currentD.getDate() + 1);
+          matches = true;
+        } else if (recurring_type === 'weekly') {
+          if (Array.isArray(recurring_days) && recurring_days.length > 0) {
+            matches = recurring_days.includes(currentD.getDay());
+          } else {
+            // Fallback to start date's day of week
+            const startDay = new Date(reservation_date + 'T00:00:00').getDay();
+            matches = currentD.getDay() === startDay;
+          }
         } else if (recurring_type === 'monthly') {
-          currentD.setMonth(currentD.getMonth() + 1);
-        } else {
-          // Default to weekly
-          currentD.setDate(currentD.getDate() + 7);
+          if (recurring_month_option === 'date') {
+            matches = currentD.getDate() === parseInt(recurring_month_date);
+          } else if (recurring_month_option === 'nth') {
+            const day = currentD.getDate();
+            const week = Math.ceil(day / 7);
+            matches = (week === parseInt(recurring_month_nth_week) && currentD.getDay() === parseInt(recurring_month_nth_day));
+          } else {
+            // Legacy monthly: matches start date's day of month
+            const startDate = new Date(reservation_date + 'T00:00:00').getDate();
+            matches = currentD.getDate() === startDate;
+          }
         }
+
+        if (matches) {
+          // Robust YYYY-MM-DD formatting in local time
+          const dateStr = [
+            currentD.getFullYear(),
+            String(currentD.getMonth() + 1).padStart(2, '0'),
+            String(currentD.getDate()).padStart(2, '0')
+          ].join('-');
+
+          const [rConflicts] = await conn.query(
+            `SELECT id FROM reservations 
+             WHERE room_id = ? AND reservation_date = ? AND status IN ('approved', 'pending')
+             AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+            [room_id, dateStr, start_time, start_time, end_time, end_time, start_time, end_time]
+          );
+
+          // Check against room_blocked_times for each instance
+          const rDayOfWeek = currentD.getDay();
+          const rDayOfMonth = currentD.getDate();
+          const rNthWeek = Math.ceil(rDayOfMonth / 7);
+
+          const [rBlocked] = await conn.query(
+            `SELECT id FROM room_blocked_times
+             WHERE room_id = ?
+             AND (
+               (recurring_type = 'weekly' AND day_of_week = ?) OR
+               (recurring_type = 'monthly_date' AND day_of_month = ?) OR
+               (recurring_type = 'monthly_nth' AND nth_week = ? AND day_of_week = ?)
+             )
+             AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?) OR (? <= start_time AND ? >= end_time))`,
+            [room_id, rDayOfWeek, rDayOfMonth, rNthWeek, rDayOfWeek, start_time, start_time, end_time, end_time, start_time, end_time]
+          );
+
+          if (rConflicts.length === 0 && rBlocked.length === 0) {
+            const [result] = await conn.query(
+              `INSERT INTO reservations (room_id, requester_id, requester_name, requester_phone, title, reservation_date, start_time, end_time, reason, is_recurring, recurring_type, recurring_end_date)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [room_id, requester_id, requester_name, requester_phone, title, dateStr, start_time, end_time, reason, true, recurring_type, recurring_end_date]
+            );
+            reservationIds.push(result.insertId);
+          } else {
+            console.log(`Conflict on ${dateStr}, skipping.`);
+          }
+        }
+
+        currentD.setDate(currentD.getDate() + 1);
         count++;
       }
     } else {

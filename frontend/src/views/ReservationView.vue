@@ -394,9 +394,23 @@ const form = ref({
   is_recurring: false,
   recurring_type: 'weekly',
   recurring_end_date: '',
+  recurring_days: [],
+  recurring_month_option: 'date',
+  recurring_month_date: new Date().getDate(),
+  recurring_month_nth_week: Math.ceil(new Date().getDate() / 7),
+  recurring_month_nth_day: new Date().getDay(),
   requester_name: '',
   requester_phone: ''
 })
+
+const toggleRecurringDay = (dayIdx) => {
+  const index = form.value.recurring_days.indexOf(dayIdx)
+  if (index > -1) {
+    form.value.recurring_days.splice(index, 1)
+  } else {
+    form.value.recurring_days.push(dayIdx)
+  }
+}
 
 watch(() => form.value.requester_phone, (val) => {
   if (!val) return
@@ -510,6 +524,14 @@ const recurringCalendarDays = computed(() => {
 const submitBooking = async () => {
   if (!form.value.requester_name?.trim()) return modal.showAlert('신청자 이름을 입력해주세요.')
   if (!form.value.requester_phone?.trim()) return modal.showAlert('연락처를 입력해주세요.')
+  
+  if (form.value.is_recurring) {
+    if (!form.value.recurring_end_date) return modal.showAlert('반복 종료일을 선택해 주세요.')
+    if (form.value.recurring_type === 'weekly' && form.value.recurring_days.length === 0) {
+      return modal.showAlert('반복할 요일을 하나 이상 선택해 주세요.')
+    }
+  }
+
   try {
     await axios.post('/api/reservations', {
       ...form.value,
@@ -1360,7 +1382,7 @@ onMounted(() => {
                 </button>
               </div>
               
-              <div v-if="form.is_recurring" class="pt-3 border-t border-slate-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div v-if="form.is_recurring" class="pt-3 border-t border-slate-50 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div class="flex gap-1.5">
                   <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
                           @click="form.recurring_type = type[0]"
@@ -1369,8 +1391,53 @@ onMounted(() => {
                     {{ type[1] }}
                   </button>
                 </div>
+
+                <!-- Weekly Days Selection -->
+                <div v-if="form.recurring_type === 'weekly'" class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
+                  <div class="flex justify-between gap-1">
+                    <button v-for="(day, idx) in ['일', '월', '화', '수', '목', '금', '토']" :key="idx"
+                            @click="toggleRecurringDay(idx)"
+                            :class="[form.recurring_days.includes(idx) ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100']"
+                            class="w-8 h-8 rounded-lg border text-[11px] font-black transition-all">
+                      {{ day }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Monthly Options -->
+                <div v-if="form.recurring_type === 'monthly'" class="space-y-3">
+                  <div class="flex gap-2">
+                    <button @click="form.recurring_month_option = 'date'"
+                            :class="[form.recurring_month_option === 'date' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                            class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 일자</button>
+                    <button @click="form.recurring_month_option = 'nth'"
+                            :class="[form.recurring_month_option === 'nth' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                            class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 주차</button>
+                  </div>
+
+                  <!-- Monthly by Date -->
+                  <div v-if="form.recurring_month_option === 'date'" class="flex items-center gap-2 px-1">
+                    <select v-model="form.recurring_month_date" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-3 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                      <option v-for="d in 31" :key="d" :value="d">{{ d }}일</option>
+                    </select>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                  </div>
+
+                  <!-- Monthly by Nth Week -->
+                  <div v-if="form.recurring_month_option === 'nth'" class="flex items-center gap-2 px-1">
+                    <select v-model="form.recurring_month_nth_week" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                      <option v-for="n in 5" :key="n" :value="n">{{ n }}째주</option>
+                    </select>
+                    <select v-model="form.recurring_month_nth_day" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                      <option v-for="(d, i) in ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']" :key="i" :value="i">{{ d }}</option>
+                    </select>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                  </div>
+                </div>
+
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group cursor-pointer" @click="toggleRecurringCalendar">
-                  <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
+                  <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
                   <div class="flex items-center justify-between">
                     <span class="font-black text-xs text-slate-700 group-hover:text-indigo-600 transition-colors">{{ form.recurring_end_date || '날짜 선택' }}</span>
                     <CalendarIcon class="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />

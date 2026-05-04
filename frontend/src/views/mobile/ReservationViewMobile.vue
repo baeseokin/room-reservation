@@ -223,6 +223,84 @@
               <textarea v-model="form.reason" placeholder="사용 목적을 입력하세요" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 h-24 resize-none focus:ring-0"></textarea>
             </div>
 
+            <div class="bg-white border border-slate-200 p-6 rounded-[2rem] space-y-4">
+              <div class="flex items-center justify-between">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 예약 설정</label>
+                <button @click="form.is_recurring = !form.is_recurring" 
+                        :class="[form.is_recurring ? 'bg-indigo-600' : 'bg-slate-200']"
+                        class="w-10 h-5 rounded-full relative transition-colors duration-200 focus:outline-none">
+                  <div :class="[form.is_recurring ? 'translate-x-5' : 'translate-x-1']"
+                       class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow-sm"></div>
+                </button>
+              </div>
+
+              <div v-if="form.is_recurring" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <!-- Recurrence Type -->
+                <div class="flex gap-2">
+                  <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
+                          @click="form.recurring_type = type[0]"
+                          :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-400']"
+                          class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    {{ type[1] }}
+                  </button>
+                </div>
+
+                <!-- Weekly Days Selection -->
+                <div v-if="form.recurring_type === 'weekly'" class="space-y-2">
+                  <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
+                  <div class="flex justify-between gap-1">
+                    <button v-for="(day, idx) in ['일', '월', '화', '수', '목', '금', '토']" :key="idx"
+                            @click="toggleRecurringDay(idx)"
+                            :class="[form.recurring_days.includes(idx) ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-100']"
+                            class="w-8 h-8 rounded-lg border text-[10px] font-black transition-all">
+                      {{ day }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Monthly Options -->
+                <div v-if="form.recurring_type === 'monthly'" class="space-y-4">
+                  <div class="flex gap-2">
+                    <button @click="form.recurring_month_option = 'date'"
+                            :class="[form.recurring_month_option === 'date' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                            class="flex-1 py-3 rounded-xl border text-[10px] font-black transition-all">매월 특정 일자</button>
+                    <button @click="form.recurring_month_option = 'nth'"
+                            :class="[form.recurring_month_option === 'nth' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                            class="flex-1 py-3 rounded-xl border text-[10px] font-black transition-all">매월 특정 주차</button>
+                  </div>
+
+                  <!-- Monthly by Date -->
+                  <div v-if="form.recurring_month_option === 'date'" class="flex items-center gap-2">
+                    <select v-model="form.recurring_month_date" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-black text-center text-slate-700">
+                      <option v-for="d in 31" :key="d" :value="d">{{ d }}일</option>
+                    </select>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                  </div>
+
+                  <!-- Monthly by Nth Week -->
+                  <div v-if="form.recurring_month_option === 'nth'" class="flex items-center gap-2">
+                    <select v-model="form.recurring_month_nth_week" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-2 font-black text-center text-slate-700">
+                      <option v-for="n in 5" :key="n" :value="n">{{ n }}째주</option>
+                    </select>
+                    <select v-model="form.recurring_month_nth_day" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-2 font-black text-center text-slate-700">
+                      <option v-for="(d, i) in ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']" :key="i" :value="i">{{ d }}</option>
+                    </select>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                  </div>
+                </div>
+
+                <!-- End Date Selection -->
+                <div class="space-y-2">
+                   <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 종료일</label>
+                   <div class="relative">
+                      <input type="date" v-model="form.recurring_end_date" 
+                             class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 px-6 font-black text-slate-700 focus:ring-0 focus:border-indigo-500 transition-all" />
+                      <CalendarIcon class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none" />
+                   </div>
+                </div>
+              </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-4 pt-4">
                <button @click="showReservationForm = false" class="py-5 bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-widest rounded-[2rem]">취소</button>
                <button @click="submitReservation" class="py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[2rem] shadow-xl shadow-slate-200 active:scale-95 transition-all">신청 완료</button>
@@ -282,7 +360,15 @@ const form = ref({
   start_time: '09:00',
   end_time: '10:00',
   title: '',
-  reason: ''
+  reason: '',
+  is_recurring: false,
+  recurring_type: 'weekly',
+  recurring_end_date: formatDate(new Date(new Date().setMonth(new Date().getMonth() + 1))),
+  recurring_days: [], // For weekly: [0, 1, 2, 3, 4, 5, 6]
+  recurring_month_option: 'date', // 'date' or 'nth'
+  recurring_month_date: new Date().getDate(),
+  recurring_month_nth_week: Math.ceil(new Date().getDate() / 7),
+  recurring_month_nth_day: new Date().getDay()
 })
 
 const searchForm = ref({
@@ -421,10 +507,30 @@ const searchAvailableRooms = () => {
   })
 }
 
+const toggleRecurringDay = (dayIdx) => {
+  const index = form.value.recurring_days.indexOf(dayIdx)
+  if (index > -1) {
+    form.value.recurring_days.splice(index, 1)
+  } else {
+    form.value.recurring_days.push(dayIdx)
+  }
+}
+
 const submitReservation = async () => {
   if (!form.value.title) { modal.showAlert('신청 명칭을 입력해 주세요.'); return; }
   if (form.value.start_time >= form.value.end_time) { modal.showAlert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
   
+  if (form.value.is_recurring) {
+    if (!form.value.recurring_end_date) {
+      modal.showAlert('반복 종료일을 선택해 주세요.');
+      return;
+    }
+    if (form.value.recurring_type === 'weekly' && form.value.recurring_days.length === 0) {
+      modal.showAlert('반복할 요일을 하나 이상 선택해 주세요.');
+      return;
+    }
+  }
+
   try {
     const payload = {
       ...form.value,

@@ -247,6 +247,13 @@ const getEffectiveStatus = (res) => {
   return res.status
 }
 
+const formatDateWithDay = (dateStr) => {
+  if (!dateStr) return ''
+  const days = ['일', '월', '화', '수', '목', '금', '토']
+  const d = new Date(dateStr + 'T00:00:00')
+  return `${dateStr}(${days[d.getDay()]})`
+}
+
 onMounted(fetchMyReservations)
 </script>
 
@@ -316,7 +323,7 @@ onMounted(fetchMyReservations)
               </div>
             </td>
             <td class="px-8 py-6">
-               <div class="font-bold text-slate-800">{{ res.reservation_date }}</div>
+               <div class="font-bold text-slate-800">{{ formatDateWithDay(res.reservation_date) }}</div>
                <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ res.start_time }} - {{ res.end_time }}</div>
             </td>
             <td class="px-8 py-6">
@@ -357,9 +364,9 @@ onMounted(fetchMyReservations)
             <!-- Date Row -->
             <div class="bg-slate-50 p-4 rounded-3xl relative">
               <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
-              <div @click="toggleCalendar" class="flex items-center justify-between cursor-pointer group">
-                <span class="font-black text-slate-700">{{ editForm.reservation_date }}</span>
-                <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+              <div class="flex items-center justify-between">
+                <span class="font-black text-slate-700">{{ formatDateWithDay(editForm.reservation_date) }}</span>
+                <CalendarDaysIcon class="w-4 h-4 text-slate-200" />
               </div>
             </div>
 
@@ -369,16 +376,16 @@ onMounted(fetchMyReservations)
               <div class="bg-slate-50 p-3 rounded-2xl">
                 <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
                 <div class="flex items-center gap-1">
-                  <select :value="getAmPm(editForm.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getAmPm(editForm.start_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
-                  <select :value="getHour12(editForm.start_time)" @change="e => updateTime('start', 'hour', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getHour12(editForm.start_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
-                  <select :value="getMinute(editForm.start_time)" @change="e => updateTime('start', 'minute', e.target.value, editForm.start_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getMinute(editForm.start_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -388,16 +395,16 @@ onMounted(fetchMyReservations)
               <div class="bg-slate-50 p-3 rounded-2xl">
                 <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
                 <div class="flex items-center gap-1">
-                  <select :value="getAmPm(editForm.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getAmPm(editForm.end_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
-                  <select :value="getHour12(editForm.end_time)" @change="e => updateTime('end', 'hour', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getHour12(editForm.end_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
-                  <select :value="getMinute(editForm.end_time)" @change="e => updateTime('end', 'minute', e.target.value, editForm.end_time)" 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer shadow-sm">
+                  <select :value="getMinute(editForm.end_time)" disabled 
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -407,14 +414,14 @@ onMounted(fetchMyReservations)
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
             <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
-            <textarea v-model="editForm.reason" class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans" placeholder="목적을 입력하세요"></textarea>
+            <textarea v-model="editForm.reason" readonly class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans cursor-default" placeholder="목적을 입력하세요"></textarea>
           </div>
 
 
           <!-- Actions -->
           <div class="flex gap-4 pt-4 border-t border-slate-100">
-             <button @click="cancelReservation(editingRes.id)" class="flex-1 py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-red-100 transition-all active:scale-95">예약 취소 / 삭제</button>
-             <button @click="updateReservation" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">예약 수정</button>
+             <button @click="cancelReservation(editingRes.id)" class="flex-1 py-5 bg-rose-50 text-rose-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-rose-100 transition-all active:scale-95">예약 취소 / 삭제</button>
+             <button @click="showEditModal = false" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">닫기</button>
           </div>
         </div>
       </div>
