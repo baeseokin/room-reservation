@@ -61,12 +61,16 @@
             @click="openReservationForm(room)"
             class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
             <div class="flex items-center gap-4">
-               <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center font-black text-indigo-400">
-                 {{ room.floor }}
+               <div class="w-16 h-16 rounded-[1.4rem] bg-indigo-50 overflow-hidden flex shrink-0 items-center justify-center font-black text-indigo-400 shadow-inner">
+                 <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover" />
+                 <span v-else>{{ room.floor }}</span>
                </div>
                <div>
-                 <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
-                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">정원 {{ room.capacity }}명</div>
+                 <div class="flex items-center gap-1.5 mb-1">
+                   <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
+                   <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
+                 </div>
+                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
                </div>
             </div>
             <div class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">선택</div>
@@ -92,12 +96,16 @@
           @click="openRoomDetail(room)"
           class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400">
-              {{ room.floor }}
+            <div class="w-16 h-16 rounded-[1.4rem] bg-slate-50 overflow-hidden flex shrink-0 items-center justify-center font-black text-slate-400 shadow-inner">
+              <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover" />
+              <span v-else>{{ room.floor }}</span>
             </div>
             <div>
-              <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
-              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">정원 {{ room.capacity }}명</div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
+                <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
+              </div>
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
             </div>
           </div>
           <div class="flex flex-col items-end gap-1">
