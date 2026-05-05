@@ -28,12 +28,14 @@ const handleLogin = async () => {
   <div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
     <div class="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-slate-100">
       <div class="p-10">
-        <div class="text-center mb-10">
-          <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
-            <span class="text-white text-2xl font-bold">R</span>
-          </div>
-          <h1 class="text-2xl font-bold text-slate-900 mb-2">공간 예약 시스템</h1>
-          <p class="text-slate-500 text-sm">임시 로그인 (개발용)</p>
+        <!-- Title Area -->
+        <div class="flex flex-col items-center mb-12 text-center">
+          <h1 class="text-4xl font-black text-slate-800 tracking-tight leading-tight">
+            원천교회<br/>
+            <span class="text-indigo-600">공간 예약 시스템</span>
+          </h1>
+          <p class="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mt-4">Wonchon Space Reservation System</p>
+          <p class="text-slate-300 text-[9px] mt-2 font-bold">(임시 로그인)</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-6">

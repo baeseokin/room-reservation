@@ -9,13 +9,13 @@
     <div class="relative w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
       <!-- Card -->
       <div class="bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200/60 border border-white">
-        <!-- Logo Area -->
-        <div class="flex flex-col items-center mb-10">
-          <div class="bg-white p-4 rounded-3xl mb-6 shadow-inner">
-            <img src="../assets/logo_wonchon.png" alt="Wonchon Church Logo" class="h-14 object-contain" />
-          </div>
-          <h1 class="text-2xl font-black text-slate-900 tracking-tight">공간 예약 시스템</h1>
-          <p class="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-1.5">Wonchon Space Management</p>
+        <!-- Title Area -->
+        <div class="flex flex-col items-center mb-12 text-center">
+          <h1 class="text-4xl font-black text-slate-800 tracking-tight leading-tight">
+            원천교회<br/>
+            <span class="text-indigo-600">공간 예약 시스템</span>
+          </h1>
+          <p class="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mt-4">Wonchon Space Reservation System</p>
         </div>
 
         <!-- Error Message -->
