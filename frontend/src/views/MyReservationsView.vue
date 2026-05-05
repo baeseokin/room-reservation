@@ -15,7 +15,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon
+  ChevronDoubleRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ArrowPathIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/vue/24/outline'
 
 import { useModalStore } from '@/stores/useModalStore'
@@ -25,9 +29,8 @@ const auth = useAuthStore()
 const reservations = ref([])
 const loading = ref(false)
 
-// Query filters
-const startDate = ref(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // 30 days ago
-const endDate = ref(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // 30 days later
+// Search filter
+const searchQuery = ref('')
 
 // Edit Modal State
 const showEditModal = ref(false)
@@ -76,8 +79,6 @@ const selectCalendarDate = (date) => {
   const dateStr = `${year}-${month}-${day}`
   
   if (calendarTarget.value === 'edit') editForm.value.reservation_date = dateStr
-  else if (calendarTarget.value === 'filter_start') startDate.value = dateStr
-  else if (calendarTarget.value === 'filter_end') endDate.value = dateStr
   
   showCalendar.value = false
 }
@@ -123,7 +124,7 @@ const calendarDays = computed(() => {
 const fetchMyReservations = async () => {
   loading.value = true
   try {
-    const res = await axios.get(`/api/reservations?user_id=${auth.user.id}&start_date=${startDate.value}&end_date=${endDate.value}`)
+    const res = await axios.get(`/api/reservations?user_id=${auth.user.id}`)
     reservations.value = res.data
   } catch (error) {
     console.error('Fetch failed:', error)
@@ -136,8 +137,6 @@ const fetchMyReservations = async () => {
 const isSelectedDate = (date) => {
   const dateStr = date.toISOString().split('T')[0]
   if (calendarTarget.value === 'edit') return editForm.value.reservation_date === dateStr
-  if (calendarTarget.value === 'filter_start') return startDate.value === dateStr
-  if (calendarTarget.value === 'filter_end') return endDate.value === dateStr
   return false
 }
 
@@ -255,6 +254,82 @@ const formatDateWithDay = (dateStr) => {
 }
 
 onMounted(fetchMyReservations)
+
+const expandedGroups = ref(new Set())
+const toggleGroup = (groupId) => {
+  if (expandedGroups.value.has(groupId)) {
+    expandedGroups.value.delete(groupId)
+  } else {
+    expandedGroups.value.add(groupId)
+  }
+}
+
+const filteredReservations = computed(() => {
+  const now = new Date();
+  const currentYMD = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  const currentHM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  return reservations.value.filter(res => {
+    // Expiration check
+    const isExpired = res.reservation_date < currentYMD || (res.reservation_date === currentYMD && res.end_time <= currentHM);
+    if (isExpired) return false;
+
+    // Search query check
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase();
+      const match = (res.room_name?.toLowerCase().includes(q)) || 
+                    (res.title?.toLowerCase().includes(q)) || 
+                    (res.reason?.toLowerCase().includes(q)) ||
+                    (res.floor?.toLowerCase().includes(q));
+      if (!match) return false;
+    }
+
+    return true;
+  });
+});
+
+const groupedReservations = computed(() => {
+  const groups = []
+  const map = new Map()
+  
+  filteredReservations.value.forEach(res => {
+    if (res.is_recurring) {
+      const key = `group_${res.room_id}_${res.title}_${res.start_time}_${res.end_time}`
+      if (!map.has(key)) {
+        const group = {
+          id: key,
+          isGroup: true,
+          room_name: res.room_name,
+          floor: res.floor,
+          title: res.title,
+          start_time: res.start_time,
+          end_time: res.end_time,
+          reason: res.reason,
+          status: res.status,
+          items: []
+        }
+        map.set(key, group)
+        groups.push(group)
+      }
+      map.get(key).items.push(res)
+    } else {
+      groups.push({
+        id: `single_${res.id}`,
+        isGroup: false,
+        ...res
+      })
+    }
+  })
+  
+  // Sort items within group by date
+  groups.forEach(g => {
+    if (g.isGroup) {
+      g.items.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
+    }
+  })
+  
+  return groups
+})
 </script>
 
 <template>
@@ -265,26 +340,20 @@ onMounted(fetchMyReservations)
         <h1 class="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
           <CalendarDaysIcon class="w-10 h-10 text-indigo-600" />
           나의 예약 현황
+          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[14px] font-black px-3 py-1 rounded-full leading-none">{{ filteredReservations.length }}</span>
         </h1>
         <p class="text-slate-400 font-bold uppercase tracking-widest text-[12px]">관리 및 예약 공간</p>
       </div>
 
-      <!-- Date Filter -->
-      <div class="bg-white p-2 rounded-[2rem] border border-slate-200 shadow-xl flex items-center gap-2">
-          <div class="flex items-center gap-3 px-6">
-            <div @click="e => toggleCalendar(e, 'filter_start')" class="flex items-center gap-2 cursor-pointer group">
-              <span class="font-black text-slate-700 text-sm group-hover:text-indigo-600 transition-colors">{{ startDate }}</span>
-              <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-            </div>
-            <span class="text-slate-300 font-black">~</span>
-            <div @click="e => toggleCalendar(e, 'filter_end')" class="flex items-center gap-2 cursor-pointer group">
-              <span class="font-black text-slate-700 text-sm group-hover:text-indigo-600 transition-colors">{{ endDate }}</span>
-              <CalendarDaysIcon class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-            </div>
-          </div>
-         <button @click="fetchMyReservations" class="bg-slate-900 text-white px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95">
-           검색
-         </button>
+      <!-- Unified Search -->
+      <div class="relative group">
+        <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+          <MagnifyingGlassIcon class="w-5 h-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+        </div>
+        <input v-model="searchQuery" 
+               type="text" 
+               placeholder="공간명, 신청명, 내용으로 검색..." 
+               class="bg-white pl-14 pr-8 py-4 w-[400px] rounded-[2rem] border border-slate-200 shadow-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none font-bold text-slate-700 placeholder:text-slate-300 transition-all" />
       </div>
     </div>
 
@@ -306,41 +375,111 @@ onMounted(fetchMyReservations)
               <td colspan="5" class="px-8 py-6 bg-slate-50/50"></td>
             </tr>
           </template>
-          <tr v-else-if="reservations.length === 0">
+          <tr v-else-if="groupedReservations.length === 0">
              <td colspan="5" class="px-8 py-20 text-center">
                 <div class="text-slate-300 font-bold">조회된 예약 내역이 없습니다.</div>
              </td>
           </tr>
-          <tr v-for="res in reservations" :key="res.id" 
-              @click="openEditModal(res)"
-              class="group hover:bg-indigo-50/30 transition-colors cursor-pointer">
-            <td class="px-8 py-6">
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                  {{ res.floor }}
+          <template v-for="group in groupedReservations" :key="group.id">
+            <!-- Group Header Row (For Recurring) -->
+            <tr v-if="group.isGroup" 
+                @click="toggleGroup(group.id)"
+                class="group bg-indigo-50/20 hover:bg-indigo-50/40 transition-colors cursor-pointer border-b border-slate-50">
+              <td class="px-8 py-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600">
+                    {{ group.floor }}
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="font-bold text-slate-800">{{ group.room_name }}</span>
+                    <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">반복 예약</span>
+                  </div>
                 </div>
-                <span class="font-bold text-slate-800">{{ res.room_name }}</span>
-              </div>
-            </td>
-            <td class="px-8 py-6">
-               <div class="font-bold text-slate-800">{{ formatDateWithDay(res.reservation_date) }}</div>
-               <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ res.start_time }} - {{ res.end_time }}</div>
-            </td>
-            <td class="px-8 py-6">
-              <div class="font-black text-slate-900 leading-tight">{{ res.title || '신청명 없음' }}</div>
-              <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ res.reason }}</div>
-            </td>
-            <td class="px-8 py-6">
-              <span :class="statusMap[getEffectiveStatus(res)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
-                {{ statusMap[getEffectiveStatus(res)]?.label || getEffectiveStatus(res) }}
-              </span>
-            </td>
-            <td class="px-8 py-6 text-center">
-               <button class="p-2 bg-slate-50 hover:bg-slate-900 rounded-xl transition-all text-slate-300 hover:text-white">
-                  <PencilSquareIcon class="w-5 h-5" />
-               </button>
-            </td>
-          </tr>
+              </td>
+              <td class="px-8 py-6">
+                 <div class="font-bold text-indigo-600 flex items-center gap-2">
+                   {{ formatDateWithDay(group.items[0].reservation_date) }} ~ 
+                   <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-black">총 {{ group.items.length }}건</span>
+                 </div>
+                 <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+              </td>
+              <td class="px-8 py-6">
+                <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
+                <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
+              </td>
+              <td class="px-8 py-6">
+                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                  반복 진행중
+                </span>
+              </td>
+              <td class="px-8 py-6 text-center">
+                <div class="flex items-center justify-center gap-2">
+                   <span class="text-[10px] font-black text-slate-400 uppercase">{{ expandedGroups.has(group.id) ? '닫기' : '상세보기' }}</span>
+                   <ChevronDownIcon v-if="!expandedGroups.has(group.id)" class="w-4 h-4 text-slate-400" />
+                   <ChevronUpIcon v-else class="w-4 h-4 text-indigo-600" />
+                </div>
+              </td>
+            </tr>
+
+            <!-- Sub Items (When expanded) -->
+            <tr v-if="group.isGroup && expandedGroups.has(group.id)" 
+                v-for="res in group.items" :key="res.id"
+                @click.stop="openEditModal(res)"
+                class="group bg-white hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50/50">
+              <td class="px-8 py-4 pl-20 relative">
+                <div class="absolute left-10 top-1/2 -translate-y-1/2 w-4 h-[1px] bg-slate-200"></div>
+                <div class="text-[11px] font-bold text-slate-400">일자별 상세</div>
+              </td>
+              <td class="px-8 py-4">
+                 <div class="text-sm font-bold text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</div>
+              </td>
+              <td class="px-8 py-4">
+                <div class="text-xs font-medium text-slate-500">{{ res.start_time.slice(0,5) }} - {{ res.end_time.slice(0,5) }}</div>
+              </td>
+              <td class="px-8 py-4">
+                <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                  {{ statusMap[getEffectiveStatus(res)]?.label }}
+                </span>
+              </td>
+              <td class="px-8 py-4 text-center">
+                 <button class="p-1.5 bg-slate-50 hover:bg-slate-900 rounded-lg transition-all text-slate-300 hover:text-white">
+                    <PencilSquareIcon class="w-4 h-4" />
+                 </button>
+              </td>
+            </tr>
+
+            <!-- Single Reservation Row -->
+            <tr v-if="!group.isGroup" 
+                @click="openEditModal(group)"
+                class="group hover:bg-indigo-50/30 transition-colors cursor-pointer border-b border-slate-100">
+              <td class="px-8 py-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                    {{ group.floor }}
+                  </div>
+                  <span class="font-bold text-slate-800">{{ group.room_name }}</span>
+                </div>
+              </td>
+              <td class="px-8 py-6">
+                 <div class="font-bold text-slate-800">{{ formatDateWithDay(group.reservation_date) }}</div>
+                 <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+              </td>
+              <td class="px-8 py-6">
+                <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
+                <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
+              </td>
+              <td class="px-8 py-6">
+                <span :class="statusMap[getEffectiveStatus(group)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                  {{ statusMap[getEffectiveStatus(group)]?.label || getEffectiveStatus(group) }}
+                </span>
+              </td>
+              <td class="px-8 py-6 text-center">
+                 <button class="p-2 bg-slate-50 hover:bg-slate-900 rounded-xl transition-all text-slate-300 hover:text-white">
+                    <PencilSquareIcon class="w-5 h-5" />
+                 </button>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
