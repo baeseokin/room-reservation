@@ -37,12 +37,16 @@
 
       <div v-if="upcomingRes" class="bg-white p-6 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col gap-4">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
-            <MapPinIcon class="w-6 h-6" />
+          <div class="w-16 h-16 rounded-[1.4rem] bg-indigo-50 overflow-hidden flex shrink-0 items-center justify-center font-black text-indigo-400 shadow-inner">
+            <img v-if="upcomingRes.image_url" :src="upcomingRes.image_url" class="w-full h-full object-cover" />
+            <MapPinIcon v-else class="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <div class="text-xs font-black text-slate-400 uppercase tracking-widest mb-0.5">{{ upcomingRes.room_name }}</div>
-            <div class="text-lg font-black text-slate-900">{{ upcomingRes.title || '공간 사용' }}</div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ upcomingRes.floor }}{{ upcomingRes.floor.includes('B') ? '' : 'F' }}</span>
+              <div class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ upcomingRes.room_name }}</div>
+            </div>
+            <div class="text-lg font-black text-slate-900 leading-tight">{{ upcomingRes.title || '공간 사용' }}</div>
           </div>
         </div>
         <div class="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-2xl">

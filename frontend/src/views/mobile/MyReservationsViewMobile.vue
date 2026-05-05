@@ -2,7 +2,10 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">나의 예약</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">나의 예약</h2>
+          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ filteredReservations.length }}</span>
+        </div>
         <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">내가 신청한 예약 목록입니다.</p>
       </div>
       <button @click="fetchMyReservations" class="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-400 active:rotate-180 transition-all duration-500">
@@ -14,12 +17,12 @@
       <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
-    <div v-else-if="reservations.length === 0" class="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-      <div class="text-slate-300 font-bold text-sm uppercase tracking-widest">예약 내역이 없습니다.</div>
+    <div v-else-if="filteredReservations.length === 0" class="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+      <div class="text-slate-300 font-bold text-sm uppercase tracking-widest">진행 중인 예약 내역이 없습니다.</div>
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="res in reservations" :key="res.id" 
+      <div v-for="res in filteredReservations" :key="res.id" 
         @click="openDetail(res)"
         class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-4 active:scale-[0.98] transition-all">
         <div class="flex justify-between items-start">
@@ -89,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../../store/auth'
 import { ArrowPathIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/vue/24/outline'
@@ -102,6 +105,18 @@ const reservations = ref([])
 const loading = ref(false)
 const showDetail = ref(false)
 const editingRes = ref(null)
+
+const filteredReservations = computed(() => {
+  const now = new Date()
+  const currentStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  
+  return reservations.value.filter(res => {
+    // res.end_time이 HH:mm:ss 형식이므로 HH:mm만 추출
+    const endTime = res.end_time.slice(0, 5)
+    const endStr = `${res.reservation_date} ${endTime}`
+    return endStr >= currentStr
+  })
+})
 
 const statusMap = {
   pending: { label: '대기중', class: 'bg-amber-50 text-amber-600' },
