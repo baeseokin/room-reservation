@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 import { useModalStore } from '@/stores/useModalStore'
-import { MagnifyingGlassIcon, ArrowPathIcon, UserIcon, BuildingOfficeIcon, PhoneIcon, PencilSquareIcon, KeyIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowPathIcon, UserIcon, BuildingOfficeIcon, PhoneIcon, PencilSquareIcon, KeyIcon, TrashIcon, XMarkIcon, ShieldCheckIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
 const users = ref([])
@@ -190,7 +190,7 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4">
                 <div class="flex justify-center gap-1">
-                  <span v-for="role in (user.roles || '').split(',')" :key="role"
+                  <span v-for="role in (user.roles || '').split(',').filter(r => r)" :key="role"
                     :class="role === '관리자' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
                     class="px-2 py-0.5 rounded-lg text-[12px] font-black border uppercase tracking-tighter">
                     {{ role }}
@@ -201,7 +201,7 @@ onMounted(() => {
                 <div class="flex justify-end gap-2">
                   <button @click="openEdit(user)" title="정보 수정"
                     class="p-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm">
-                    <PencilIcon class="w-4 h-4" />
+                    <PencilSquareIcon class="w-4 h-4" />
                   </button>
                   <button @click="resetPassword(user)" title="비밀번호 초기화"
                     class="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all border border-amber-100 shadow-sm">
@@ -254,11 +254,16 @@ onMounted(() => {
 
             <div class="space-y-2">
               <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
-              <select v-model="form.dept_name" 
-                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none">
-                <option value="">부서 미지정</option>
-                <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
-              </select>
+              <div class="relative">
+                <select v-model="form.dept_name" 
+                  class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none">
+                  <option value="">부서 미지정</option>
+                  <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
+                </select>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDownIcon class="w-4 h-4" />
+                </div>
+              </div>
             </div>
 
             <!-- Role Cards (Single select for simplicity as requested before, but multiple allowed in backend. Let's keep cards) -->

@@ -6,7 +6,9 @@ import { useModalStore } from '@/stores/useModalStore'
 import { 
   BuildingOfficeIcon, 
   PlusIcon, 
-  ArrowPathIcon 
+  ArrowPathIcon,
+  XMarkIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
@@ -193,35 +195,54 @@ onMounted(fetchDepartments)
 
     <!-- Modal -->
     <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[3.5rem] shadow-2xl max-w-lg w-full p-12 space-y-10 animate-in fade-in zoom-in duration-300">
-          <div class="space-y-1">
-            <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
-            <h2 class="text-3xl font-black text-slate-900 font-serif italic">{{ editingDept ? '부서 정보 수정' : '새 부서 등록' }}</h2>
+      <div v-if="showModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-[3rem] shadow-2xl max-w-lg w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-2xl font-black text-slate-900">{{ editingDept ? '부서 정보 수정' : '새 부서 등록' }}</h2>
+              <p class="text-slate-500 text-sm font-medium mt-0.5">조직 체계의 부서 정보를 관리합니다.</p>
+            </div>
+            <button @click="showModal = false" class="p-2 text-slate-300 hover:text-slate-900 transition-colors">
+              <XMarkIcon class="w-6 h-6" />
+            </button>
           </div>
 
+          <!-- Form Area -->
           <div class="space-y-6">
-            <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6">
-              <div>
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">부서명</label>
-                <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 유치부 등" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500" />
-              </div>
+            <div class="space-y-2">
+              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">부서명</label>
+              <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 음악부 등"
+                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
+            </div>
 
-              <div>
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">상위 소속</label>
-                <select v-model="form.parent_dept_id" class="w-full bg-white border-none rounded-2xl py-4 px-6 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none">
-                  <option :value="null">최상위 조직</option>
+            <div class="space-y-2">
+              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">상위 소속</label>
+              <div class="relative">
+                <select v-model="form.parent_dept_id" 
+                  class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none">
+                  <option :value="null">최상위 조직 (Root)</option>
                   <option v-for="d in departments.filter(d => d.id !== editingDept?.id)" :key="d.id" :value="d.id">
                     {{ d.dept_name }}
                   </option>
                 </select>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDownIcon class="w-4 h-4" />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="flex gap-4">
-            <button @click="showModal = false" class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">취소</button>
-            <button @click="saveDepartment" class="flex-1 bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-95">저장하기</button>
+            <!-- Action Buttons -->
+            <div class="flex gap-4 pt-4">
+              <button @click="showModal = false" 
+                class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">
+                취소
+              </button>
+              <button @click="saveDepartment" 
+                class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-[0.98]">
+                {{ editingDept ? '수정 완료' : '부서 생성' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
