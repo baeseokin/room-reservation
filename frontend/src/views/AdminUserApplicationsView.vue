@@ -2,6 +2,15 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useModalStore } from '@/stores/useModalStore'
+import { 
+  ArrowPathIcon, 
+  CheckCircleIcon, 
+  XCircleIcon, 
+  UserPlusIcon, 
+  UserIcon, 
+  ShieldCheckIcon, 
+  XMarkIcon 
+} from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
 const applications = ref([])

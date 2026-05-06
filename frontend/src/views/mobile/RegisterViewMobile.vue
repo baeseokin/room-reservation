@@ -11,18 +11,16 @@
     </div>
 
     <template v-else>
-      <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-black px-6 py-4 rounded-2xl mb-6 text-center animate-in fade-in slide-in-from-top-2 duration-300">
-        {{ errorMsg }}
-      </div>
+
 
       <form @submit.prevent="handleRegister" class="space-y-6 pb-12">
       <div class="space-y-1.5">
         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디 <span class="text-rose-500">*</span></label>
         <div class="flex gap-2">
           <input v-model="form.userId" type="text" placeholder="ID 입력" required
-            class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
+            class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
           <button type="button" @click="checkId" 
-            class="px-4 bg-slate-900 text-white text-[11px] font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap">
+            class="px-4 bg-slate-900 text-white text-[11px] font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap shrink-0">
             중복확인
           </button>
         </div>
@@ -89,8 +87,10 @@
 import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { useModalStore } from '@/stores/useModalStore'
 
 const router = useRouter()
+const modal = useModalStore()
 const form = ref({ userId: '', password: '', passwordConfirm: '', userName: '', phone: '', email: '', deptName: '' })
 const isLoading = ref(false)
 const errorMsg = ref('')
@@ -109,7 +109,7 @@ onMounted(async () => {
 
 const checkId = async () => {
   if (!form.value.userId) {
-    errorMsg.value = '아이디를 입력해 주세요.'
+    modal.showAlert('아이디를 입력해 주세요.')
     return
   }
   
@@ -119,13 +119,11 @@ const checkId = async () => {
       idAvailable.value = res.data.available
       idChecked.value = true
       if (!idAvailable.value) {
-        errorMsg.value = '이미 사용 중인 아이디입니다.'
-      } else {
-        errorMsg.value = ''
+        modal.showAlert('이미 사용 중인 아이디입니다.')
       }
     }
   } catch (error) {
-    errorMsg.value = '중복 체크 중 오류가 발생했습니다.'
+    modal.showAlert('중복 체크 중 오류가 발생했습니다.')
   }
 }
 
@@ -153,36 +151,35 @@ watch(() => form.value.phone, (newVal) => {
 
 const handleRegister = async () => {
   if (!form.value.userId || !form.value.password || !form.value.passwordConfirm || !form.value.userName || !form.value.phone || !form.value.deptName) {
-    errorMsg.value = '필수 항목을 모두 입력해 주세요.'
+    modal.showAlert('필수 항목을 모두 입력해 주세요.')
     return
   }
 
   if (form.value.password !== form.value.passwordConfirm) {
-    errorMsg.value = '비밀번호가 일치하지 않습니다.'
+    modal.showAlert('비밀번호가 일치하지 않습니다.')
     return
   }
 
   if (!idChecked.value || !idAvailable.value) {
-    errorMsg.value = '아이디 중복 체크를 완료해 주세요.'
+    modal.showAlert('아이디 중복 체크를 완료해 주세요.')
     return
   }
 
   // Validate phone format (010-0000-0000)
   const phoneRegex = /^010-\d{3,4}-\d{4}$/
   if (!phoneRegex.test(form.value.phone)) {
-    errorMsg.value = '올바른 휴대폰 번호 형식이 아닙니다.'
+    modal.showAlert('올바른 휴대폰 번호 형식이 아닙니다.')
     return
   }
 
   isLoading.value = true
-  errorMsg.value = ''
   try {
     const res = await axios.post('/api/auth/register', form.value)
     if (res.data.success) {
       successMsg.value = res.data.message
     }
   } catch (e) {
-    errorMsg.value = e.response?.data?.message || '회원가입 중 오류가 발생했습니다.'
+    modal.showAlert(e.response?.data?.message || '회원가입 중 오류가 발생했습니다.')
   } finally {
     isLoading.value = false
   }

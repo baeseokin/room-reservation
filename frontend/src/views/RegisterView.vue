@@ -37,7 +37,7 @@ onMounted(fetchDepartments)
 
 const checkId = async () => {
   if (!form.value.userId) {
-    errorMsg.value = '아이디를 입력해 주세요.'
+    modal.showAlert('아이디를 입력해 주세요.')
     return
   }
   
@@ -47,13 +47,11 @@ const checkId = async () => {
       idAvailable.value = res.data.available
       idChecked.value = true
       if (!idAvailable.value) {
-        errorMsg.value = '이미 사용 중인 아이디입니다.'
-      } else {
-        errorMsg.value = ''
+        modal.showAlert('이미 사용 중인 아이디입니다.')
       }
     }
   } catch (error) {
-    errorMsg.value = '중복 체크 중 오류가 발생했습니다.'
+    modal.showAlert('중복 체크 중 오류가 발생했습니다.')
   }
 }
 
@@ -86,29 +84,28 @@ watch(() => form.value.phone, (newVal) => {
 
 const handleRegister = async () => {
   if (!form.value.userId || !form.value.password || !form.value.passwordConfirm || !form.value.userName || !form.value.phone || !form.value.deptName) {
-    errorMsg.value = '아이디, 비밀번호, 성함, 연락처, 담당부서는 필수 입력 항목입니다.'
+    modal.showAlert('아이디, 비밀번호, 성함, 연락처, 담당부서는 필수 입력 항목입니다.')
     return
   }
 
   if (form.value.password !== form.value.passwordConfirm) {
-    errorMsg.value = '비밀번호가 일치하지 않습니다.'
+    modal.showAlert('비밀번호가 일치하지 않습니다.')
     return
   }
 
   // Validate phone format (010-0000-0000)
   const phoneRegex = /^010-\d{3,4}-\d{4}$/
   if (!phoneRegex.test(form.value.phone)) {
-    errorMsg.value = '올바른 휴대폰 번호 형식이 아닙니다. (예: 010-1234-5678)'
+    modal.showAlert('올바른 휴대폰 번호 형식이 아닙니다. (예: 010-1234-5678)')
     return
   }
 
   if (!idChecked.value || !idAvailable.value) {
-    errorMsg.value = '아이디 중복 체크를 완료해 주세요.'
+    modal.showAlert('아이디 중복 체크를 완료해 주세요.')
     return
   }
 
   isLoading.value = true
-  errorMsg.value = ''
   
   try {
     const res = await axios.post('/api/auth/register', form.value)
@@ -117,7 +114,7 @@ const handleRegister = async () => {
       router.push('/')
     }
   } catch (error) {
-    errorMsg.value = error.response?.data?.message || '회원가입 중 오류가 발생했습니다.'
+    modal.showAlert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.')
   } finally {
     isLoading.value = false
   }
@@ -141,9 +138,7 @@ const handleRegister = async () => {
           <p class="text-slate-500 text-sm font-bold">원천교회 공간 예약시스템</p>
         </div>
 
-        <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold px-4 py-3 rounded-xl mb-6 text-center">
-          {{ errorMsg }}
-        </div>
+
 
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div class="space-y-4">

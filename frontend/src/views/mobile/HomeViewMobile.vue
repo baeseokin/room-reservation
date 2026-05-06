@@ -8,7 +8,8 @@
 
     <!-- Quick Stats / Status -->
     <div class="grid grid-cols-2 gap-4">
-      <div @click="$router.push('/m/my-reservations')" class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <!-- Left Card: My Reservations (User) or Pending Approvals (Admin) -->
+      <div v-if="!auth.isAdmin" @click="$router.push('/m/my-reservations')" class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 flex flex-col justify-between aspect-square active:scale-95 transition-all">
         <div class="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
           <CalendarIcon class="w-6 h-6 text-white" />
         </div>
@@ -17,13 +18,33 @@
           <div class="text-3xl font-black">{{ myResCount }}건</div>
         </div>
       </div>
-      <div @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <div v-else @click="$router.push('/m/admin/reservations')" class="bg-rose-500 p-5 rounded-[2.5rem] text-white shadow-xl shadow-rose-100 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+        <div class="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
+          <CheckBadgeIcon class="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <div class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">예약 승인 대기</div>
+          <div class="text-3xl font-black">{{ pendingResCount }}건</div>
+        </div>
+      </div>
+
+      <!-- Right Card: Book Space (User) or New Sign-ups (Admin) -->
+      <div v-if="!auth.isAdmin" @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
         <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
           <PlusIcon class="w-6 h-6 text-indigo-600" />
         </div>
         <div>
           <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">신규 신청</div>
           <div class="text-xl font-black text-slate-900">공간 예약하기</div>
+        </div>
+      </div>
+      <div v-else @click="$router.push('/m/admin/applications')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+        <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
+          <UserPlusIcon class="w-6 h-6 text-rose-500" />
+        </div>
+        <div>
+          <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">신규 가입 대기</div>
+          <div class="text-3xl font-black text-slate-900">{{ pendingUserCount }}건</div>
         </div>
       </div>
     </div>
@@ -86,17 +107,20 @@ import {
   MapPinIcon, 
   CalendarDaysIcon, 
   ClockIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  UserPlusIcon,
+  CheckBadgeIcon
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const upcomingRes = ref(null)
 const myResCount = ref(0)
+const pendingResCount = ref(0)
+const pendingUserCount = ref(0)
 
 onMounted(async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
-    // Fetch user's reservations from today onwards
+    // 1. Fetch data for common/user stats
     const res = await axios.get(`/api/reservations`, { 
       params: { 
         user_id: auth.user.id,
@@ -105,25 +129,20 @@ onMounted(async () => {
     })
     const all = res.data
     
-    // Count only active/approved reservations that are NOT finished
     const now = new Date()
     const activeReservations = all.filter(r => {
       if (r.status === 'rejected' || r.status === 'cancelled') return false
-      
-      // Check if finished
       const endTime = new Date(`${r.reservation_date}T${r.end_time}`)
       return endTime > now
     })
     
     myResCount.value = activeReservations.length
 
-    // Find upcoming reservation (future only, closest to now)
     const futureOnly = activeReservations.filter(r => {
       const startTime = new Date(`${r.reservation_date}T${r.start_time}`)
       return startTime > now
     })
 
-    // Sort by date and then start time
     futureOnly.sort((a, b) => {
       const timeA = new Date(`${a.reservation_date}T${a.start_time}`).getTime()
       const timeB = new Date(`${b.reservation_date}T${b.start_time}`).getTime()
@@ -133,6 +152,18 @@ onMounted(async () => {
     if (futureOnly.length > 0) {
       upcomingRes.value = futureOnly[0]
     }
+
+    // 2. Fetch data for admin stats if applicable
+    if (auth.isAdmin) {
+      // Fetch pending reservations count
+      const pRes = await axios.get('/api/reservations', { params: { status: 'pending' } })
+      pendingResCount.value = pRes.data.length
+
+      // Fetch pending users count
+      const pUsers = await axios.get('/api/users')
+      pendingUserCount.value = pUsers.data.filter(u => !u.is_approved).length
+    }
+
   } catch (e) {
     console.error('Home stats fetch error:', e)
   }

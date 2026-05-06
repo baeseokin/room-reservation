@@ -150,3 +150,5 @@ INSERT INTO roomdb.users (user_id,password_hash,is_approved,user_name,email,phon
 	 ('admin','$2b$10$qHL1YqktyS6pSW2lcPuktOvxpqjoBXoK97ZC.PozBsBLpo43X3Jd2',1,'관리자','admin@example.com','010-2307-0437','교회',NULL,'2026-04-18 11:21:53','2026-04-27 13:19:56','$2b$10$toZ3NwFsAnO0RetMiAUJNeAm6rLL18/WbRUVbMqZ138NzzkclrysO',0),
 	 ('user01','$2b$10$8SCRNTAdX.pcbLrLrpupquubryMcas5vvFRWXsl9c7ib6gqFpA636',1,'사용자01','','010-2307-0437','청년부',NULL,'2026-04-26 13:00:30','2026-05-01 00:02:08',NULL,0),
 	 ('user02','$2b$10$ex4X5f8RJ.y5B0fpXYngv.Cd/DhecMIhgdCLTmU6if01Jb9Fux/PG',1,'홍길동','','010-2345-0099','재정부',NULL,'2026-04-30 23:59:31','2026-05-01 00:03:50',NULL,0);
+
+
