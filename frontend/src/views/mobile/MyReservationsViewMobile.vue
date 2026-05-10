@@ -47,12 +47,12 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <h3 class="text-lg font-black text-slate-800 truncate">{{ group.room_name }}</h3>
+                  <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
                   <span class="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">
                     반복 {{ group.items.length }}건
                   </span>
                 </div>
-                <p class="text-slate-900 font-bold text-sm mb-2 truncate">{{ group.title || '신청명 없음' }}</p>
+                <p class="text-slate-500 font-bold text-sm mb-2 truncate">{{ group.room_name }}</p>
                 <div class="flex flex-wrap gap-2">
                   <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                     <CalendarDaysIcon class="w-3.5 h-3.5 text-indigo-500" />
@@ -102,10 +102,10 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-lg font-black text-slate-800 truncate">{{ group.room_name }}</h3>
+                <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
                 <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black">{{ group.floor }}</span>
               </div>
-              <p class="text-slate-900 font-bold text-sm mb-3 truncate">{{ group.title || '신청명 없음' }}</p>
+              <p class="text-slate-500 font-bold text-sm mb-3 truncate">{{ group.room_name }}</p>
               
               <div class="flex flex-wrap gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100">

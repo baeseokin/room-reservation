@@ -51,6 +51,8 @@ const newInquiryContent = ref('')
 const answerContents = ref({})
 const hoveredRoom = ref(null)
 const roomTooltipPos = ref({ x: 0, y: 0 })
+const bookingStep = ref('form') // 'form' or 'agreement'
+const isAgreed = ref(false)
 
 // Calendar Dropdown Logic
 const showCalendar = ref(false)
@@ -472,6 +474,8 @@ const openBooking = (room, time = '09:00', date = null) => {
   const endDate = new Date()
   endDate.setMonth(endDate.getMonth() + 1)
   form.value.recurring_end_date = formatDate(endDate)
+  bookingStep.value = 'form'
+  isAgreed.value = false
   showBookingModal.value = true
 }
 
@@ -546,6 +550,15 @@ const submitBooking = async () => {
     if (form.value.recurring_type === 'weekly' && form.value.recurring_days.length === 0) {
       return modal.showAlert('반복할 요일을 하나 이상 선택해 주세요.')
     }
+  }
+
+  if (bookingStep.value === 'form') {
+    bookingStep.value = 'agreement'
+    return
+  }
+
+  if (!isAgreed.value) {
+    return modal.showAlert('공간사용 수칙에 동의하셔야 신청이 가능합니다.')
   }
 
   try {
@@ -1332,162 +1345,198 @@ onMounted(() => {
 
           <!-- Content Area (Scrollable) -->
           <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
-            <!-- Application Title Input -->
-            <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
-              <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">
-                <SparklesIcon class="w-3 h-3" />
-                신청명
-              </label>
-              <input type="text" v-model="form.title" placeholder="무엇을 위한 예약인가요?" 
-                     class="w-full bg-transparent border-none p-0 font-black text-lg text-slate-900 placeholder:text-slate-200 focus:ring-0" />
-            </div>
-
-            <!-- Time Selection Row -->
-            <div class="grid grid-cols-2 gap-3">
-              <!-- Start Time -->
-              <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">시작 시간</label>
-                <div class="flex items-center gap-1">
-                  <select :value="getAmPm(form.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
-                  </select>
-                  <select :value="getHour12(form.start_time)" @change="e => updateTime('start', 'hour', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-                  </select>
-                  <select :value="getMinute(form.start_time)" @change="e => updateTime('start', 'minute', e.target.value, form.start_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- End Time -->
-              <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
-                <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">종료 시간</label>
-                <div class="flex items-center gap-1">
-                  <select :value="getAmPm(form.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
-                  </select>
-                  <select :value="getHour12(form.end_time)" @change="e => updateTime('end', 'hour', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-                  </select>
-                  <select :value="getMinute(form.end_time)" @change="e => updateTime('end', 'minute', e.target.value, form.end_time)" 
-                          class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
-                    <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recurring Options -->
-            <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-3 transition-all">
-              <div class="flex items-center justify-between">
-                <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 uppercase tracking-widest">
-                  <ArrowPathIcon class="w-3 h-3" />
-                  반복 예약 설정
+            <template v-if="bookingStep === 'form'">
+              <!-- Application Title Input -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <SparklesIcon class="w-3 h-3" />
+                  신청명
                 </label>
-                <button @click="form.is_recurring = !form.is_recurring" 
-                        :class="[form.is_recurring ? 'bg-indigo-600' : 'bg-slate-200']"
-                        class="w-8 h-4 rounded-full relative transition-colors duration-200 focus:outline-none">
-                  <div :class="[form.is_recurring ? 'translate-x-4' : 'translate-x-1']"
-                       class="absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200 shadow-sm"></div>
-                </button>
+                <input type="text" v-model="form.title" placeholder="무엇을 위한 예약인가요?" 
+                       class="w-full bg-transparent border-none p-0 font-black text-lg text-slate-900 placeholder:text-slate-200 focus:ring-0" />
               </div>
-              
-              <div v-if="form.is_recurring" class="pt-3 border-t border-slate-50 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div class="flex gap-1.5">
-                  <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
-                          @click="form.recurring_type = type[0]"
-                          :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200']"
-                          class="flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all">
-                    {{ type[1] }}
+
+              <!-- Time Selection Row -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Start Time -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
+                  <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">시작 시간</label>
+                  <div class="flex items-center gap-1">
+                    <select :value="getAmPm(form.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, form.start_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                    </select>
+                    <select :value="getHour12(form.start_time)" @change="e => updateTime('start', 'hour', e.target.value, form.start_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                    </select>
+                    <select :value="getMinute(form.start_time)" @change="e => updateTime('start', 'minute', e.target.value, form.start_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- End Time -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm focus-within:border-indigo-500 transition-all">
+                  <label class="text-[12px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-center">종료 시간</label>
+                  <div class="flex items-center gap-1">
+                    <select :value="getAmPm(form.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, form.end_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
+                    </select>
+                    <select :value="getHour12(form.end_time)" @change="e => updateTime('end', 'hour', e.target.value, form.end_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                    </select>
+                    <select :value="getMinute(form.end_time)" @change="e => updateTime('end', 'minute', e.target.value, form.end_time)" 
+                            class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer">
+                      <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recurring Options -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-3 transition-all">
+                <div class="flex items-center justify-between">
+                  <label class="flex items-center gap-1.5 text-[12px] font-black text-slate-400 uppercase tracking-widest">
+                    <ArrowPathIcon class="w-3 h-3" />
+                    반복 예약 설정
+                  </label>
+                  <button @click="form.is_recurring = !form.is_recurring" 
+                          :class="[form.is_recurring ? 'bg-indigo-600' : 'bg-slate-200']"
+                          class="w-8 h-4 rounded-full relative transition-colors duration-200 focus:outline-none">
+                    <div :class="[form.is_recurring ? 'translate-x-4' : 'translate-x-1']"
+                         class="absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200 shadow-sm"></div>
                   </button>
                 </div>
-
-                <!-- Weekly Days Selection -->
-                <div v-if="form.recurring_type === 'weekly'" class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
-                  <div class="flex justify-between gap-1">
-                    <button v-for="(day, idx) in ['일', '월', '화', '수', '목', '금', '토']" :key="idx"
-                            @click="toggleRecurringDay(idx)"
-                            :class="[form.recurring_days.includes(idx) ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100']"
-                            class="w-8 h-8 rounded-lg border text-[11px] font-black transition-all">
-                      {{ day }}
+                
+                <div v-if="form.is_recurring" class="pt-3 border-t border-slate-50 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div class="flex gap-1.5">
+                    <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
+                            @click="form.recurring_type = type[0]"
+                            :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200']"
+                            class="flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all">
+                      {{ type[1] }}
                     </button>
                   </div>
-                </div>
 
-                <!-- Monthly Options -->
-                <div v-if="form.recurring_type === 'monthly'" class="space-y-3">
-                  <div class="flex gap-2">
-                    <button @click="form.recurring_month_option = 'date'"
-                            :class="[form.recurring_month_option === 'date' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
-                            class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 일자</button>
-                    <button @click="form.recurring_month_option = 'nth'"
-                            :class="[form.recurring_month_option === 'nth' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
-                            class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 주차</button>
+                  <!-- Weekly Days Selection -->
+                  <div v-if="form.recurring_type === 'weekly'" class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
+                    <div class="flex justify-between gap-1">
+                      <button v-for="(day, idx) in ['일', '월', '화', '수', '목', '금', '토']" :key="idx"
+                              @click="toggleRecurringDay(idx)"
+                              :class="[form.recurring_days.includes(idx) ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100']"
+                              class="w-8 h-8 rounded-lg border text-[11px] font-black transition-all">
+                        {{ day }}
+                      </button>
+                    </div>
                   </div>
 
-                  <!-- Monthly by Date -->
-                  <div v-if="form.recurring_month_option === 'date'" class="flex items-center gap-2 px-1">
-                    <select v-model="form.recurring_month_date" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-3 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
-                      <option v-for="d in 31" :key="d" :value="d">{{ d }}일</option>
-                    </select>
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                  <!-- Monthly Options -->
+                  <div v-if="form.recurring_type === 'monthly'" class="space-y-3">
+                    <div class="flex gap-2">
+                      <button @click="form.recurring_month_option = 'date'"
+                              :class="[form.recurring_month_option === 'date' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                              class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 일자</button>
+                      <button @click="form.recurring_month_option = 'nth'"
+                              :class="[form.recurring_month_option === 'nth' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
+                              class="flex-1 py-2 rounded-xl border text-[11px] font-black transition-all">매월 특정 주차</button>
+                    </div>
+
+                    <!-- Monthly by Date -->
+                    <div v-if="form.recurring_month_option === 'date'" class="flex items-center gap-2 px-1">
+                      <select v-model="form.recurring_month_date" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-3 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                        <option v-for="d in 31" :key="d" :value="d">{{ d }}일</option>
+                      </select>
+                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                    </div>
+
+                    <!-- Monthly by Nth Week -->
+                    <div v-if="form.recurring_month_option === 'nth'" class="flex items-center gap-2 px-1">
+                      <select v-model="form.recurring_month_nth_week" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                        <option v-for="n in 5" :key="n" :value="n">{{ n }}째주</option>
+                      </select>
+                      <select v-model="form.recurring_month_nth_day" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
+                        <option v-for="(d, i) in ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']" :key="i" :value="i">{{ d }}</option>
+                      </select>
+                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                    </div>
                   </div>
 
-                  <!-- Monthly by Nth Week -->
-                  <div v-if="form.recurring_month_option === 'nth'" class="flex items-center gap-2 px-1">
-                    <select v-model="form.recurring_month_nth_week" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
-                      <option v-for="n in 5" :key="n" :value="n">{{ n }}째주</option>
-                    </select>
-                    <select v-model="form.recurring_month_nth_day" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg py-2 px-2 font-black text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500/20">
-                      <option v-for="(d, i) in ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']" :key="i" :value="i">{{ d }}</option>
-                    </select>
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
-                  </div>
-                </div>
-
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group cursor-pointer" @click="toggleRecurringCalendar">
-                  <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
-                  <div class="flex items-center justify-between">
-                    <span class="font-black text-xs text-slate-700 group-hover:text-indigo-600 transition-colors">{{ form.recurring_end_date || '날짜 선택' }}</span>
-                    <CalendarIcon class="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group cursor-pointer" @click="toggleRecurringCalendar">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest cursor-pointer group-hover:text-indigo-500 transition-colors">반복 종료일</label>
+                    <div class="flex items-center justify-between">
+                      <span class="font-black text-xs text-slate-700 group-hover:text-indigo-600 transition-colors">{{ form.recurring_end_date || '날짜 선택' }}</span>
+                      <CalendarIcon class="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Requester Info Grid -->
-            <div class="grid grid-cols-2 gap-3">
+              <!-- Requester Info Grid -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                  <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">신청자 성함</label>
+                  <input type="text" v-model="form.requester_name" placeholder="홍길동" 
+                         class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
+                </div>
+                <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                  <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">연락처</label>
+                  <input type="tel" v-model="form.requester_phone" placeholder="010-0000-0000" 
+                         class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
+                </div>
+              </div>
+
+              <!-- Reason TextArea -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">신청자 성함</label>
-                <input type="text" v-model="form.requester_name" placeholder="홍길동" 
-                       class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
+                <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">예약 사유</label>
+                <textarea v-model="form.reason" class="w-full bg-transparent border-none p-0 font-bold text-xs text-slate-700 placeholder:text-slate-200 focus:ring-0 h-16 resize-none" placeholder="사용 목적 입력..."></textarea>
               </div>
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">연락처</label>
-                <input type="tel" v-model="form.requester_phone" placeholder="010-0000-0000" 
-                       class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-200 focus:ring-0" />
-              </div>
-            </div>
+            </template>
 
-            <!-- Reason TextArea -->
-            <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-              <label class="block text-[12px] font-black text-slate-400 mb-1 uppercase tracking-widest">예약 사유</label>
-              <textarea v-model="form.reason" class="w-full bg-transparent border-none p-0 font-bold text-xs text-slate-700 placeholder:text-slate-200 focus:ring-0 h-16 resize-none" placeholder="사용 목적 입력..."></textarea>
-            </div>
+            <template v-else-if="bookingStep === 'agreement'">
+              <div class="animate-in fade-in zoom-in duration-300 space-y-6 py-4">
+                <div class="bg-indigo-50 p-6 rounded-[2rem] border border-indigo-100">
+                  <h3 class="text-base font-black text-indigo-900 mb-4 flex items-center gap-2">
+                    <InformationCircleIcon class="w-5 h-5" />
+                    공간 사용 수칙 안내
+                  </h3>
+                  <ul class="space-y-4">
+                    <li v-for="(rule, idx) in [
+                      '사용 후 냉난방기 및 전등을 반드시 꺼주세요.',
+                      '음식물 반입은 원칙적으로 금지됩니다.',
+                      '사용 후 비품은 원래 자리에 정리해 주세요.'
+                    ]" :key="idx" class="flex gap-3">
+                      <span class="shrink-0 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[10px] font-black text-indigo-600 shadow-sm">{{ idx + 1 }}</span>
+                      <p class="text-sm font-bold text-slate-700 leading-snug">{{ rule }}</p>
+                    </li>
+                  </ul>
+                </div>
+
+                <label class="flex items-center gap-3 p-6 bg-white border border-slate-200 rounded-[2rem] cursor-pointer hover:border-indigo-500 transition-all group">
+                  <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
+                    <input type="checkbox" v-model="isAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all" />
+                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">위 공간 사용 수칙을 확인했으며, 이에 동의합니다.</span>
+                </label>
+              </div>
+            </template>
           </div>
 
           <!-- Footer Actions (Fixed) -->
           <div class="px-8 py-6 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0">
-            <button @click="showBookingModal = false" class="px-6 py-3 bg-slate-100 border border-slate-200/60 rounded-2xl text-[11px] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest">취소</button>
+            <button @click="bookingStep === 'agreement' ? bookingStep = 'form' : showBookingModal = false" 
+                    class="px-6 py-3 bg-slate-100 border border-slate-200/60 rounded-2xl text-[11px] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest">
+              {{ bookingStep === 'agreement' ? '이전으로' : '취소' }}
+            </button>
             <button @click="submitBooking" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
-              🗓 예약 신청하기
+              {{ bookingStep === 'agreement' ? '🗓 최종 신청하기' : '🗓 예약 신청하기' }}
             </button>
           </div>
         </div>
