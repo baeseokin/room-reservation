@@ -16,13 +16,13 @@
           <p class="text-slate-400 text-xs font-black uppercase tracking-widest mt-2 text-center">보안을 위해 비밀번호를 변경해 주세요.</p>
         </div>
 
-        <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-500 text-[11px] font-black px-4 py-3 rounded-2xl mb-6 text-center uppercase tracking-wider">
+        <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-500 text-[0.6875rem] font-black px-4 py-3 rounded-2xl mb-6 text-center uppercase tracking-wider">
           {{ errorMsg }}
         </div>
 
         <form @submit.prevent="handleChangePassword" class="space-y-5">
           <div v-if="!isFirstLogin" class="space-y-1.5">
-            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">현재 비밀번호</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">현재 비밀번호</label>
             <input
               v-model="currentPassword"
               type="password"
@@ -32,7 +32,7 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호</label>
             <input
               v-model="newPassword"
               type="password"
@@ -42,7 +42,7 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호 확인</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호 확인</label>
             <input
               v-model="confirmPassword"
               type="password"

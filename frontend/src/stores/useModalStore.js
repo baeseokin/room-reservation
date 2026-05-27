@@ -10,21 +10,28 @@ export const useModalStore = defineStore('modal', () => {
 
   const promptValue = ref('')
   const promptPlaceholder = ref('')
+  
+  const confirmText = ref('확인')
+  const cancelText = ref('취소')
 
   const showAlert = (msg, t = '알림') => {
     return new Promise((resolve) => {
       title.value = t
       message.value = msg
+      confirmText.value = '확인'
+      cancelText.value = '취소'
       type.value = 'alert'
       isOpen.value = true
       resolvePromise.value = resolve
     })
   }
 
-  const showConfirm = (msg, t = '확인') => {
+  const showConfirm = (msg, t = '확인', okText = '확인', cancelTxt = '취소') => {
     return new Promise((resolve) => {
       title.value = t
       message.value = msg
+      confirmText.value = okText
+      cancelText.value = cancelTxt
       type.value = 'confirm'
       isOpen.value = true
       resolvePromise.value = resolve
@@ -35,6 +42,8 @@ export const useModalStore = defineStore('modal', () => {
     return new Promise((resolve) => {
       title.value = t
       message.value = msg
+      confirmText.value = '확인'
+      cancelText.value = '취소'
       promptPlaceholder.value = placeholder
       promptValue.value = ''
       type.value = 'prompt'
@@ -59,6 +68,8 @@ export const useModalStore = defineStore('modal', () => {
     message,
     promptValue,
     promptPlaceholder,
+    confirmText,
+    cancelText,
     showAlert,
     showConfirm,
     showPrompt,

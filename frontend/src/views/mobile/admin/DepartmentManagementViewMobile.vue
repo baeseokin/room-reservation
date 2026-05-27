@@ -135,7 +135,7 @@ onMounted(fetchDepartments)
     <div class="flex justify-between items-center px-2">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">조직 체계 관리</h2>
-        <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">부서 간의 계층 구조를 관리합니다.</p>
+        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">부서 간의 계층 구조를 관리합니다.</p>
       </div>
       <div class="flex gap-2">
         <button @click="fetchDepartments" class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:scale-95 transition-all">
@@ -167,7 +167,7 @@ onMounted(fetchDepartments)
       <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
         <BuildingOfficeIcon class="w-8 h-8 text-slate-200" />
       </div>
-      <p class="text-slate-400 font-black text-[10px] uppercase tracking-widest">
+      <p class="text-slate-400 font-black text-[0.625rem] uppercase tracking-widest">
         {{ searchQuery ? '"' + searchQuery + '" 검색 결과가 없습니다' : '등록된 부서가 없습니다' }}
       </p>
     </div>
@@ -184,7 +184,7 @@ onMounted(fetchDepartments)
         <div class="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3.5rem] p-8 sm:p-12 space-y-8 animate-in slide-in-from-bottom duration-500">
           <div class="flex justify-between items-center">
             <div class="space-y-1">
-              <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
+              <span class="text-[0.625rem] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">조직 설정</span>
               <h2 class="text-2xl font-black text-slate-900 tracking-tight">{{ editingDept ? '부서 정보 수정' : '새 부서 등록' }}</h2>
             </div>
             <button @click="showModal = false" class="p-2 bg-slate-50 text-slate-400 rounded-full">
@@ -195,12 +195,12 @@ onMounted(fetchDepartments)
           <div class="space-y-6">
             <div class="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 space-y-6">
               <div class="space-y-1.5">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">부서명</label>
+                <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">부서명</label>
                 <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 유치부 등" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all text-sm" />
               </div>
 
               <div class="space-y-1.5">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">상위 소속</label>
+                <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">상위 소속</label>
                 <select v-model="form.parent_dept_id" class="w-full bg-white border-none rounded-2xl py-4 px-5 font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 appearance-none text-sm">
                   <option :value="null">최상위 조직</option>
                   <option v-for="d in departments.filter(d => d.id !== editingDept?.id)" :key="d.id" :value="d.id">

@@ -115,12 +115,12 @@ onMounted(fetchApplications)
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-black text-slate-900 text-sm">{{ user.user_name }}</span>
-              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg uppercase tracking-wider">{{ user.user_id }}</span>
+              <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg uppercase tracking-wider">{{ user.user_id }}</span>
             </div>
             <div class="text-xs text-slate-500 font-bold mt-0.5">
               {{ user.dept_name || '부서 미지정' }} · {{ user.phone }}
             </div>
-            <div class="text-[12px] text-slate-400 font-bold mt-0.5">
+            <div class="text-[0.75rem] text-slate-400 font-bold mt-0.5">
               신청 일시: {{ formatDate(user.created_at) }}
             </div>
           </div>
@@ -163,7 +163,7 @@ onMounted(fetchApplications)
               </div>
               <div class="min-w-0">
                 <div class="text-lg font-black text-slate-900 truncate">{{ selectedUser.user_name }}</div>
-                <div class="text-[11px] font-bold text-slate-400 mt-0.5 truncate italic">
+                <div class="text-[0.6875rem] font-bold text-slate-400 mt-0.5 truncate italic">
                   {{ selectedUser.dept_name || '부서 미지정' }} · {{ selectedUser.phone }}
                 </div>
               </div>
@@ -171,7 +171,7 @@ onMounted(fetchApplications)
 
             <!-- Role Selection Cards -->
             <div class="space-y-4">
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">부여할 시스템 권한</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">부여할 시스템 권한</label>
               <div class="grid grid-cols-2 gap-4">
                 <!-- User Role Card -->
                 <button @click="selectRole('사용자')" 
@@ -183,7 +183,7 @@ onMounted(fetchApplications)
                   </div>
                   <div class="space-y-0.5">
                     <div class="text-xs font-black text-slate-900 uppercase tracking-widest">일반 사용자</div>
-                    <div class="text-[12px] font-bold text-slate-400 uppercase tracking-tighter">Room Reservation</div>
+                    <div class="text-[0.75rem] font-bold text-slate-400 uppercase tracking-tighter">Room Reservation</div>
                   </div>
                 </button>
 
@@ -197,7 +197,7 @@ onMounted(fetchApplications)
                   </div>
                   <div class="space-y-0.5">
                     <div class="text-xs font-black text-slate-900 uppercase tracking-widest">시스템 관리자</div>
-                    <div class="text-[12px] font-bold text-slate-400 uppercase tracking-tighter">Full Access</div>
+                    <div class="text-[0.75rem] font-bold text-slate-400 uppercase tracking-tighter">Full Access</div>
                   </div>
                 </button>
               </div>

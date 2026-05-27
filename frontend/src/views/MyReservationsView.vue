@@ -340,9 +340,9 @@ const groupedReservations = computed(() => {
         <h1 class="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
           <CalendarDaysIcon class="w-10 h-10 text-indigo-600" />
           나의 예약 현황
-          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[14px] font-black px-3 py-1 rounded-full leading-none">{{ filteredReservations.length }}</span>
+          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[0.875rem] font-black px-3 py-1 rounded-full leading-none">{{ filteredReservations.length }}</span>
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-[12px]">관리 및 예약 공간</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-[0.75rem]">관리 및 예약 공간</p>
       </div>
 
       <!-- Unified Search -->
@@ -362,11 +362,11 @@ const groupedReservations = computed(() => {
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100">
-            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
-            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
-            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">신청명</th>
-            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest">상태</th>
-            <th class="px-8 py-6 text-[12px] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
+            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
+            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
+            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">신청명</th>
+            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">상태</th>
+            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
           </tr>
         </thead>
         <tbody>
@@ -392,7 +392,7 @@ const groupedReservations = computed(() => {
                   </div>
                   <div class="flex flex-col">
                     <span class="font-bold text-slate-800">{{ group.room_name }}</span>
-                    <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">반복 예약</span>
+                    <span class="text-[0.5625rem] font-black text-indigo-400 uppercase tracking-widest">반복 예약</span>
                   </div>
                 </div>
               </td>
@@ -401,20 +401,20 @@ const groupedReservations = computed(() => {
                    {{ formatDateWithDay(group.items[0].reservation_date) }} ~ 
                    <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-black">총 {{ group.items.length }}건</span>
                  </div>
-                 <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
               </td>
               <td class="px-8 py-6">
                 <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
-                <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
+                <div class="text-[0.75rem] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
               </td>
               <td class="px-8 py-6">
-                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
                   반복 진행중
                 </span>
               </td>
               <td class="px-8 py-6 text-center">
                 <div class="flex items-center justify-center gap-2">
-                   <span class="text-[10px] font-black text-slate-400 uppercase">{{ expandedGroups.has(group.id) ? '닫기' : '상세보기' }}</span>
+                   <span class="text-[0.625rem] font-black text-slate-400 uppercase">{{ expandedGroups.has(group.id) ? '닫기' : '상세보기' }}</span>
                    <ChevronDownIcon v-if="!expandedGroups.has(group.id)" class="w-4 h-4 text-slate-400" />
                    <ChevronUpIcon v-else class="w-4 h-4 text-indigo-600" />
                 </div>
@@ -428,7 +428,7 @@ const groupedReservations = computed(() => {
                 class="group bg-white hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50/50">
               <td class="px-8 py-4 pl-20 relative">
                 <div class="absolute left-10 top-1/2 -translate-y-1/2 w-4 h-[1px] bg-slate-200"></div>
-                <div class="text-[11px] font-bold text-slate-400">일자별 상세</div>
+                <div class="text-[0.6875rem] font-bold text-slate-400">일자별 상세</div>
               </td>
               <td class="px-8 py-4">
                  <div class="text-sm font-bold text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</div>
@@ -437,7 +437,7 @@ const groupedReservations = computed(() => {
                 <div class="text-xs font-medium text-slate-500">{{ res.start_time.slice(0,5) }} - {{ res.end_time.slice(0,5) }}</div>
               </td>
               <td class="px-8 py-4">
-                <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[0.625rem] font-black uppercase tracking-tighter">
                   {{ statusMap[getEffectiveStatus(res)]?.label }}
                 </span>
               </td>
@@ -462,14 +462,14 @@ const groupedReservations = computed(() => {
               </td>
               <td class="px-8 py-6">
                  <div class="font-bold text-slate-800">{{ formatDateWithDay(group.reservation_date) }}</div>
-                 <div class="text-[12px] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
               </td>
               <td class="px-8 py-6">
                 <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
-                <div class="text-[12px] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
+                <div class="text-[0.75rem] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
               </td>
               <td class="px-8 py-6">
-                <span :class="statusMap[getEffectiveStatus(group)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-tighter">
+                <span :class="statusMap[getEffectiveStatus(group)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
                   {{ statusMap[getEffectiveStatus(group)]?.label || getEffectiveStatus(group) }}
                 </span>
               </td>
@@ -490,7 +490,7 @@ const groupedReservations = computed(() => {
         <div class="p-10 space-y-8 text-left">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
+              <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
               <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes.room_name }}</h2>
             </div>
             <button @click="showEditModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all">
@@ -502,7 +502,7 @@ const groupedReservations = computed(() => {
           <div class="space-y-4">
             <!-- Date Row -->
             <div class="bg-slate-50 p-4 rounded-3xl relative">
-              <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 mb-[5px] uppercase tracking-widest">날짜</label>
               <div class="flex items-center justify-between">
                 <span class="font-black text-slate-700">{{ formatDateWithDay(editForm.reservation_date) }}</span>
                 <CalendarDaysIcon class="w-4 h-4 text-slate-200" />
@@ -513,18 +513,18 @@ const groupedReservations = computed(() => {
             <div class="grid grid-cols-2 gap-4">
               <!-- Start Time -->
               <div class="bg-slate-50 p-3 rounded-2xl">
-                <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
+                <label class="block text-[0.75rem] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">시작 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(editForm.start_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(editForm.start_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(editForm.start_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -532,18 +532,18 @@ const groupedReservations = computed(() => {
 
               <!-- End Time -->
               <div class="bg-slate-50 p-3 rounded-2xl">
-                <label class="block text-[12px] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
+                <label class="block text-[0.75rem] font-black text-slate-400 mb-1.5 uppercase tracking-widest text-center">종료 시간</label>
                 <div class="flex items-center gap-1">
                   <select :value="getAmPm(editForm.end_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
                   <select :value="getHour12(editForm.end_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
                   </select>
                   <select :value="getMinute(editForm.end_time)" disabled 
-                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[12px] text-slate-400 appearance-none text-center shadow-sm">
+                          class="flex-1 min-w-0 bg-white border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-400 appearance-none text-center shadow-sm">
                     <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
                   </select>
                 </div>
@@ -552,7 +552,7 @@ const groupedReservations = computed(() => {
           </div>
           
           <div class="bg-slate-50 p-6 rounded-[2rem]">
-            <label class="block text-[12px] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 mb-[5px] uppercase tracking-widest">사용 목적</label>
             <textarea v-model="editForm.reason" readonly class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans cursor-default" placeholder="목적을 입력하세요"></textarea>
           </div>
 
@@ -576,7 +576,7 @@ const groupedReservations = computed(() => {
             <button @click="moveCalendarYear(-1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronDoubleLeftIcon class="w-3.5 h-3.5" /></button>
             <button @click="moveCalendarMonth(-1)" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all"><ChevronLeftIcon class="w-3.5 h-3.5" /></button>
           </div>
-          <span class="text-[11px] font-black text-slate-900 uppercase tracking-widest">
+          <span class="text-[0.6875rem] font-black text-slate-900 uppercase tracking-widest">
             {{ calendarDate.getFullYear() }}. {{ (calendarDate.getMonth() + 1).toString().padStart(2, '0') }}
           </span>
           <div class="flex gap-1">
@@ -585,7 +585,7 @@ const groupedReservations = computed(() => {
           </div>
         </div>
         <div class="grid grid-cols-7 gap-1 mb-2">
-          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-[12px] font-black text-slate-300 text-center uppercase">{{ d }}</span>
+          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-[0.75rem] font-black text-slate-300 text-center uppercase">{{ d }}</span>
         </div>
         <div class="grid grid-cols-7 gap-1">
           <button v-for="(day, idx) in calendarDays" :key="idx"
@@ -594,7 +594,7 @@ const groupedReservations = computed(() => {
                     day.current ? 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600' : 'text-slate-200',
                     isSelectedDate(day.date) ? 'bg-indigo-600 !text-white shadow-lg shadow-indigo-100' : ''
                   ]"
-                  class="aspect-square flex items-center justify-center text-[12px] font-black rounded-lg transition-all">
+                  class="aspect-square flex items-center justify-center text-[0.75rem] font-black rounded-lg transition-all">
             {{ day.day }}
           </button>
         </div>

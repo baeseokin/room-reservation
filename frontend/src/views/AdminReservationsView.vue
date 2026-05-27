@@ -167,7 +167,7 @@ onMounted(fetchReservations)
         <button v-for="s in ['all','pending','approved','rejected','cancelled']" :key="s"
           @click="filterStatus = s"
           :class="filterStatus === s ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'"
-          class="px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest shrink-0">
+          class="px-4 py-2 rounded-xl text-[0.6875rem] font-black transition-all uppercase tracking-widest shrink-0">
           {{ { all:'전체', pending:'대기', approved:'승인', rejected:'거부', cancelled:'취소' }[s] }}
         </button>
       </div>
@@ -224,7 +224,7 @@ onMounted(fetchReservations)
 
           <!-- Status badge -->
           <div :class="[statusMap[r.status]?.bg, statusMap[r.status]?.text, statusMap[r.status]?.border]"
-            class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black border w-24 justify-center">
+            class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.6875rem] font-black border w-24 justify-center">
             {{ statusMap[r.status]?.label || r.status }}
           </div>
 
@@ -232,7 +232,7 @@ onMounted(fetchReservations)
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-black text-slate-900 text-sm">{{ r.title || '(제목 없음)' }}</span>
-              <span class="text-[12px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{{ r.room_name }}</span>
+              <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{{ r.room_name }}</span>
             </div>
             <div class="text-xs text-slate-500 font-bold mt-0.5">
               {{ fmtDate(r.reservation_date) }} · {{ fmtTime(r.start_time) }} ~ {{ fmtTime(r.end_time) }}
@@ -279,7 +279,7 @@ onMounted(fetchReservations)
         </div>
 
         <div class="space-y-2">
-          <label class="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">거부 사유 입력 (선택)</label>
+          <label class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">거부 사유 입력 (선택)</label>
           <textarea v-model="rejectReason" rows="3"
             placeholder="예: 해당 시간에는 교회 행사가 예정되어 있습니다."
             class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-rose-500/10 focus:border-rose-300 outline-none resize-none transition-all">

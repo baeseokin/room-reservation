@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">예약 승인 관리</h2>
-        <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">예약 신청건을 검토합니다.</p>
+        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">예약 신청건을 검토합니다.</p>
       </div>
     </div>
 
@@ -20,7 +20,7 @@
          <button v-for="s in ['all', 'pending', 'approved', 'rejected']" :key="s"
            @click="filterStatus = s"
            :class="[filterStatus === s ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-100']"
-           class="px-5 py-2.5 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all shrink-0">
+           class="px-5 py-2.5 rounded-2xl border text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
            {{ { all:'전체', pending:'대기', approved:'승인', rejected:'거부' }[s] }}
          </button>
        </div>
@@ -35,14 +35,14 @@
         class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
         <div class="flex justify-between items-start">
           <div class="flex flex-col">
-            <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-tighter mb-2 border">
+            <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-tighter mb-2 border">
               {{ statusMap[res.status]?.label }}
             </span>
             <h3 class="text-base font-black text-slate-900 leading-tight">{{ res.title || '신청 제목 없음' }}</h3>
           </div>
           <div class="text-right">
-            <div class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{{ res.room_name }}</div>
-            <div class="text-[10px] font-bold text-slate-300 uppercase">{{ res.floor }}</div>
+            <div class="text-[0.625rem] font-black text-indigo-600 uppercase tracking-widest">{{ res.room_name }}</div>
+            <div class="text-[0.625rem] font-bold text-slate-300 uppercase">{{ res.floor }}</div>
           </div>
         </div>
 
@@ -59,10 +59,10 @@
         </div>
 
         <div v-if="res.status === 'pending'" class="flex gap-3 pt-2">
-           <button @click="reject(res)" class="flex-1 py-4 bg-rose-50 text-rose-500 font-black text-[10px] uppercase tracking-widest rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-rose-100">
+           <button @click="reject(res)" class="flex-1 py-4 bg-rose-50 text-rose-500 font-black text-[0.625rem] uppercase tracking-widest rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-rose-100">
              <XCircleIcon class="w-4 h-4" />거부
            </button>
-           <button @click="approve(res)" class="flex-1 py-4 bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+           <button @click="approve(res)" class="flex-1 py-4 bg-emerald-500 text-white font-black text-[0.625rem] uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
              <CheckCircleIcon class="w-4 h-4" />승인
            </button>
         </div>

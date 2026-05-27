@@ -33,7 +33,7 @@
 
                 <div class="text-center mb-6">
                   <h3 class="text-lg font-black text-slate-900 tracking-tight mb-2">{{ modal.title }}</h3>
-                  <p class="text-slate-500 font-bold text-[13px] leading-relaxed whitespace-pre-line">{{ modal.message }}</p>
+                  <p class="text-slate-500 font-bold text-[0.8125rem] leading-relaxed whitespace-pre-line">{{ modal.message }}</p>
                 </div>
 
                 <!-- Prompt Input (Mobile) -->
@@ -51,12 +51,12 @@
                 <div class="flex w-full gap-2">
                   <button v-if="modal.type === 'confirm' || modal.type === 'prompt'" 
                     @click="modal.close(false)"
-                    class="flex-1 bg-slate-100 text-slate-400 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest active:scale-95 transition-all">
-                    취소
+                    class="flex-1 bg-slate-100 text-slate-400 font-black py-4 rounded-2xl text-[0.625rem] uppercase tracking-widest active:scale-95 transition-all">
+                    {{ modal.cancelText || '취소' }}
                   </button>
                   <button @click="modal.close(true)"
-                    class="flex-1 bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-slate-200 active:scale-95 transition-all">
-                    확인
+                    class="flex-1 bg-slate-900 text-white font-black py-4 rounded-2xl text-[0.625rem] uppercase tracking-widest shadow-lg shadow-slate-200 active:scale-95 transition-all">
+                    {{ modal.confirmText || '확인' }}
                   </button>
                 </div>
               </div>
@@ -101,12 +101,12 @@
                 <div class="flex gap-3">
                   <button v-if="modal.type === 'confirm' || modal.type === 'prompt'" 
                     @click="modal.close(false)"
-                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-400 font-black py-4 rounded-2xl transition-all active:scale-[0.98] text-[10px] uppercase tracking-widest">
-                    취소
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-400 font-black py-4 rounded-2xl transition-all active:scale-[0.98] text-[0.625rem] uppercase tracking-widest">
+                    {{ modal.cancelText || '취소' }}
                   </button>
                   <button @click="modal.close(true)"
-                    class="flex-1 bg-slate-900 hover:bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-100 transition-all active:scale-[0.98] text-[10px] uppercase tracking-widest">
-                    확인
+                    class="flex-1 bg-slate-900 hover:bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-100 transition-all active:scale-[0.98] text-[0.625rem] uppercase tracking-widest">
+                    {{ modal.confirmText || '확인' }}
                   </button>
                 </div>
               </div>

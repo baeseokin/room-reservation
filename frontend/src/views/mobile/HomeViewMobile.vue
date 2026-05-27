@@ -3,7 +3,7 @@
     <!-- Welcome Section -->
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">{{ auth.user?.userName }}님, 안녕하세요! 👋</h2>
-      <p class="text-slate-400 text-[12px] font-black uppercase tracking-widest">오늘도 평안한 하루 되세요.</p>
+      <p class="text-slate-400 text-[0.75rem] font-black uppercase tracking-widest">오늘도 평안한 하루 되세요.</p>
     </div>
 
     <!-- Quick Stats / Status -->
@@ -14,7 +14,7 @@
           <CalendarIcon class="w-6 h-6 text-white" />
         </div>
         <div>
-          <div class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">나의 예약</div>
+          <div class="text-[0.625rem] font-black uppercase tracking-widest opacity-60 mb-1">나의 예약</div>
           <div class="text-3xl font-black">{{ myResCount }}건</div>
         </div>
       </div>
@@ -23,7 +23,7 @@
           <CheckBadgeIcon class="w-6 h-6 text-white" />
         </div>
         <div>
-          <div class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">예약 승인 대기</div>
+          <div class="text-[0.625rem] font-black uppercase tracking-widest opacity-60 mb-1">예약 승인 대기</div>
           <div class="text-3xl font-black">{{ pendingResCount }}건</div>
         </div>
       </div>
@@ -34,7 +34,7 @@
           <PlusIcon class="w-6 h-6 text-indigo-600" />
         </div>
         <div>
-          <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">신규 신청</div>
+          <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">신규 신청</div>
           <div class="text-xl font-black text-slate-900">공간 예약하기</div>
         </div>
       </div>
@@ -43,7 +43,7 @@
           <UserPlusIcon class="w-6 h-6 text-rose-500" />
         </div>
         <div>
-          <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">신규 가입 대기</div>
+          <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">신규 가입 대기</div>
           <div class="text-3xl font-black text-slate-900">{{ pendingUserCount }}건</div>
         </div>
       </div>
@@ -53,7 +53,7 @@
     <div class="space-y-4">
       <div class="flex justify-between items-center px-1">
         <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">다가오는 예약</h3>
-        <router-link to="/m/my-reservations" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">전체보기</router-link>
+        <router-link to="/m/my-reservations" class="text-[0.625rem] font-black text-indigo-600 uppercase tracking-widest">전체보기</router-link>
       </div>
 
       <div v-if="upcomingRes" class="bg-white p-6 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col gap-4">
@@ -64,7 +64,7 @@
           </div>
           <div>
             <div class="flex items-center gap-1.5 mb-1">
-              <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ upcomingRes.floor }}{{ upcomingRes.floor.includes('B') ? '' : 'F' }}</span>
+              <span class="text-[0.5625rem] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ upcomingRes.floor }}{{ upcomingRes.floor.includes('B') ? '' : 'F' }}</span>
               <div class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ upcomingRes.room_name }}</div>
             </div>
             <div class="text-lg font-black text-slate-900 leading-tight">{{ upcomingRes.title || '공간 사용' }}</div>
@@ -90,7 +90,7 @@
     <div @click="$router.push('/m/guide')" class="bg-slate-900 p-8 rounded-[2.5rem] text-white relative overflow-hidden active:scale-95 transition-all">
       <div class="relative z-10 space-y-2">
         <h4 class="text-lg font-black tracking-tight leading-tight">원천교회 공간 사용 수칙을<br>확인해 주세요.</h4>
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] pt-2">이용 가이드 보기 →</p>
+        <p class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-[0.2em] pt-2">이용 가이드 보기 →</p>
       </div>
       <BuildingOfficeIcon class="absolute -right-4 -bottom-4 w-32 h-32 text-white/5" />
     </div>

@@ -2,29 +2,29 @@
   <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">비밀번호 변경</h2>
-      <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">새로운 비밀번호를 설정해 주세요.</p>
+      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">새로운 비밀번호를 설정해 주세요.</p>
     </div>
 
     <div class="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
-      <div v-if="errorMsg" class="bg-rose-50 text-rose-500 text-[10px] font-black p-3 rounded-2xl text-center border border-rose-100">
+      <div v-if="errorMsg" class="bg-rose-50 text-rose-500 text-[0.625rem] font-black p-3 rounded-2xl text-center border border-rose-100">
         {{ errorMsg }}
       </div>
 
       <div class="space-y-4">
         <div class="space-y-1.5">
-          <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">현재 비밀번호</label>
+          <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">현재 비밀번호</label>
           <input v-model="form.currentPassword" type="password" placeholder="현재 비밀번호" 
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호</label>
+          <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">새 비밀번호</label>
           <input v-model="form.newPassword" type="password" placeholder="새 비밀번호 (4자 이상)" 
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 확인</label>
+          <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 확인</label>
           <input v-model="confirmPassword" type="password" placeholder="새 비밀번호 다시 입력" 
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
         </div>

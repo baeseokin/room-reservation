@@ -35,7 +35,7 @@ const handleLogin = async () => {
             <span class="text-indigo-600">공간 예약 시스템</span>
           </h1>
           <p class="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mt-4">Wonchon Space Reservation System</p>
-          <p class="text-slate-300 text-[9px] mt-2 font-bold">(임시 로그인)</p>
+          <p class="text-slate-300 text-[0.5625rem] mt-2 font-bold">(임시 로그인)</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-6">

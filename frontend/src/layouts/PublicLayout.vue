@@ -10,7 +10,7 @@
         <nav class="hidden md:flex items-center gap-1">
           <router-link v-for="item in navItems" :key="item.path" :to="item.path"
             exact-active-class="bg-slate-900 text-white shadow-lg shadow-slate-200"
-            class="px-4 py-2 rounded-xl text-[16px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all whitespace-nowrap">
+            class="px-4 py-2 rounded-xl text-[1rem] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all whitespace-nowrap">
             {{ item.name }}
           </router-link>
         </nav>
@@ -20,12 +20,35 @@
         <!-- User Info & Logout (if logged in) -->
         <template v-if="auth.user">
           <div class="hidden lg:flex items-center px-2">
-            <span class="text-[13px] font-black text-slate-900 tracking-tight">
+            <span class="text-[0.8125rem] font-black text-slate-900 tracking-tight">
               <span class="text-indigo-600 font-black mr-2 opacity-80">성도님 환영합니다</span>
               {{ auth.user.userName }}님
             </span>
           </div>
           <div class="w-px h-8 bg-slate-200 mx-2 hidden lg:block"></div>
+          <!-- Font control buttons -->
+          <div class="relative flex items-center mr-1" @mouseleave="isFontMenuOpen = false">
+            <button @click="isFontMenuOpen = !isFontMenuOpen" class="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all shadow-sm select-none flex items-center justify-center" title="글자 크기 조절">
+              <span class="inline-flex items-center font-black text-[0.8125rem] tracking-tighter">
+                <span class="text-indigo-600">+</span>
+                <span class="text-slate-300 mx-0.5">/</span>
+                <span class="text-rose-500">-</span>
+              </span>
+            </button>
+            <div v-if="isFontMenuOpen" class="absolute right-0 top-full pt-2 z-50">
+              <div class="p-2 bg-white border border-slate-200 shadow-xl rounded-2xl flex items-center gap-1.5">
+                <button @click="decreaseFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 축소">
+                  A-
+                </button>
+                <button @click="resetFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 기본 크기">
+                  A
+                </button>
+                <button @click="increaseFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 확대">
+                  A+
+                </button>
+              </div>
+            </div>
+          </div>
           <button @click="auth.logout()" class="p-2.5 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all group" title="로그아웃">
             <ArrowLeftOnRectangleIcon class="w-5 h-5" />
           </button>
@@ -83,14 +106,14 @@
     <footer v-if="!$route.path.startsWith('/app/reservations')" class="bg-white border-t border-slate-100 py-6 mt-auto">
       <div class="max-w-7xl mx-auto px-6 flex flex-col items-center space-y-2 text-center">
         <div class="space-y-1">
-          <p class="text-[12px] text-slate-400 font-medium">
+          <p class="text-[0.75rem] text-slate-400 font-medium">
             (120-826) 서울특별시 서대문구 연희로 32길 19
           </p>
-          <p class="text-[12px] text-slate-400 font-medium">
+          <p class="text-[0.75rem] text-slate-400 font-medium">
             TEL. 02-337-5400 | FAX. 02-335-3576
           </p>
         </div>
-        <p class="text-[12px] text-slate-400 font-bold">© 2024 WONCHEON CHURCH. ALL RIGHTS RESERVED.</p>
+        <p class="text-[0.75rem] text-slate-400 font-bold">© 2024 WONCHEON CHURCH. ALL RIGHTS RESERVED.</p>
       </div>
     </footer>
   </div>
@@ -99,6 +122,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../store/auth'
+import { useModalStore } from '@/stores/useModalStore'
 import { 
   CalendarIcon, 
   HomeIcon, 
@@ -110,6 +134,8 @@ import {
 
 const auth = useAuthStore()
 const isMobileMenuOpen = ref(false)
+const modal = useModalStore()
+const isFontMenuOpen = ref(false)
 
 const navItems = [
   { name: '홈', path: '/home' },
@@ -118,4 +144,32 @@ const navItems = [
 
   { name: '내 정보', path: '/home/profile' },
 ]
+
+const getRootFontSize = () => {
+  const saved = localStorage.getItem('app-font-size')
+  return saved ? parseInt(saved) : 14
+}
+
+const increaseFontSize = () => {
+  const current = getRootFontSize()
+  if (current <= 20) {
+    const nextSize = current + 2
+    document.documentElement.style.fontSize = `${nextSize}px`
+    localStorage.setItem('app-font-size', nextSize)
+  }
+}
+
+const resetFontSize = () => {
+  document.documentElement.style.fontSize = '14px'
+  localStorage.setItem('app-font-size', '14')
+}
+
+const decreaseFontSize = () => {
+  const current = getRootFontSize()
+  if (current > 12) {
+    const nextSize = current - 2
+    document.documentElement.style.fontSize = `${nextSize}px`
+    localStorage.setItem('app-font-size', nextSize)
+  }
+}
 </script>

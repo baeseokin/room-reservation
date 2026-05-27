@@ -2,7 +2,7 @@
   <div class="space-y-8">
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">프로필 설정</h2>
-      <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">본인의 계정 정보를 관리합니다.</p>
+      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">본인의 계정 정보를 관리합니다.</p>
     </div>
 
     <!-- Profile Header -->
@@ -22,7 +22,7 @@
         <div class="flex items-center gap-4">
           <div class="p-3 bg-slate-50 rounded-2xl text-slate-400"><BuildingOfficeIcon class="w-5 h-5" /></div>
           <div>
-            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">소속 부서</div>
+            <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">소속 부서</div>
             <div class="text-sm font-black text-slate-700">{{ auth.user?.deptName || '미지정' }}</div>
           </div>
         </div>
@@ -32,7 +32,7 @@
         <div class="flex items-center gap-4">
           <div class="p-3 bg-slate-50 rounded-2xl text-slate-400"><PhoneIcon class="w-5 h-5" /></div>
           <div>
-            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">연락처</div>
+            <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">연락처</div>
             <div class="text-sm font-black text-slate-700">{{ auth.user?.phone }}</div>
           </div>
         </div>

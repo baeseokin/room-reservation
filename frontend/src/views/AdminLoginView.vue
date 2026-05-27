@@ -19,14 +19,14 @@
         </div>
 
         <!-- Error Message -->
-        <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-500 text-[11px] font-black px-4 py-3 rounded-2xl mb-6 text-center uppercase tracking-wider">
+        <div v-if="errorMsg" class="bg-rose-50 border border-rose-100 text-rose-500 text-[0.6875rem] font-black px-4 py-3 rounded-2xl mb-6 text-center uppercase tracking-wider">
           {{ errorMsg }}
         </div>
 
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="space-y-5">
           <div class="space-y-1.5">
-            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
             <input
               v-model="userId"
               type="text"
@@ -37,7 +37,7 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
+            <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
             <div class="relative">
               <input
                 v-model="password"
@@ -67,7 +67,7 @@
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-slate-100"></div>
           </div>
-          <div class="relative flex justify-center text-[12px]">
+          <div class="relative flex justify-center text-[0.75rem]">
             <span class="px-3 bg-white text-slate-300 font-black uppercase tracking-widest">or</span>
           </div>
         </div>
@@ -84,10 +84,10 @@
       <!-- Footer Info -->
       <div class="mt-10 text-center space-y-2">
         <div class="space-y-0.5">
-          <p class="text-[11px] text-slate-400 font-medium">(120-826) 서울특별시 서대문구 연희로 32길 19</p>
-          <p class="text-[11px] text-slate-400 font-medium">TEL. 02-337-5400 | FAX. 02-335-3576</p>
+          <p class="text-[0.6875rem] text-slate-400 font-medium">(120-826) 서울특별시 서대문구 연희로 32길 19</p>
+          <p class="text-[0.6875rem] text-slate-400 font-medium">TEL. 02-337-5400 | FAX. 02-335-3576</p>
         </div>
-        <p class="text-[11px] text-slate-300 font-bold uppercase tracking-widest">
+        <p class="text-[0.6875rem] text-slate-300 font-bold uppercase tracking-widest">
           © {{ new Date().getFullYear() }} Wonchon Church. All rights reserved.
         </p>
       </div>

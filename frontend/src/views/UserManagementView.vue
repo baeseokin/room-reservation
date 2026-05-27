@@ -157,10 +157,10 @@ onMounted(() => {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50/50 border-b border-slate-100">
-              <th class="px-6 py-4 text-[12px] font-black text-slate-400 uppercase tracking-widest">사용자 정보</th>
-              <th class="px-6 py-4 text-[12px] font-black text-slate-400 uppercase tracking-widest">부서 / 연락처</th>
-              <th class="px-6 py-4 text-[12px] font-black text-slate-400 uppercase tracking-widest text-center">권한</th>
-              <th class="px-6 py-4 text-[12px] font-black text-slate-400 uppercase tracking-widest text-right">관리 액션</th>
+              <th class="px-6 py-4 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">사용자 정보</th>
+              <th class="px-6 py-4 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">부서 / 연락처</th>
+              <th class="px-6 py-4 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest text-center">권한</th>
+              <th class="px-6 py-4 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest text-right">관리 액션</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-sm">
@@ -172,7 +172,7 @@ onMounted(() => {
                   </div>
                   <div>
                     <div class="font-black text-slate-900">{{ user.user_name }}</div>
-                    <div class="text-[11px] font-bold text-slate-400">{{ user.user_id }}</div>
+                    <div class="text-[0.6875rem] font-bold text-slate-400">{{ user.user_id }}</div>
                   </div>
                 </div>
               </td>
@@ -192,7 +192,7 @@ onMounted(() => {
                 <div class="flex justify-center gap-1">
                   <span v-for="role in (user.roles || '').split(',').filter(r => r)" :key="role"
                     :class="role === '관리자' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
-                    class="px-2 py-0.5 rounded-lg text-[12px] font-black border uppercase tracking-tighter">
+                    class="px-2 py-0.5 rounded-lg text-[0.75rem] font-black border uppercase tracking-tighter">
                     {{ role }}
                   </span>
                 </div>
@@ -238,22 +238,22 @@ onMounted(() => {
           <div class="space-y-6">
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
+                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
                 <input v-model="form.user_name" type="text"
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
               </div>
               <div class="space-y-2">
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
                 <input v-model="form.phone" type="text"
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
               </div>
             </div>
-            <p class="text-[10px] text-indigo-500 font-bold ml-1 -mt-4 leading-tight">
+            <p class="text-[0.625rem] text-indigo-500 font-bold ml-1 -mt-4 leading-tight">
               ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
             </p>
 
             <div class="space-y-2">
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
               <div class="relative">
                 <select v-model="form.dept_name" 
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none">
@@ -268,7 +268,7 @@ onMounted(() => {
 
             <!-- Role Cards (Single select for simplicity as requested before, but multiple allowed in backend. Let's keep cards) -->
             <div class="space-y-3">
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">권한 설정</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">권한 설정</label>
               <div class="grid grid-cols-2 gap-3">
                 <button @click="selectRole(2)" 
                   :class="[form.roleIds.includes(2) ? 'ring-2 ring-indigo-600 bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-100']"

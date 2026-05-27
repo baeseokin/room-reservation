@@ -4,9 +4,9 @@
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           <h2 class="text-2xl font-black text-slate-900 tracking-tight">나의 예약</h2>
-          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ filteredReservations.length }}</span>
+          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[0.625rem] font-black px-2 py-0.5 rounded-full">{{ filteredReservations.length }}</span>
         </div>
-        <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">내가 신청한 예약 목록입니다.</p>
+        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">내가 신청한 예약 목록입니다.</p>
       </div>
       <button @click="fetchMyReservations" class="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-400 active:rotate-180 transition-all duration-500">
         <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
@@ -48,7 +48,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
                   <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
-                  <span class="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <span class="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[0.625rem] font-black uppercase tracking-widest">
                     반복 {{ group.items.length }}건
                   </span>
                 </div>
@@ -56,13 +56,13 @@
                 <div class="flex flex-wrap gap-2">
                   <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                     <CalendarDaysIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    <span class="text-[11px] font-black text-slate-600">
+                    <span class="text-[0.6875rem] font-black text-slate-600">
                       {{ formatDateWithDay(group.items[0].reservation_date) }} ~
                     </span>
                   </div>
                   <div class="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
                     <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    <span class="text-[11px] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
+                    <span class="text-[0.6875rem] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
                   </div>
                 </div>
               </div>
@@ -82,7 +82,7 @@
                 <div class="flex items-center gap-3">
                   <div class="w-2 h-2 rounded-full bg-indigo-400"></div>
                   <span class="text-sm font-black text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</span>
-                  <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter">
+                  <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[0.5625rem] font-black uppercase tracking-tighter">
                     {{ statusMap[getEffectiveStatus(res)]?.label }}
                   </span>
                 </div>
@@ -103,18 +103,18 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
-                <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black">{{ group.floor }}</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[0.625rem] font-black">{{ group.floor }}</span>
               </div>
               <p class="text-slate-500 font-bold text-sm mb-3 truncate">{{ group.room_name }}</p>
               
               <div class="flex flex-wrap gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100">
                   <CalendarDaysIcon class="w-4 h-4 text-indigo-500" />
-                  <span class="text-[12px] font-black text-slate-600">{{ formatDateWithDay(group.reservation_date) }}</span>
+                  <span class="text-[0.75rem] font-black text-slate-600">{{ formatDateWithDay(group.reservation_date) }}</span>
                 </div>
                 <div class="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-2xl border border-indigo-100">
                   <ClockIcon class="w-4 h-4 text-indigo-500" />
-                  <span class="text-[12px] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
+                  <span class="text-[0.75rem] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
                 </div>
               </div>
             </div>
@@ -133,11 +133,11 @@
           <div class="space-y-8">
             <div class="flex justify-between items-start">
               <div>
-                <span :class="statusMap[getEffectiveStatus(editingRes)]?.class" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">{{ statusMap[getEffectiveStatus(editingRes)]?.label }}</span>
+                <span :class="statusMap[getEffectiveStatus(editingRes)]?.class" class="px-3 py-1 rounded-full text-[0.625rem] font-black uppercase tracking-tighter">{{ statusMap[getEffectiveStatus(editingRes)]?.label }}</span>
                 <h3 class="text-2xl font-black text-slate-900 pt-3">{{ editingRes?.title || '예약 상세' }}</h3>
               </div>
               <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex flex-col items-center justify-center">
-                <span class="text-[10px] font-black text-indigo-400 uppercase">{{ editingRes?.floor }}</span>
+                <span class="text-[0.625rem] font-black text-indigo-400 uppercase">{{ editingRes?.floor }}</span>
                 <span class="text-xs font-black text-indigo-600">{{ editingRes?.room_name }}</span>
               </div>
             </div>

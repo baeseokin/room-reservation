@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">공간 예약</h2>
-        <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">원하시는 방식으로 예약해 보세요.</p>
+        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">원하시는 방식으로 예약해 보세요.</p>
       </div>
     </div>
 
@@ -37,7 +37,7 @@
         <button v-for="f in floorOptions" :key="f"
           @click="selectedFloor = f"
           :class="[selectedFloor === f ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-200']"
-          class="px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all shrink-0">
+          class="px-5 py-2.5 rounded-xl border text-[0.6875rem] font-black uppercase tracking-widest transition-all shrink-0">
           {{ f }}
         </button>
       </div>
@@ -54,15 +54,15 @@
             </div>
             <div>
               <div class="flex items-center gap-1.5 mb-1">
-                <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
+                <span class="text-[0.5625rem] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
                 <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
               </div>
-              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
+              <div class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
             </div>
           </div>
           <div class="flex flex-col items-end gap-1">
              <ChevronRightIcon class="w-5 h-5 text-slate-300" />
-             <span class="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">현황보기</span>
+             <span class="text-[0.5625rem] font-black text-indigo-400 uppercase tracking-tighter">현황보기</span>
           </div>
         </div>
       </div>
@@ -73,13 +73,13 @@
        <div class="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
           <div class="grid grid-cols-2 gap-4">
              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">시작 시간</label>
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">시작 시간</label>
                 <select v-model="searchForm.start_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                 </select>
              </div>
              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">종료 시간</label>
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">종료 시간</label>
                 <select v-model="searchForm.end_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                 </select>
@@ -105,13 +105,13 @@
                </div>
                <div>
                  <div class="flex items-center gap-1.5 mb-1">
-                   <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
+                   <span class="text-[0.5625rem] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
                    <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
                  </div>
-                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
+                 <div class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
                </div>
             </div>
-            <div class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">선택</div>
+            <div class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[0.625rem] font-black uppercase tracking-widest">선택</div>
           </div>
        </div>
     </div>
@@ -138,22 +138,22 @@
                 <template v-else>
                    <!-- Blocked Times -->
                    <div v-for="bt in currentRoomBlockedTimes" :key="'bt-'+bt.id" class="flex gap-4 items-start opacity-70">
-                      <div class="w-16 text-[10px] font-black text-rose-300 uppercase py-1 border-r border-rose-100">
+                      <div class="w-16 text-[0.625rem] font-black text-rose-300 uppercase py-1 border-r border-rose-100">
                          {{ bt.start_time.slice(0, 5) }}
                       </div>
                       <div class="flex-1 bg-rose-50 p-4 rounded-2xl border border-rose-100">
                          <div class="text-sm font-black text-rose-800">{{ bt.reason || '관리자 설정 예약 불가' }}</div>
-                         <div class="text-[10px] font-bold text-rose-400 uppercase mt-0.5">{{ bt.start_time.slice(0, 5) }} - {{ bt.end_time.slice(0, 5) }}</div>
+                         <div class="text-[0.625rem] font-bold text-rose-400 uppercase mt-0.5">{{ bt.start_time.slice(0, 5) }} - {{ bt.end_time.slice(0, 5) }}</div>
                       </div>
                    </div>
                    <!-- Actual Reservations -->
                    <div v-for="res in roomReservations" :key="res.id" class="flex gap-4 items-start">
-                      <div class="w-16 text-[10px] font-black text-slate-300 uppercase py-1 border-r border-slate-100">
+                      <div class="w-16 text-[0.625rem] font-black text-slate-300 uppercase py-1 border-r border-slate-100">
                          {{ res.start_time.slice(0, 5) }}
                       </div>
                       <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                          <div class="text-sm font-black text-slate-800">{{ res.title || '공간 사용' }}</div>
-                         <div class="text-[10px] font-bold text-indigo-400 uppercase mt-0.5">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
+                         <div class="text-[0.625rem] font-bold text-indigo-400 uppercase mt-0.5">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
                       </div>
                    </div>
                 </template>
@@ -185,7 +185,7 @@
              </div>
 
              <div class="grid grid-cols-7 gap-2 mb-2">
-                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[10px] font-black text-slate-300 uppercase">{{ d }}</span>
+                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[0.625rem] font-black text-slate-300 uppercase">{{ d }}</span>
              </div>
              <div class="grid grid-cols-7 gap-2">
                 <button v-for="(day, idx) in calendarDays" :key="idx"
@@ -223,13 +223,13 @@
               <!-- Time Selection (In form) -->
               <div class="grid grid-cols-2 gap-4">
                 <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
-                  <label class="text-[10px] font-black text-slate-400 uppercase text-center block tracking-widest">시작 시간</label>
+                  <label class="text-[0.625rem] font-black text-slate-400 uppercase text-center block tracking-widest">시작 시간</label>
                   <select v-model="form.start_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
                      <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                   </select>
                 </div>
                 <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
-                  <label class="text-[10px] font-black text-slate-400 uppercase text-center block tracking-widest">종료 시간</label>
+                  <label class="text-[0.625rem] font-black text-slate-400 uppercase text-center block tracking-widest">종료 시간</label>
                   <select v-model="form.end_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
                      <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
                   </select>
@@ -237,18 +237,18 @@
               </div>
 
               <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">신청 명칭</label>
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">신청 명칭</label>
                 <input v-model="form.title" type="text" placeholder="예: 청년부 모임" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 focus:ring-0" />
               </div>
 
               <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">상세 내용</label>
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">상세 내용</label>
                 <textarea v-model="form.reason" placeholder="사용 목적을 입력하세요" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 h-24 resize-none focus:ring-0"></textarea>
               </div>
 
               <div class="bg-white border border-slate-200 p-6 rounded-[2rem] space-y-4">
                 <div class="flex items-center justify-between">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 예약 설정</label>
+                  <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">반복 예약 설정</label>
                   <button @click="form.is_recurring = !form.is_recurring" 
                           :class="[form.is_recurring ? 'bg-indigo-600' : 'bg-slate-200']"
                           class="w-10 h-5 rounded-full relative transition-colors duration-200 focus:outline-none">
@@ -263,19 +263,19 @@
                     <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
                             @click="form.recurring_type = type[0]"
                             :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-400']"
-                            class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                            class="flex-1 py-3 rounded-xl text-[0.625rem] font-black uppercase tracking-widest transition-all">
                       {{ type[1] }}
                     </button>
                   </div>
 
                   <!-- Weekly Days Selection -->
                   <div v-if="form.recurring_type === 'weekly'" class="space-y-2">
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
+                    <label class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest ml-1">요일 선택 (중복 가능)</label>
                     <div class="flex justify-between gap-1">
                       <button v-for="(day, idx) in ['일', '월', '화', '수', '목', '금', '토']" :key="idx"
                               @click="toggleRecurringDay(idx)"
                               :class="[form.recurring_days.includes(idx) ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-100']"
-                              class="w-8 h-8 rounded-lg border text-[10px] font-black transition-all">
+                              class="w-8 h-8 rounded-lg border text-[0.625rem] font-black transition-all">
                         {{ day }}
                       </button>
                     </div>
@@ -286,10 +286,10 @@
                     <div class="flex gap-2">
                       <button @click="form.recurring_month_option = 'date'"
                               :class="[form.recurring_month_option === 'date' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
-                              class="flex-1 py-3 rounded-xl border text-[10px] font-black transition-all">매월 특정 일자</button>
+                              class="flex-1 py-3 rounded-xl border text-[0.625rem] font-black transition-all">매월 특정 일자</button>
                       <button @click="form.recurring_month_option = 'nth'"
                               :class="[form.recurring_month_option === 'nth' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-400 border-slate-100']"
-                              class="flex-1 py-3 rounded-xl border text-[10px] font-black transition-all">매월 특정 주차</button>
+                              class="flex-1 py-3 rounded-xl border text-[0.625rem] font-black transition-all">매월 특정 주차</button>
                     </div>
 
                     <!-- Monthly by Date -->
@@ -297,7 +297,7 @@
                       <select v-model="form.recurring_month_date" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-black text-center text-slate-700">
                         <option v-for="d in 31" :key="d" :value="d">{{ d }}일</option>
                       </select>
-                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                      <span class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
                     </div>
 
                     <!-- Monthly by Nth Week -->
@@ -308,13 +308,13 @@
                       <select v-model="form.recurring_month_nth_day" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-2 font-black text-center text-slate-700">
                         <option v-for="(d, i) in ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']" :key="i" :value="i">{{ d }}</option>
                       </select>
-                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
+                      <span class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">에 반복</span>
                     </div>
                   </div>
 
                   <!-- End Date Selection -->
                   <div class="space-y-2">
-                     <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">반복 종료일</label>
+                     <label class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest ml-1">반복 종료일</label>
                      <button @click="showRecurringEndCalendar = true" 
                              class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 px-6 font-black text-slate-700 flex items-center justify-between active:scale-[0.98] transition-all">
                         <span>{{ form.recurring_end_date || '날짜 선택' }}</span>
@@ -334,7 +334,7 @@
                   </div>
                   <div>
                     <h4 class="text-lg font-black text-slate-900 tracking-tight">공간 사용 수칙 동의</h4>
-                    <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">안전하고 쾌적한 사용을 위해 꼭 읽어주세요.</p>
+                    <p class="text-[0.625rem] font-bold text-indigo-400 uppercase tracking-widest">안전하고 쾌적한 사용을 위해 꼭 읽어주세요.</p>
                   </div>
                 </div>
                 
@@ -396,7 +396,7 @@
              </div>
  
              <div class="grid grid-cols-7 gap-2 mb-2">
-                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[10px] font-black text-slate-300 uppercase">{{ d }}</span>
+                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[0.625rem] font-black text-slate-300 uppercase">{{ d }}</span>
              </div>
              <div class="grid grid-cols-7 gap-2">
                 <button v-for="(day, idx) in recurringEndCalendarDays" :key="idx"

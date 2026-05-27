@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">이용 가이드</h2>
-      <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">원천교회 공간 사용을 위한 안내입니다.</p>
+      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">원천교회 공간 사용을 위한 안내입니다.</p>
     </div>
 
     <!-- Guide Content -->

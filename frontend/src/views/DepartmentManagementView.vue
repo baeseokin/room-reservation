@@ -167,7 +167,7 @@ onMounted(fetchDepartments)
     <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[400px]">
       <div v-if="loading" class="flex flex-col items-center justify-center py-32 space-y-4">
         <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-slate-400 font-black text-[12px] uppercase tracking-widest">조직도 불러오는 중...</p>
+        <p class="text-slate-400 font-black text-[0.75rem] uppercase tracking-widest">조직도 불러오는 중...</p>
       </div>
 
       <div v-else-if="treeData.length === 0" class="text-center py-32">
@@ -211,13 +211,13 @@ onMounted(fetchDepartments)
           <!-- Form Area -->
           <div class="space-y-6">
             <div class="space-y-2">
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">부서명</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">부서명</label>
               <input v-model="form.dept_name" type="text" placeholder="예: 재정부, 음악부 등"
                 class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
             </div>
 
             <div class="space-y-2">
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest ml-1">상위 소속</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">상위 소속</label>
               <div class="relative">
                 <select v-model="form.parent_dept_id" 
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none">

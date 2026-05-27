@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">신규 가입 승인</h2>
-      <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">대기 중인 회원가입 신청입니다.</p>
+      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">대기 중인 회원가입 신청입니다.</p>
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
@@ -19,7 +19,7 @@
           <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-slate-400">{{ app.user_name.charAt(0) }}</div>
           <div>
             <div class="text-base font-black text-slate-900">{{ app.user_name }}</div>
-            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ app.user_id }}</div>
+            <div class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-widest">{{ app.user_id }}</div>
           </div>
         </div>
         
@@ -29,8 +29,8 @@
         </div>
 
         <div class="flex gap-3 pt-2">
-           <button @click="reject(app)" class="flex-1 py-4 bg-rose-50 text-rose-500 font-black text-[10px] uppercase tracking-widest rounded-2xl active:scale-95 transition-all">거절</button>
-           <button @click="approve(app)" class="flex-1 py-4 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all">승인</button>
+           <button @click="reject(app)" class="flex-1 py-4 bg-rose-50 text-rose-500 font-black text-[0.625rem] uppercase tracking-widest rounded-2xl active:scale-95 transition-all">거절</button>
+           <button @click="approve(app)" class="flex-1 py-4 bg-slate-900 text-white font-black text-[0.625rem] uppercase tracking-widest rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all">승인</button>
         </div>
       </div>
     </div>

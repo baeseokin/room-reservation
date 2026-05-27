@@ -140,7 +140,7 @@ onMounted(() => {
     <div class="flex flex-col gap-4">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">사용자 관리</h2>
-        <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">등록된 회원 정보를 관리합니다.</p>
+        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">등록된 회원 정보를 관리합니다.</p>
       </div>
 
       <div class="flex gap-2">
@@ -180,22 +180,22 @@ onMounted(() => {
               <div class="flex gap-1">
                 <span v-for="role in (user.roles || '').split(',')" :key="role"
                   :class="role === '관리자' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
-                  class="px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-tighter">
+                  class="px-2 py-0.5 rounded-lg text-[0.5625rem] font-black border uppercase tracking-tighter">
                   {{ role }}
                 </span>
               </div>
             </div>
-            <div class="text-[11px] font-bold text-slate-400 mt-0.5">{{ user.user_id }}</div>
+            <div class="text-[0.6875rem] font-bold text-slate-400 mt-0.5">{{ user.user_id }}</div>
           </div>
         </div>
 
         <!-- Details Box -->
         <div class="bg-slate-50 p-4 rounded-2xl space-y-2">
-           <div class="flex items-center gap-2.5 text-[12px] font-bold text-slate-600">
+           <div class="flex items-center gap-2.5 text-[0.75rem] font-bold text-slate-600">
              <BuildingOfficeIcon class="w-4 h-4 text-slate-300" />
              {{ user.dept_name || '부서 미지정' }}
            </div>
-           <div class="flex items-center gap-2.5 text-[12px] font-bold text-slate-600">
+           <div class="flex items-center gap-2.5 text-[0.75rem] font-bold text-slate-600">
              <PhoneIcon class="w-4 h-4 text-slate-300" />
              {{ user.phone || '연락처 없음' }}
            </div>
@@ -204,7 +204,7 @@ onMounted(() => {
         <!-- Action Buttons -->
         <div class="flex gap-2 pt-2">
           <button @click="openEdit(user)"
-            class="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-slate-200">
+            class="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-900 text-white font-black text-[0.625rem] uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-slate-200">
             <PencilSquareIcon class="w-4 h-4" /> 정보 수정
           </button>
           <div class="flex gap-2">
@@ -229,7 +229,7 @@ onMounted(() => {
           <div class="flex justify-between items-start">
             <div>
               <h2 class="text-xl font-black text-slate-900">사용자 정보 수정</h2>
-              <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">회원 정보를 변경합니다.</p>
+              <p class="text-slate-400 text-[0.625rem] font-black uppercase tracking-widest mt-1">회원 정보를 변경합니다.</p>
             </div>
             <button @click="showEditModal = false" class="p-2 text-slate-300 hover:text-slate-900 transition-colors">
               <XMarkIcon class="w-6 h-6" />
@@ -240,25 +240,25 @@ onMounted(() => {
           <div class="space-y-5">
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-1.5">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
+                <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
                 <input v-model="form.user_name" type="text"
                   class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+                <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
                 <input v-model="form.phone" type="text"
                   class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
               </div>
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-indigo-500 italic">
+              <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1 text-indigo-500 italic">
                 ※ 연락처 오입력 시 알림톡 전송이 불가합니다.
               </label>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
+              <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
               <div class="relative">
                 <select v-model="form.dept_name" 
                   class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none transition-all">
@@ -272,19 +272,19 @@ onMounted(() => {
             </div>
 
             <div class="space-y-3">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">권한 설정</label>
+              <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">권한 설정</label>
               <div class="grid grid-cols-2 gap-3">
                 <button @click="selectRole(2)" 
                   :class="[form.roleIds.includes(2) ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-slate-50 border-slate-200 text-slate-400']"
                   class="flex flex-col items-center gap-2 p-5 rounded-[2rem] border transition-all active:scale-95">
                   <UserIcon class="w-6 h-6" />
-                  <span class="text-[10px] font-black uppercase tracking-widest">일반 사용자</span>
+                  <span class="text-[0.625rem] font-black uppercase tracking-widest">일반 사용자</span>
                 </button>
                 <button @click="selectRole(1)" 
                   :class="[form.roleIds.includes(1) ? 'bg-rose-500 text-white ring-4 ring-rose-100' : 'bg-slate-50 border-slate-200 text-slate-400']"
                   class="flex flex-col items-center gap-2 p-5 rounded-[2rem] border transition-all active:scale-95">
                   <ShieldCheckIcon class="w-6 h-6" />
-                  <span class="text-[10px] font-black uppercase tracking-widest">관리자</span>
+                  <span class="text-[0.625rem] font-black uppercase tracking-widest">관리자</span>
                 </button>
               </div>
             </div>
@@ -292,11 +292,11 @@ onMounted(() => {
             <!-- Action Buttons -->
             <div class="flex gap-4 pt-4">
               <button @click="showEditModal = false" 
-                class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-[11px] uppercase tracking-widest text-slate-400 active:bg-slate-50">
+                class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-[0.6875rem] uppercase tracking-widest text-slate-400 active:bg-slate-50">
                 닫기
               </button>
               <button @click="handleUpdate" 
-                class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-[0.98] transition-transform">
+                class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-[0.6875rem] uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-[0.98] transition-transform">
                 수정 완료
               </button>
             </div>

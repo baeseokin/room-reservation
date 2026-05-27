@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="space-y-1">
       <h2 class="text-2xl font-black text-slate-900 tracking-tight">관리자 센터</h2>
-      <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">시스템 관리 기능을 이용하세요.</p>
+      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">시스템 관리 기능을 이용하세요.</p>
     </div>
 
     <div class="grid grid-cols-1 gap-4">
@@ -14,7 +14,7 @@
           </div>
           <div>
             <div class="text-base font-black text-slate-900">{{ item.label }}</div>
-            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ item.desc }}</div>
+            <div class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ item.desc }}</div>
           </div>
         </div>
         <ChevronRightIcon class="w-5 h-5 text-slate-300" />

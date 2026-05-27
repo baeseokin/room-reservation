@@ -143,43 +143,43 @@ const handleRegister = async () => {
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div class="space-y-4">
             <div>
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">아이디 <span class="text-rose-500">*</span></label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">아이디 <span class="text-rose-500">*</span></label>
               <div class="flex gap-2">
                 <input v-model="form.userId" type="text" placeholder="아이디 입력" required
                        class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
                 <button type="button" @click="checkId" 
-                        class="px-4 bg-slate-900 text-white text-[12px] font-black rounded-xl hover:bg-indigo-600 transition-all uppercase tracking-widest whitespace-nowrap">
+                        class="px-4 bg-slate-900 text-white text-[0.75rem] font-black rounded-xl hover:bg-indigo-600 transition-all uppercase tracking-widest whitespace-nowrap">
                   중복확인
                 </button>
               </div>
-              <p v-if="idChecked && idAvailable" class="text-[12px] text-indigo-600 font-bold mt-1 ml-1">✓ 사용 가능한 아이디입니다.</p>
+              <p v-if="idChecked && idAvailable" class="text-[0.75rem] text-indigo-600 font-bold mt-1 ml-1">✓ 사용 가능한 아이디입니다.</p>
             </div>
             <div>
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 <span class="text-rose-500">*</span></label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 <span class="text-rose-500">*</span></label>
               <input v-model="form.password" type="password" placeholder="비밀번호 입력" required
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
             </div>
             <div>
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
               <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 재입력" required
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
             </div>
             <div>
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">이름 <span class="text-rose-500">*</span></label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">이름 <span class="text-rose-500">*</span></label>
               <input v-model="form.userName" type="text" placeholder="성함 입력" required
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">연락처 <span class="text-rose-500">*</span></label>
+                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">연락처 <span class="text-rose-500">*</span></label>
                 <input v-model="form.phone" type="text" placeholder="010-0000-0000" required
                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
-                <p class="text-[10px] text-indigo-500 font-bold ml-1 mt-1.5 leading-tight">
+                <p class="text-[0.625rem] text-indigo-500 font-bold ml-1 mt-1.5 leading-tight">
                   ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
                 </p>
               </div>
               <div>
-                <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">담당부서 <span class="text-rose-500">*</span></label>
+                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">담당부서 <span class="text-rose-500">*</span></label>
                 <div class="relative">
                   <select v-model="form.deptName" required
                           :class="[!form.deptName ? 'text-slate-400' : 'text-slate-900']"
@@ -192,7 +192,7 @@ const handleRegister = async () => {
               </div>
             </div>
             <div>
-              <label class="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">이메일</label>
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">이메일</label>
               <input v-model="form.email" type="email" placeholder="example@email.com"
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
             </div>
@@ -204,7 +204,7 @@ const handleRegister = async () => {
           </button>
         </form>
 
-        <p class="mt-8 text-[11px] text-slate-400 text-center font-bold leading-relaxed">
+        <p class="mt-8 text-[0.6875rem] text-slate-400 text-center font-bold leading-relaxed">
           회원가입 신청 후 관리자의 승인이 완료되어야 로그인이 가능합니다.<br/>
           승인 결과는 별도로 안내되지 않으니 참고 부탁드립니다.
         </p>

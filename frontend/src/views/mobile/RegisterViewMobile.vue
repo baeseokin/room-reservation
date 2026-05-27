@@ -15,47 +15,47 @@
 
       <form @submit.prevent="handleRegister" class="space-y-6 pb-12">
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">아이디 <span class="text-rose-500">*</span></label>
         <div class="flex gap-2">
           <input v-model="form.userId" type="text" placeholder="ID 입력" required
             class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
           <button type="button" @click="checkId" 
-            class="px-4 bg-slate-900 text-white text-[11px] font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap shrink-0">
+            class="px-4 bg-slate-900 text-white text-[0.6875rem] font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap shrink-0">
             중복확인
           </button>
         </div>
-        <p v-if="idChecked && idAvailable" class="text-[11px] text-indigo-600 font-bold mt-1 ml-1">✓ 사용 가능한 아이디입니다.</p>
+        <p v-if="idChecked && idAvailable" class="text-[0.6875rem] text-indigo-600 font-bold mt-1 ml-1">✓ 사용 가능한 아이디입니다.</p>
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 <span class="text-rose-500">*</span></label>
         <input v-model="form.password" type="password" placeholder="비밀번호 입력" required
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
         <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 재입력" required
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">이름 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">이름 <span class="text-rose-500">*</span></label>
         <input v-model="form.userName" type="text" placeholder="성함 입력" required
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">휴대폰 번호 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">휴대폰 번호 <span class="text-rose-500">*</span></label>
         <input v-model="form.phone" type="tel" placeholder="010-0000-0000" required
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
-        <p class="text-[10px] text-indigo-500 font-bold ml-1 mt-1 leading-tight">
+        <p class="text-[0.625rem] text-indigo-500 font-bold ml-1 mt-1 leading-tight">
           ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
         </p>
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서 <span class="text-rose-500">*</span></label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서 <span class="text-rose-500">*</span></label>
         <select v-model="form.deptName" required
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 appearance-none">
           <option value="">부서 선택</option>
@@ -64,7 +64,7 @@
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">이메일 (선택)</label>
+        <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">이메일 (선택)</label>
         <input v-model="form.email" type="email" placeholder="example@email.com" 
           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20" />
       </div>

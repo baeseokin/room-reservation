@@ -15,7 +15,7 @@
         <div class="space-y-0.5 relative -mt-10">
           <h1 class="text-3xl font-black text-slate-800 tracking-tighter leading-tight">원천교회</h1>
           <h2 class="text-3xl font-black text-indigo-600 tracking-tighter leading-tight">공간예약 시스템</h2>
-          <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] pt-3">Wonchon Space Reservation System</p>
+          <p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-[0.25em] pt-3">Wonchon Space Reservation System</p>
         </div>
       </div>
 
@@ -27,13 +27,13 @@
       <!-- Restored Original Form Design -->
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-1.5">
-          <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
+          <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
           <input v-model="userId" type="text" placeholder="아이디 입력" 
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
+          <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
           <input v-model="password" type="password" placeholder="비밀번호 입력" 
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
         </div>
@@ -49,7 +49,7 @@
       </div>
 
       <div class="mt-auto pt-12 text-center">
-        <p class="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em]">© Wonchon Church</p>
+        <p class="text-[0.625rem] text-slate-300 font-bold uppercase tracking-[0.2em]">© Wonchon Church</p>
       </div>
     </div>
   </div>
