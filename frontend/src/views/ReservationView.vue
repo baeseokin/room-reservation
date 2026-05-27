@@ -453,7 +453,7 @@ const editForm = ref({
 
 const openBooking = (room, time = '09:00', date = null) => {
   if (date) selectedDate.value = date
-  selectedRoom.value = room
+  selectedRoom.value = room || rooms.value[0] || null
   form.value = {
     title: '',
     start_time: time,
@@ -1166,7 +1166,14 @@ onMounted(() => {
              :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500']"
              class="px-5 py-1.5 rounded-lg text-xs font-black transition-all">{{ s.name }}</button>
            </div>
-           <div class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredReservations.length }}</span> items</div>
+           <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+             <div class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredReservations.length }}</span> items</div>
+             <button @click="openBooking(null)" 
+                     class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-1.5 shrink-0">
+               <CalendarIcon class="w-3.5 h-3.5" />
+               예약 신청
+             </button>
+           </div>
         </div>
         <div v-if="filteredReservations.length === 0" class="py-24 text-center border-2 border-dashed border-slate-100 rounded-[3rem]">
            <CalendarIcon class="w-12 h-12 text-slate-200 mx-auto mb-4" />
@@ -1346,6 +1353,20 @@ onMounted(() => {
           <!-- Content Area (Scrollable) -->
           <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
             <template v-if="bookingStep === 'form'">
+              <!-- Room Selection -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  예약 공간
+                </label>
+                <select v-model="selectedRoom" 
+                        class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer">
+                  <option v-for="r in rooms" :key="r.id" :value="r">
+                    [{{ r.floor }}{{ r.floor.includes('B') ? '' : 'F' }}] {{ r.room_name }}
+                  </option>
+                </select>
+              </div>
+
               <!-- Application Title Input -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
                 <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
