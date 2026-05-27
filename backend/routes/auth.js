@@ -95,6 +95,7 @@ router.post("/login", async (req, res) => {
       userName: user.user_name,
       email: user.email,
       phone: user.phone,
+      deptName: user.dept_name,
       roles,
       mustChangePassword: !!user.must_change_password
     };
@@ -176,6 +177,7 @@ router.post("/kakao", async (req, res) => {
       userName: user.user_name,
       email: user.email,
       phone: user.phone,
+      deptName: user.dept_name,
       roles,
     };
 

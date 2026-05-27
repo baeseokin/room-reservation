@@ -2,6 +2,43 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
 const { sendNewReservationToAdmin, sendApprovalAlimTalk, sendRejectionAlimTalk, sendInquiryAlimTalk } = require("../services/alimtalk");
+const { getHoliday } = require("../utils/holidays");
+
+// Timezone KST today string helper (YYYY-MM-DD)
+const getKstTodayStr = () => {
+  const d = new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const kst = new Date(utc + (3600000 * 9)); // UTC + 9 hours
+  return kst.toISOString().substring(0, 10);
+};
+
+// Validate reservation policy rules (for non-admins)
+const validateReservationPolicy = (dateStr, startTime, endTime) => {
+  const todayStr = getKstTodayStr();
+  if (dateStr === todayStr) {
+    return "당일 예약 신청은 불가합니다.";
+  }
+  if (dateStr < todayStr) {
+    return "과거 날짜에 대한 예약 신청은 불가합니다.";
+  }
+
+  const dObj = new Date(dateStr + 'T00:00:00');
+  const dayOfWeek = dObj.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  if (dayOfWeek === 1) {
+    return "월요일은 예약 신청이 불가합니다.";
+  }
+  
+  const holidayName = getHoliday(dateStr);
+  if (holidayName) {
+    return `공휴일은 예약 신청이 불가합니다. (${holidayName})`;
+  }
+
+  if (startTime < "09:00" || endTime > "17:00") {
+    return "예약 가능 시간은 오전 9시부터 오후 5시까지입니다.";
+  }
+
+  return null;
+};
 
 // Auth check middleware
 const isLogged = (req, res, next) => {
@@ -87,9 +124,18 @@ router.post("/", async (req, res) => {
   const requester_id = req.session?.user?.id || null;
   const conn = await pool.getConnection();
 
-
   try {
     await conn.beginTransaction();
+
+    // 0. Validate reservation rules 1)~3) (skipped for admins)
+    const isAdminUser = req.session?.user && req.session.user.roles.includes("관리자");
+    if (!isAdminUser && !is_recurring) {
+      const errMsg = validateReservationPolicy(reservation_date, start_time, end_time);
+      if (errMsg) {
+        await conn.rollback();
+        return res.status(400).json({ success: false, message: errMsg });
+      }
+    }
 
     // 1. Conflict check against 'approved' and 'pending' reservations
     const [conflicts] = await conn.query(
@@ -196,6 +242,20 @@ router.post("/", async (req, res) => {
             String(currentD.getMonth() + 1).padStart(2, '0'),
             String(currentD.getDate()).padStart(2, '0')
           ].join('-');
+
+          // 0. Validate reservation rules 1)~3) for this occurrence (skipped for admins)
+          if (!isAdminUser) {
+            const errMsg = validateReservationPolicy(dateStr, start_time, end_time);
+            if (errMsg) {
+              await conn.rollback();
+              const days = ['일', '월', '화', '수', '목', '금', '토'];
+              const dayStr = days[currentD.getDay()];
+              return res.status(400).json({
+                success: false,
+                message: `${dateStr}(${dayStr}): ${errMsg}`
+              });
+            }
+          }
 
           // Individual occurrence conflict check
           const [rConflicts] = await conn.query(
@@ -601,6 +661,15 @@ router.put("/:id", isLogged, async (req, res) => {
 
         if (!user.roles.includes("관리자") && record[0].requester_id !== user.id) {
             return res.status(403).json({ success: false, message: "No permission" });
+        }
+
+        // 0. Validate reservation rules 1)~3) (skipped for admins)
+        const isAdminUser = user.roles.includes("관리자");
+        if (!isAdminUser) {
+            const errMsg = validateReservationPolicy(reservation_date, start_time, end_time);
+            if (errMsg) {
+                return res.status(400).json({ success: false, message: errMsg });
+            }
         }
 
         const room_id = record[0].room_id;

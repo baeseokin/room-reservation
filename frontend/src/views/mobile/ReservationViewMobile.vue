@@ -415,6 +415,74 @@
           </div>
        </div>
     </Teleport>
+
+    <!-- Modal: Notice Guide -->
+    <Teleport to="body">
+      <div v-if="showNoticeModal" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showNoticeModal = false"></div>
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-white overflow-hidden animate-in transform-gpu antialiased">
+          <!-- Header -->
+          <div class="bg-indigo-900 px-6 py-6 text-white relative">
+            <button @click="showNoticeModal = false" class="absolute top-5 right-5 p-2 hover:bg-white/10 rounded-full transition-colors">
+              <XMarkIcon class="w-4 h-4" />
+            </button>
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-7 h-7 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <InformationCircleIcon class="w-3.5 h-3.5 text-white" />
+              </div>
+              <h3 class="text-base font-black tracking-tight">공간 예약 신청 안내</h3>
+            </div>
+            <p class="text-indigo-200 text-[0.625rem] font-bold uppercase tracking-widest">이용 수칙 및 예약 규정 안내</p>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-4">
+            <div class="space-y-2.5">
+              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="w-4 h-4 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">1</span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800">당일 신청 불가</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">당일 및 과거 날짜에 대한 예약 신청은 불가합니다.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="w-4 h-4 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">2</span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800">공휴일 / 월요일 신청 불가</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">매주 월요일과 법정 공휴일에는 예약 신청이 불가합니다.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="w-4 h-4 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">3</span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800">이용 시간 제한 (화 - 주일)</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">화요일부터 주일(일요일)까지 **오전 9시 ~ 오후 5시** 사이에만 이용 가능합니다.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5 p-2.5 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">4</span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-900">최대 2일 소요</h4>
+                  <p class="text-[0.625rem] text-slate-600 mt-0.5">예약 신청 후 관리자 승인 완료까지 **최대 2일**이 소요됩니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Toggles -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <label class="flex items-center gap-1.5 cursor-pointer group">
+                <input type="checkbox" v-model="dontShowToday" class="rounded text-indigo-600 focus:ring-indigo-500/20 border-slate-300 w-3.5 h-3.5 cursor-pointer" />
+                <span class="text-[0.6875rem] font-bold text-slate-500 group-hover:text-slate-800 transition-colors">오늘 하루 보지 않기</span>
+              </label>
+              <button @click="closeNotice" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-md active:scale-95">확인</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -432,13 +500,28 @@ import {
   ChevronLeftIcon,
   ChevronDownIcon,
   ShieldCheckIcon,
-  CheckIcon
+  CheckIcon,
+  XMarkIcon,
+  InformationCircleIcon
 } from '@heroicons/vue/24/outline'
 
 import { useModalStore } from '@/stores/useModalStore'
+import { getHoliday } from '@/utils/holidays'
 
 const modal = useModalStore()
 const auth = useAuthStore()
+
+const showNoticeModal = ref(false)
+const dontShowToday = ref(false)
+
+const closeNotice = () => {
+  if (dontShowToday.value) {
+    const todayStr = formatDate(new Date())
+    localStorage.setItem('hide-reservation-notice', todayStr)
+  }
+  showNoticeModal.value = false
+}
+
 const mode = ref('room') // 'room' or 'time'
 const rooms = ref([])
 const reservations = ref([]) // All reservations for selected date
@@ -555,6 +638,12 @@ onMounted(async () => {
     fetchReservations()
   ])
   rooms.value = roomRes.data
+
+  const todayStr = formatDate(new Date())
+  const hideUntil = localStorage.getItem('hide-reservation-notice')
+  if (hideUntil !== todayStr) {
+    showNoticeModal.value = true
+  }
 })
 
 const fetchReservations = async () => {
@@ -684,8 +773,38 @@ const toggleRecurringDay = (dayIdx) => {
 }
 
 const submitReservation = async () => {
+  // Validate reservation policy rules (skipped for admins)
+  if (!auth.isAdmin) {
+    const todayStr = formatDate(new Date())
+    if (selectedDate.value === todayStr) {
+      modal.showAlert('당일 예약 신청은 불가합니다.')
+      return
+    }
+    if (selectedDate.value < todayStr) {
+      modal.showAlert('과거 날짜에 대한 예약 신청은 불가합니다.')
+      return
+    }
+
+    const dateObj = new Date(selectedDate.value + 'T00:00:00')
+    const dayOfWeek = dateObj.getDay()
+    if (dayOfWeek === 1) {
+      modal.showAlert('월요일은 예약 신청이 불가합니다.')
+      return
+    }
+    const holidayName = getHoliday(selectedDate.value)
+    if (holidayName) {
+      modal.showAlert(`공휴일은 예약 신청이 불가합니다. (${holidayName})`)
+      return
+    }
+
+    if (form.value.start_time < '09:00' || form.value.end_time > '17:00') {
+      modal.showAlert('예약 가능 시간은 오전 9시부터 오후 5시까지입니다.')
+      return
+    }
+  }
+
   if (bookingStep.value === 'form') {
-    if (!form.value.title) { modal.showAlert('신청 명칭을 입력해 주세요.'); return; }
+    if (!form.value.title?.trim()) { modal.showAlert('신청명을 입력해주세요.'); return; }
     if (form.value.start_time >= form.value.end_time) { modal.showAlert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
     
     if (form.value.is_recurring) {
