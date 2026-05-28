@@ -118,6 +118,7 @@ async function sendRejectionAlimTalk(reservation, reason) {
           "#{공간명}": reservation.room_name,
           "#{층}": reservation.floor ? `${reservation.floor}층` : "",
           "#{URL}": "home/my-reservations",
+          "#{반려사유}": "- 거절사유 : " + reason
         },
       },
     ],
