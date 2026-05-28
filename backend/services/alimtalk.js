@@ -9,7 +9,6 @@ const sendon = new Sendon({
 });
 
 async function sendAlimTalk(options) {
-  console.log("✅ sendAlimTalk options :", options);
   const profileId = envPick("SENDON_PROFILE_ID", "");
 
   if (!envPick("SENDON_ID") || !envPick("SENDON_APIKEY") || !profileId) {
