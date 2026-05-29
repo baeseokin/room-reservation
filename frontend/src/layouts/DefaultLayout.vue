@@ -88,9 +88,9 @@ const logout = () => auth.logout()
 
     <!-- Mobile Header -->
     <div class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-40">
-      <div class="flex items-center">
-        <img src="../assets/logo_wonchon.png" alt="Logo" class="h-8 object-contain" />
-      </div>
+      <router-link to="/" class="flex items-center active:scale-95 transition-all">
+        <img src="../assets/logo_wonchon.png" alt="Logo" class="w-8 h-8 object-cover object-left" />
+      </router-link>
       <button @click="isSidebarOpen = true">
         <Bars3Icon class="w-8 h-8 text-slate-900" />
       </button>

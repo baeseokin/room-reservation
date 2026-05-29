@@ -4,7 +4,7 @@
     <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm shadow-slate-200/20">
       <div class="flex items-center gap-8">
         <router-link to="/home" class="flex items-center group transition-transform active:scale-95">
-          <img src="../assets/logo_wonchon.png" alt="원천교회" class="h-8 object-contain" />
+          <img src="../assets/logo_wonchon.png" alt="원천교회" class="w-8 h-8 object-cover object-left md:w-auto md:h-8 md:object-contain" />
         </router-link>
 
         <nav class="hidden md:flex items-center gap-1">
@@ -27,27 +27,13 @@
           </div>
           <div class="w-px h-8 bg-slate-200 mx-2 hidden lg:block"></div>
           <!-- Font control buttons -->
-          <div class="relative flex items-center mr-1" @mouseleave="isFontMenuOpen = false">
-            <button @click="isFontMenuOpen = !isFontMenuOpen" class="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all shadow-sm select-none flex items-center justify-center" title="글자 크기 조절">
-              <span class="inline-flex items-center font-black text-[0.8125rem] tracking-tighter">
-                <span class="text-indigo-600">+</span>
-                <span class="text-slate-300 mx-0.5">/</span>
-                <span class="text-rose-500">-</span>
-              </span>
+          <div class="flex items-center border border-slate-200 bg-white rounded-lg md:rounded-xl shadow-sm overflow-hidden select-none mr-1 shrink-0">
+            <button @click="decreaseFontSize" class="px-2.5 md:px-3 h-8 md:h-10 flex items-center justify-center text-[11px] md:text-xs font-bold text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors border-r border-slate-200" title="글자 축소">
+              가 -
             </button>
-            <div v-if="isFontMenuOpen" class="absolute right-0 top-full pt-2 z-50">
-              <div class="p-2 bg-white border border-slate-200 shadow-xl rounded-2xl flex items-center gap-1.5">
-                <button @click="decreaseFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 축소">
-                  A-
-                </button>
-                <button @click="resetFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 기본 크기">
-                  A
-                </button>
-                <button @click="increaseFontSize" class="px-3 py-1.5 border border-slate-100 bg-slate-50 text-slate-700 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-black text-xs select-none" title="글자 확대">
-                  A+
-                </button>
-              </div>
-            </div>
+            <button @click="increaseFontSize" class="px-2.5 md:px-3 h-8 md:h-10 flex items-center justify-center text-[11px] md:text-xs font-bold text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors" title="글자 확대">
+              가 +
+            </button>
           </div>
           <button @click="auth.logout()" class="p-2.5 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all group" title="로그아웃">
             <ArrowLeftOnRectangleIcon class="w-5 h-5" />
@@ -150,26 +136,21 @@ const getRootFontSize = () => {
   return saved ? parseInt(saved) : 14
 }
 
+const fontSize = ref(getRootFontSize())
+
 const increaseFontSize = () => {
-  const current = getRootFontSize()
-  if (current <= 20) {
-    const nextSize = current + 2
-    document.documentElement.style.fontSize = `${nextSize}px`
-    localStorage.setItem('app-font-size', nextSize)
+  if (fontSize.value < 20) {
+    fontSize.value += 2
+    document.documentElement.style.fontSize = `${fontSize.value}px`
+    localStorage.setItem('app-font-size', fontSize.value)
   }
 }
 
-const resetFontSize = () => {
-  document.documentElement.style.fontSize = '14px'
-  localStorage.setItem('app-font-size', '14')
-}
-
 const decreaseFontSize = () => {
-  const current = getRootFontSize()
-  if (current > 12) {
-    const nextSize = current - 2
-    document.documentElement.style.fontSize = `${nextSize}px`
-    localStorage.setItem('app-font-size', nextSize)
+  if (fontSize.value > 12) {
+    fontSize.value -= 2
+    document.documentElement.style.fontSize = `${fontSize.value}px`
+    localStorage.setItem('app-font-size', fontSize.value)
   }
 }
 </script>

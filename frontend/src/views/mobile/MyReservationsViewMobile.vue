@@ -39,28 +39,28 @@
         <!-- Recurring Group Card -->
         <div v-if="group.isGroup" class="space-y-2">
           <div @click="toggleGroup(group.id)"
-               class="bg-white rounded-[2rem] p-6 shadow-sm border border-indigo-100 active:scale-95 transition-all">
-            <div class="flex items-start gap-4">
-              <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden">
+               class="bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 active:scale-95 transition-all">
+            <div class="flex items-start gap-3">
+              <div class="w-14 h-14 bg-indigo-50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
                 <img v-if="group.image_url" :src="group.image_url" class="w-full h-full object-cover" />
-                <span v-else class="text-indigo-400 font-black text-xl">{{ group.floor }}</span>
+                <span v-else class="text-indigo-400 font-black text-lg">{{ group.floor }}</span>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
-                  <span class="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[0.625rem] font-black uppercase tracking-widest">
-                    반복 {{ group.items.length }}건
+                <div class="flex items-center gap-2 mb-1 min-w-0">
+                  <h3 class="text-base font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
+                  <span v-if="group.items.length > 1" class="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[0.625rem] font-black uppercase tracking-widest shrink-0">
+                    총 {{ group.items.length }}건
                   </span>
                 </div>
-                <p class="text-slate-500 font-bold text-sm mb-2 truncate">{{ group.room_name }}</p>
-                <div class="flex flex-wrap gap-2">
-                  <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                <p class="text-slate-500 font-bold text-xs mb-1.5 truncate">{{ group.room_name }}</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
                     <CalendarDaysIcon class="w-3.5 h-3.5 text-indigo-500" />
                     <span class="text-[0.6875rem] font-black text-slate-600">
-                      {{ formatDateWithDay(group.items[0].reservation_date) }} ~
+                      {{ formatDateWithDay(group.items[0].reservation_date) }}{{ group.items.length > 1 ? ' ~' : '' }}
                     </span>
                   </div>
-                  <div class="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                  <div class="flex items-center gap-1.5 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
                     <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
                     <span class="text-[0.6875rem] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
                   </div>
@@ -74,19 +74,19 @@
           </div>
 
           <!-- Nested Individual Items -->
-          <div v-if="expandedGroups.has(group.id)" class="ml-4 space-y-2 pl-4 border-l-2 border-indigo-50">
+          <div v-if="expandedGroups.has(group.id)" class="ml-4 space-y-2 pl-3 border-l-2 border-indigo-50">
             <div v-for="res in group.items" :key="res.id"
                  @click="openDetail(res)"
-                 class="bg-slate-50/80 rounded-[1.5rem] p-4 border border-slate-100 active:scale-95 transition-all">
+                 class="bg-slate-50/80 rounded-xl p-3 border border-slate-100 active:scale-95 transition-all">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 rounded-full bg-indigo-400"></div>
-                  <span class="text-sm font-black text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</span>
+                <div class="flex items-center gap-2">
+                  <div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                  <span class="text-xs font-black text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</span>
                   <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[0.5625rem] font-black uppercase tracking-tighter">
                     {{ statusMap[getEffectiveStatus(res)]?.label }}
                   </span>
                 </div>
-                <PencilSquareIcon class="w-4 h-4 text-slate-300" />
+                <PencilSquareIcon class="w-3.5 h-3.5 text-slate-300" />
               </div>
             </div>
           </div>
@@ -94,27 +94,27 @@
 
         <!-- Single Reservation Card -->
         <div v-else @click="openDetail(group)" 
-             class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 active:scale-95 transition-all">
-          <div class="flex items-start gap-4">
-            <div class="w-20 h-20 bg-slate-50 rounded-3xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
+             class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-slate-50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
               <img v-if="group.image_url" :src="group.image_url" class="w-full h-full object-cover" />
-              <span v-else class="text-slate-400 font-black text-2xl">{{ group.floor }}</span>
+              <span v-else class="text-slate-400 font-black text-lg">{{ group.floor }}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-lg font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
-                <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[0.625rem] font-black">{{ group.floor }}</span>
+              <div class="flex items-center gap-2 mb-1 min-w-0">
+                <h3 class="text-base font-black text-slate-800 truncate">{{ group.title || '신청명 없음' }}</h3>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[0.625rem] font-black shrink-0">{{ group.floor }}</span>
               </div>
-              <p class="text-slate-500 font-bold text-sm mb-3 truncate">{{ group.room_name }}</p>
+              <p class="text-slate-500 font-bold text-xs mb-1.5 truncate">{{ group.room_name }}</p>
               
-              <div class="flex flex-wrap gap-2">
-                <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100">
-                  <CalendarDaysIcon class="w-4 h-4 text-indigo-500" />
-                  <span class="text-[0.75rem] font-black text-slate-600">{{ formatDateWithDay(group.reservation_date) }}</span>
+              <div class="flex flex-wrap gap-1.5">
+                <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                  <CalendarDaysIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  <span class="text-[0.6875rem] font-black text-slate-600">{{ formatDateWithDay(group.reservation_date) }}</span>
                 </div>
-                <div class="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-2xl border border-indigo-100">
-                  <ClockIcon class="w-4 h-4 text-indigo-500" />
-                  <span class="text-[0.75rem] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
+                <div class="flex items-center gap-1.5 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
+                  <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  <span class="text-[0.6875rem] font-black text-indigo-600">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</span>
                 </div>
               </div>
             </div>

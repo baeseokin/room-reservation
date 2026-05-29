@@ -30,26 +30,21 @@ const getRootFontSize = () => {
   return saved ? parseInt(saved) : 14
 }
 
+const fontSize = ref(getRootFontSize())
+
 const increaseFontSize = () => {
-  const current = getRootFontSize()
-  if (current <= 20) {
-    const nextSize = current + 2
-    document.documentElement.style.fontSize = `${nextSize}px`
-    localStorage.setItem('app-font-size', nextSize)
+  if (fontSize.value < 20) {
+    fontSize.value += 2
+    document.documentElement.style.fontSize = `${fontSize.value}px`
+    localStorage.setItem('app-font-size', fontSize.value)
   }
 }
 
-const resetFontSize = () => {
-  document.documentElement.style.fontSize = '14px'
-  localStorage.setItem('app-font-size', '14')
-}
-
 const decreaseFontSize = () => {
-  const current = getRootFontSize()
-  if (current > 12) {
-    const nextSize = current - 2
-    document.documentElement.style.fontSize = `${nextSize}px`
-    localStorage.setItem('app-font-size', nextSize)
+  if (fontSize.value > 12) {
+    fontSize.value -= 2
+    document.documentElement.style.fontSize = `${fontSize.value}px`
+    localStorage.setItem('app-font-size', fontSize.value)
   }
 }
 </script>
@@ -94,28 +89,16 @@ const decreaseFontSize = () => {
           <div class="text-sm font-bold text-white mt-0.5">{{ auth.user?.userName }}</div>
         </div>
         <!-- Font Zoom Controls -->
-        <div class="relative flex items-center px-4" :class="[isCollapsed ? 'justify-center' : 'gap-3']" @mouseleave="isFontMenuOpen = false">
-          <button @click="isFontMenuOpen = !isFontMenuOpen" class="w-9 h-9 shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black rounded-xl transition-all select-none flex items-center justify-center shadow-sm" title="글자 크기 조절">
-            <span class="inline-flex items-center font-black text-[0.75rem] tracking-tighter">
-              <span class="text-indigo-400">+</span>
-              <span class="text-slate-600 mx-0.5">/</span>
-              <span class="text-rose-400">-</span>
-            </span>
-          </button>
-          <span v-if="!isCollapsed" class="text-sm font-bold text-slate-400">글자 크기 조절</span>
-          <div v-if="isFontMenuOpen" :class="[isCollapsed ? 'left-full top-0 pl-2' : 'bottom-full left-4 pb-2']" class="absolute z-50">
-            <div class="p-2 bg-slate-900 border border-slate-800 shadow-xl rounded-2xl flex items-center gap-1.5">
-              <button @click="decreaseFontSize" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-200 rounded-lg transition-all font-black text-xs select-none" title="글자 축소">
-                A-
-              </button>
-              <button @click="resetFontSize" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-200 rounded-lg transition-all font-black text-xs select-none" title="글자 기본 크기">
-                A
-              </button>
-              <button @click="increaseFontSize" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-200 rounded-lg transition-all font-black text-xs select-none" title="글자 확대">
-                A+
-              </button>
-            </div>
+        <div v-if="!isCollapsed" class="flex items-center gap-3 px-4">
+          <div class="flex items-center border border-slate-800 bg-slate-900 rounded-xl overflow-hidden select-none">
+            <button @click="decreaseFontSize" class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-400 hover:bg-slate-800 active:bg-slate-700 transition-colors border-r border-slate-800" title="글자 축소">
+              가-
+            </button>
+            <button @click="increaseFontSize" class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-400 hover:bg-slate-800 active:bg-slate-700 transition-colors" title="글자 확대">
+              가+
+            </button>
           </div>
+          <span class="text-sm font-bold text-slate-400">글자 크기 조절</span>
         </div>
         <button @click="logout" :title="isCollapsed ? '로그아웃' : ''"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold text-sm whitespace-nowrap">
