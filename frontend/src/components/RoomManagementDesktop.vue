@@ -109,11 +109,16 @@ const openModal = (floor = '', room = null) => {
   previewUrl.value = null
   if (room) {
     editingRoom.value = room
-    form.value = { ...room }
+    form.value = {
+      ...room,
+      capacity: room.capacity ?? '',
+      manager_name: room.manager_name || '',
+      manager_contact: room.manager_contact || ''
+    }
     previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', capacity: '', floor: floor || '3', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
+    form.value = { room_name: '', capacity: '', floor: floor || '3', dept_name: departments.value[0]?.dept_name || '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
@@ -125,11 +130,11 @@ const saveRoom = async () => {
   try {
     const formData = new FormData()
     formData.append('room_name', form.value.room_name)
-    formData.append('capacity', form.value.capacity)
+    formData.append('capacity', form.value.capacity ?? '')
     formData.append('floor', form.value.floor)
     formData.append('dept_name', form.value.dept_name)
-    formData.append('manager_name', form.value.manager_name)
-    formData.append('manager_contact', form.value.manager_contact)
+    formData.append('manager_name', form.value.manager_name || '')
+    formData.append('manager_contact', form.value.manager_contact || '')
     if (selectedFile.value) {
       formData.append('image', selectedFile.value)
     }
@@ -348,7 +353,6 @@ onMounted(() => {
                 <div class="space-y-1.5">
                   <label class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">소속 부서</label>
                   <select v-model="form.dept_name" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 appearance-none">
-                    <option value="">전체 공용</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                   </select>
                 </div>

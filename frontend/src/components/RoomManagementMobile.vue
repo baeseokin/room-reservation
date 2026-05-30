@@ -95,11 +95,16 @@ const openModal = (room = null) => {
   previewUrl.value = null
   if (room) {
     editingRoom.value = room
-    form.value = { ...room }
+    form.value = {
+      ...room,
+      capacity: room.capacity ?? '',
+      manager_name: room.manager_name || '',
+      manager_contact: room.manager_contact || ''
+    }
     previewUrl.value = room.image_url
   } else {
     editingRoom.value = null
-    form.value = { room_name: '', capacity: '', floor: '', dept_name: '', manager_name: '', manager_contact: '', image_url: null }
+    form.value = { room_name: '', capacity: '', floor: '', dept_name: departments.value[0]?.dept_name || '', manager_name: '', manager_contact: '', image_url: null }
   }
   showModal.value = true
 }
@@ -112,11 +117,11 @@ const saveRoom = async () => {
   try {
     const formData = new FormData()
     formData.append('room_name', form.value.room_name)
-    formData.append('capacity', form.value.capacity)
+    formData.append('capacity', form.value.capacity ?? '')
     formData.append('floor', form.value.floor)
     formData.append('dept_name', form.value.dept_name)
-    formData.append('manager_name', form.value.manager_name)
-    formData.append('manager_contact', form.value.manager_contact)
+    formData.append('manager_name', form.value.manager_name || '')
+    formData.append('manager_contact', form.value.manager_contact || '')
     if (selectedFile.value) {
       formData.append('image', selectedFile.value)
     }
@@ -230,7 +235,6 @@ onMounted(() => {
             <div class="flex gap-4">
                <input v-model="form.floor" type="text" class="flex-1 input-field p-4 bg-slate-50 border-none rounded-2xl" placeholder="층" />
                <select v-model="form.dept_name" class="flex-1 input-field p-4 bg-slate-50 border-none rounded-2xl">
-                 <option value="">부서 선택</option>
                  <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">
                    {{ dept.dept_name }}
                  </option>

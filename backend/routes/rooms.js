@@ -106,7 +106,15 @@ router.post("/", isAdmin, upload.single("image"), async (req, res) => {
   try {
     const [result] = await pool.query(
       "INSERT INTO rooms (room_name, capacity, floor, dept_name, manager_name, manager_contact, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [room_name, capacity, floor, dept_name, manager_name, manager_contact, image_url]
+      [
+        room_name,
+        capacity || null,
+        floor,
+        dept_name,
+        manager_name || null,
+        manager_contact || null,
+        image_url
+      ]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) {
@@ -124,7 +132,14 @@ router.put("/:id", isAdmin, upload.single("image"), async (req, res) => {
   
   try {
     let updateFields = "room_name = ?, capacity = ?, floor = ?, dept_name = ?, manager_name = ?, manager_contact = ?";
-    let params = [room_name, capacity, floor, dept_name, manager_name, manager_contact];
+    let params = [
+      room_name,
+      capacity || null,
+      floor,
+      dept_name,
+      manager_name || null,
+      manager_contact || null
+    ];
 
     if (req.file) {
       const image_url = `/uploads/rooms/${req.file.filename}`;
