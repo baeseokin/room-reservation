@@ -151,4 +151,19 @@ INSERT INTO roomdb.users (user_id,password_hash,is_approved,user_name,email,phon
 	 ('user01','$2b$10$8SCRNTAdX.pcbLrLrpupquubryMcas5vvFRWXsl9c7ib6gqFpA636',1,'사용자01','','010-2307-0437','청년부',NULL,'2026-04-26 13:00:30','2026-05-01 00:02:08',NULL,0),
 	 ('user02','$2b$10$ex4X5f8RJ.y5B0fpXYngv.Cd/DhecMIhgdCLTmU6if01Jb9Fux/PG',1,'홍길동','','010-2345-0099','재정부',NULL,'2026-04-30 23:59:31','2026-05-01 00:03:50',NULL,0);
 
+-- roomdb.reservation_policies definition
+CREATE TABLE IF NOT EXISTS `reservation_policies` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `allow_same_day` tinyint(1) NOT NULL DEFAULT 0,
+  `allow_monday` tinyint(1) NOT NULL DEFAULT 0,
+  `allow_holidays` tinyint(1) NOT NULL DEFAULT 0,
+  `start_time` time NOT NULL DEFAULT '09:00:00',
+  `end_time` time NOT NULL DEFAULT '17:00:00',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+INSERT INTO `reservation_policies` (`id`, `allow_same_day`, `allow_monday`, `allow_holidays`, `start_time`, `end_time`)
+VALUES (1, 0, 0, 0, '09:00:00', '17:00:00')
+ON DUPLICATE KEY UPDATE id=id;

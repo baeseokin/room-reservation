@@ -96,6 +96,11 @@ const router = createRouter({
           path: 'applications',
           name: 'AdminUserApplications',
           component: () => import('../views/AdminUserApplicationsView.vue')
+        },
+        {
+          path: 'policy',
+          name: 'AdminPolicy',
+          component: () => import('../views/AdminPolicyView.vue')
         }
       ]
     },
@@ -169,6 +174,12 @@ const router = createRouter({
           path: 'admin/departments',
           name: 'DepartmentManagementMobile',
           component: () => import('../views/mobile/admin/DepartmentManagementViewMobile.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'admin/policy',
+          name: 'AdminPolicyMobile',
+          component: () => import('../views/mobile/admin/AdminPolicyViewMobile.vue'),
           meta: { requiresAdmin: true }
         },
         {

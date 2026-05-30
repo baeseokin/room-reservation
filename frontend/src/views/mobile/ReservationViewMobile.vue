@@ -189,12 +189,13 @@
              </div>
              <div class="grid grid-cols-7 gap-2">
                 <button v-for="(day, idx) in calendarDays" :key="idx"
-                  @click="selectDate(day.date)"
+                  @click="day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? modal.showAlert(checkDatePolicy(formatDate(day.date))) : selectDate(day.date)"
                   :disabled="!day.current"
                   :class="[
                     day.current ? 'text-slate-700' : 'text-slate-100',
                     isToday(day.date) ? 'text-indigo-600' : '',
-                    isSelected(day.date) ? 'bg-indigo-600 !text-white shadow-lg' : ''
+                    isSelected(day.date) ? 'bg-indigo-600 !text-white shadow-lg' : '',
+                    day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? 'opacity-30 cursor-not-allowed bg-slate-100/50' : ''
                   ]"
                   class="aspect-square flex items-center justify-center text-xs font-black rounded-xl transition-all active:scale-90">
                   {{ day.day }}
@@ -438,34 +439,41 @@
           <!-- Body -->
           <div class="p-6 space-y-4">
             <div class="space-y-2.5">
-              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="w-4 h-4 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">1</span>
+              <div v-if="!policySettings.allow_same_day" class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <span class="w-6 h-6 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-sm">✕</span>
                 <div>
                   <h4 class="text-xs font-bold text-slate-800">당일 신청 불가</h4>
-                  <p class="text-[0.625rem] text-slate-500 mt-0.5">당일 및 과거 날짜에 대한 예약 신청은 불가합니다.</p>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">당일 날짜에 대한 예약 신청은 허용되지 않습니다.</p>
                 </div>
               </div>
 
-              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="w-4 h-4 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">2</span>
+              <div v-if="!policySettings.allow_monday || !policySettings.allow_holidays" class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <span class="w-6 h-6 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-sm">✕</span>
                 <div>
-                  <h4 class="text-xs font-bold text-slate-800">공휴일 / 월요일 신청 불가</h4>
-                  <p class="text-[0.625rem] text-slate-500 mt-0.5">매주 월요일과 법정 공휴일에는 예약 신청이 불가합니다.</p>
+                  <h4 class="text-xs font-bold text-slate-800">예약 신청 제한</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">
+                    <span v-if="!policySettings.allow_monday">매주 월요일</span>
+                    <span v-if="!policySettings.allow_monday && !policySettings.allow_holidays"> 및 </span>
+                    <span v-if="!policySettings.allow_holidays">법정 공휴일</span>
+                    에는 예약 신청이 불가합니다.
+                  </p>
                 </div>
               </div>
 
-              <div class="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="w-4 h-4 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">3</span>
+              <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <span class="w-6 h-6 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-sm">⏰</span>
                 <div>
-                  <h4 class="text-xs font-bold text-slate-800">이용 시간 제한 (화 - 주일)</h4>
-                  <p class="text-[0.625rem] text-slate-500 mt-0.5">화요일부터 주일(일요일)까지 **오전 9시 ~ 오후 5시** 사이에만 이용 가능합니다.</p>
+                  <h4 class="text-xs font-bold text-slate-800">이용 시간 제한</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">
+                    예약 가능 시간은 **오전 {{ policySettings.start_time.slice(0, 5) }} ~ 오후 {{ policySettings.end_time.slice(0, 5) }}** 사이입니다.
+                  </p>
                 </div>
               </div>
 
-              <div class="flex items-start gap-2.5 p-2.5 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
-                <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[0.625rem] shrink-0 mt-0.5">4</span>
+              <div class="flex items-start gap-3 p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                <span class="w-6 h-6 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-md shadow-indigo-200">📋</span>
                 <div>
-                  <h4 class="text-xs font-bold text-slate-900">최대 2일 소요</h4>
+                  <h4 class="text-sm font-bold text-slate-900">최대 2일 소요</h4>
                   <p class="text-[0.625rem] text-slate-600 mt-0.5">예약 신청 후 관리자 승인 완료까지 **최대 2일**이 소요됩니다.</p>
                 </div>
               </div>
@@ -510,6 +518,50 @@ import { getHoliday } from '@/utils/holidays'
 
 const modal = useModalStore()
 const auth = useAuthStore()
+
+const policySettings = ref({
+  allow_same_day: 0,
+  allow_monday: 0,
+  allow_holidays: 0,
+  start_time: '09:00:00',
+  end_time: '17:00:00'
+})
+
+const fetchPolicy = async () => {
+  try {
+    const res = await axios.get('/api/reservations/policy')
+    policySettings.value = res.data
+  } catch (e) {
+    console.error("Fetch policy error:", e)
+  }
+}
+
+const checkDatePolicy = (dateStr) => {
+  console.log("[DEBUG Mobile checkDatePolicy] isAdmin:", auth.isAdmin, "user:", auth.user);
+  if (auth.isAdmin) return null
+
+  const todayStr = formatDate(new Date())
+  if (!policySettings.value.allow_same_day && dateStr === todayStr) {
+    return '당일 예약 신청은 불가합니다.'
+  }
+
+  const dateObj = new Date(dateStr + 'T00:00:00')
+  const dayOfWeek = dateObj.getDay()
+  if (!policySettings.value.allow_monday && dayOfWeek === 1) {
+    return '월요일은 예약 신청이 불가합니다.'
+  }
+  const holidayName = getHoliday(dateStr)
+  if (!policySettings.value.allow_holidays && holidayName) {
+    return `공휴일은 예약 신청이 불가합니다. (${holidayName})`
+  }
+
+  return null
+}
+
+const isDateDisabledByPolicy = (dateStr) => {
+  if (auth.isAdmin) return false
+  return checkDatePolicy(dateStr) !== null
+}
 
 const showNoticeModal = ref(false)
 const dontShowToday = ref(false)
@@ -633,6 +685,7 @@ const generateCalendarDays = (baseDate) => {
 const availableRooms = ref([])
 
 onMounted(async () => {
+  fetchPolicy()
   const [roomRes] = await Promise.all([
     axios.get('/api/rooms'),
     fetchReservations()
@@ -718,6 +771,14 @@ const openRoomDetail = async (room) => {
 }
 
 const openReservationForm = (room) => {
+  if (!auth.isAdmin) {
+    const policyMsg = checkDatePolicy(selectedDate.value)
+    if (policyMsg) {
+      modal.showAlert(policyMsg)
+      return
+    }
+  }
+
   selectedRoom.value = room
   if (mode.value === 'time') {
     form.value.start_time = searchForm.value.start_time
@@ -774,31 +835,18 @@ const toggleRecurringDay = (dayIdx) => {
 
 const submitReservation = async () => {
   // Validate reservation policy rules (skipped for admins)
+  console.log("[DEBUG Mobile submitReservation] isAdmin:", auth.isAdmin, "user:", auth.user);
   if (!auth.isAdmin) {
-    const todayStr = formatDate(new Date())
-    if (selectedDate.value === todayStr) {
-      modal.showAlert('당일 예약 신청은 불가합니다.')
-      return
-    }
-    if (selectedDate.value < todayStr) {
-      modal.showAlert('과거 날짜에 대한 예약 신청은 불가합니다.')
+    const policyMsg = checkDatePolicy(selectedDate.value)
+    if (policyMsg) {
+      modal.showAlert(policyMsg)
       return
     }
 
-    const dateObj = new Date(selectedDate.value + 'T00:00:00')
-    const dayOfWeek = dateObj.getDay()
-    if (dayOfWeek === 1) {
-      modal.showAlert('월요일은 예약 신청이 불가합니다.')
-      return
-    }
-    const holidayName = getHoliday(selectedDate.value)
-    if (holidayName) {
-      modal.showAlert(`공휴일은 예약 신청이 불가합니다. (${holidayName})`)
-      return
-    }
-
-    if (form.value.start_time < '09:00' || form.value.end_time > '17:00') {
-      modal.showAlert('예약 가능 시간은 오전 9시부터 오후 5시까지입니다.')
+    const startLimit = policySettings.value.start_time.slice(0, 5)
+    const endLimit = policySettings.value.end_time.slice(0, 5)
+    if (form.value.start_time < startLimit || form.value.end_time > endLimit) {
+      modal.showAlert(`예약 가능 시간은 오전 ${startLimit}부터 오후 ${endLimit}까지입니다.`)
       return
     }
   }

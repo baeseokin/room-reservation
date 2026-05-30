@@ -29,7 +29,8 @@ import {
   UserGroupIcon, 
   BuildingOfficeIcon, 
   HomeModernIcon,
-  ChevronRightIcon 
+  ChevronRightIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/vue/24/outline'
 
 const adminMenu = [
@@ -37,6 +38,7 @@ const adminMenu = [
   { path: '/m/admin/applications', icon: UserGroupIcon, label: '가입 승인', desc: '신규 회원 승인 대기', color: 'bg-emerald-500' },
   { path: '/m/admin/users', icon: UserGroupIcon, label: '사용자 관리', desc: '회원 정보 및 권한 설정', color: 'bg-amber-500' },
   { path: '/m/admin/rooms', icon: HomeModernIcon, label: '공간 관리', desc: '회의실 등록 및 수정', color: 'bg-slate-900' },
-  { path: '/m/admin/departments', icon: BuildingOfficeIcon, label: '부서 관리', desc: '조직도 및 부서 설정', color: 'bg-rose-500' }
+  { path: '/m/admin/departments', icon: BuildingOfficeIcon, label: '부서 관리', desc: '조직도 및 부서 설정', color: 'bg-rose-500' },
+  { path: '/m/admin/policy', icon: AdjustmentsHorizontalIcon, label: '예약 정책 설정', desc: '예약 제약조건 및 시간 범위 설정', color: 'bg-violet-600' }
 ]
 </script>

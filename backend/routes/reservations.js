@@ -13,28 +13,29 @@ const getKstTodayStr = () => {
 };
 
 // Validate reservation policy rules (for non-admins)
-const validateReservationPolicy = (dateStr, startTime, endTime) => {
+const validateReservationPolicy = (policy, dateStr, startTime, endTime) => {
+  if (!policy) return null;
   const todayStr = getKstTodayStr();
-  if (dateStr === todayStr) {
+  
+  if (!policy.allow_same_day && dateStr === todayStr) {
     return "당일 예약 신청은 불가합니다.";
-  }
-  if (dateStr < todayStr) {
-    return "과거 날짜에 대한 예약 신청은 불가합니다.";
   }
 
   const dObj = new Date(dateStr + 'T00:00:00');
   const dayOfWeek = dObj.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
-  if (dayOfWeek === 1) {
+  if (!policy.allow_monday && dayOfWeek === 1) {
     return "월요일은 예약 신청이 불가합니다.";
   }
   
   const holidayName = getHoliday(dateStr);
-  if (holidayName) {
+  if (!policy.allow_holidays && holidayName) {
     return `공휴일은 예약 신청이 불가합니다. (${holidayName})`;
   }
 
-  if (startTime < "09:00" || endTime > "17:00") {
-    return "예약 가능 시간은 오전 9시부터 오후 5시까지입니다.";
+  const startLimit = policy.start_time.slice(0, 5);
+  const endLimit = policy.end_time.slice(0, 5);
+  if (startTime < startLimit || endTime > endLimit) {
+    return `예약 가능 시간은 오전 ${startLimit}부터 오후 ${endLimit}까지입니다.`;
   }
 
   return null;
@@ -50,6 +51,49 @@ const isAdmin = (req, res, next) => {
   if (req.session.user && req.session.user.roles.includes("관리자")) return next();
   res.status(403).json({ success: false, message: "Admin permission required" });
 };
+
+/**
+ * GET /api/reservations/policy
+ * Public endpoint to fetch policy settings
+ */
+router.get("/policy", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM reservation_policies WHERE id = 1");
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Policy not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("GET Policy Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * PUT /api/reservations/policy
+ * Admin endpoint to update policy settings
+ */
+router.put("/policy", isLogged, isAdmin, async (req, res) => {
+  const { allow_same_day, allow_monday, allow_holidays, start_time, end_time } = req.body;
+  try {
+    await pool.query(
+      `UPDATE reservation_policies 
+       SET allow_same_day = ?, allow_monday = ?, allow_holidays = ?, start_time = ?, end_time = ? 
+       WHERE id = 1`,
+      [
+        allow_same_day ? 1 : 0,
+        allow_monday ? 1 : 0,
+        allow_holidays ? 1 : 0,
+        start_time,
+        end_time
+      ]
+    );
+    res.json({ success: true, message: "Policy updated successfully" });
+  } catch (err) {
+    console.error("PUT Policy Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /**
  * List reservations (filter by date range, room, user)
@@ -127,10 +171,15 @@ router.post("/", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // 0. Validate reservation rules 1)~3) (skipped for admins)
+    // Fetch active policy settings
+    const [policyRows] = await conn.query("SELECT * FROM reservation_policies WHERE id = 1");
+    const policy = policyRows[0];
+
+    // 0. Validate reservation rules (skipped for admins)
     const isAdminUser = req.session?.user && req.session.user.roles.includes("관리자");
+    console.log("[DEBUG Backend POST /] user:", req.session?.user, "isAdminUser:", isAdminUser);
     if (!isAdminUser && !is_recurring) {
-      const errMsg = validateReservationPolicy(reservation_date, start_time, end_time);
+      const errMsg = validateReservationPolicy(policy, reservation_date, start_time, end_time);
       if (errMsg) {
         await conn.rollback();
         return res.status(400).json({ success: false, message: errMsg });
@@ -243,9 +292,9 @@ router.post("/", async (req, res) => {
             String(currentD.getDate()).padStart(2, '0')
           ].join('-');
 
-          // 0. Validate reservation rules 1)~3) for this occurrence (skipped for admins)
+          // 0. Validate reservation rules for this occurrence (skipped for admins)
           if (!isAdminUser) {
-            const errMsg = validateReservationPolicy(dateStr, start_time, end_time);
+            const errMsg = validateReservationPolicy(policy, dateStr, start_time, end_time);
             if (errMsg) {
               await conn.rollback();
               const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -663,10 +712,15 @@ router.put("/:id", isLogged, async (req, res) => {
             return res.status(403).json({ success: false, message: "No permission" });
         }
 
-        // 0. Validate reservation rules 1)~3) (skipped for admins)
+        // Fetch policy
+        const [policyRows] = await pool.query("SELECT * FROM reservation_policies WHERE id = 1");
+        const policy = policyRows[0];
+
+        // 0. Validate reservation rules (skipped for admins)
         const isAdminUser = user.roles.includes("관리자");
+        console.log("[DEBUG Backend PUT /:id] user:", user, "isAdminUser:", isAdminUser);
         if (!isAdminUser) {
-            const errMsg = validateReservationPolicy(reservation_date, start_time, end_time);
+            const errMsg = validateReservationPolicy(policy, reservation_date, start_time, end_time);
             if (errMsg) {
                 return res.status(400).json({ success: false, message: errMsg });
             }
@@ -746,5 +800,7 @@ router.delete("/:id", isLogged, async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
+
+
 
 module.exports = router;

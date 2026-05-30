@@ -106,3 +106,19 @@ INSERT IGNORE INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r 
 WHERE u.user_id = 'admin' AND r.role_name = '관리자'
 ON DUPLICATE KEY UPDATE user_id = user_id;
+
+-- Reservation Policies
+CREATE TABLE IF NOT EXISTS reservation_policies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  allow_same_day TINYINT(1) NOT NULL DEFAULT 0,
+  allow_monday TINYINT(1) NOT NULL DEFAULT 0,
+  allow_holidays TINYINT(1) NOT NULL DEFAULT 0,
+  start_time TIME NOT NULL DEFAULT '09:00:00',
+  end_time TIME NOT NULL DEFAULT '17:00:00',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO reservation_policies (id, allow_same_day, allow_monday, allow_holidays, start_time, end_time)
+VALUES (1, 0, 0, 0, '09:00:00', '17:00:00');
+

@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router'
 import { useModalStore } from '@/stores/useModalStore'
 import {
   CalendarIcon, MapIcon, UserGroupIcon, BuildingOfficeIcon,
-  ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, ShieldCheckIcon, HomeIcon, UserPlusIcon
+  ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, ShieldCheckIcon, HomeIcon, UserPlusIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/vue/24/outline'
 import { ref } from 'vue'
 
@@ -21,6 +22,7 @@ const navItems = [
   { name: '사용자 관리', icon: UserGroupIcon, path: '/admin/users' },
   { name: '가입 신청 관리', icon: UserPlusIcon, path: '/admin/applications' },
   { name: '부서 관리', icon: BuildingOfficeIcon, path: '/admin/departments' },
+  { name: '예약 정책 관리', icon: AdjustmentsHorizontalIcon, path: '/admin/policy' },
 ]
 
 const logout = () => auth.logout()
