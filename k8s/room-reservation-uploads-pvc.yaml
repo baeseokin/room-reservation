@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: room-reservation-uploads-pv
+  labels:
+    app: room-reservation
+    type: local
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    # Docker Desktop for Windows (WSL2 기반) 환경에서는
+    # 윈도우의 드라이브가 /mnt/드라이브문자/ 형태로 마운트됩니다.
+    # D 드라이브에 폴더를 만들어 사용할 수 있습니다. (예: D:\room-reservation\uploads)
+    path: "/mnt/d/room-reservation/uploads"
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: room-reservation-uploads-pvc
+  namespace: room-reservation
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      app: room-reservation
+      type: local

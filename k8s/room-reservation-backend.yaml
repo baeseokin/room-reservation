@@ -38,6 +38,13 @@ spec:
               value: "roomdb"
             - name: CORS_ORIGIN
               value: "http://localhost:30004,http://localhost:30003,http://localhost:5173"
+          volumeMounts:
+            - name: uploads-volume
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads-volume
+          persistentVolumeClaim:
+            claimName: room-reservation-uploads-pvc
 ---
 apiVersion: v1
 kind: Service
