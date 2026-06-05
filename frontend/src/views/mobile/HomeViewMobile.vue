@@ -9,7 +9,7 @@
     <!-- Quick Stats / Status -->
     <div class="grid grid-cols-2 gap-4">
       <!-- Left Card: My Reservations (User) or Pending Approvals (Admin) -->
-      <div v-if="!auth.isAdmin" @click="$router.push('/m/my-reservations')" class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <div v-if="!auth.isAdmin" @click="$router.push('/m/my-reservations')" class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
         <div class="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
           <CalendarIcon class="w-6 h-6 text-white" />
         </div>
@@ -18,7 +18,7 @@
           <div class="text-3xl font-black">{{ myResCount }}건</div>
         </div>
       </div>
-      <div v-else @click="$router.push('/m/admin/reservations')" class="bg-rose-500 p-5 rounded-[2.5rem] text-white shadow-xl shadow-rose-100 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <div v-else @click="$router.push('/m/admin/reservations')" class="bg-rose-500 p-5 rounded-[2.5rem] text-white shadow-xl shadow-rose-100 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
         <div class="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
           <CheckBadgeIcon class="w-6 h-6 text-white" />
         </div>
@@ -29,7 +29,7 @@
       </div>
 
       <!-- Right Card: Book Space (User) or New Sign-ups (Admin) -->
-      <div v-if="!auth.isAdmin" @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <div v-if="!auth.isAdmin" @click="$router.push('/m/reservations')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
         <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
           <PlusIcon class="w-6 h-6 text-indigo-600" />
         </div>
@@ -38,7 +38,7 @@
           <div class="text-xl font-black text-slate-900">공간 예약하기</div>
         </div>
       </div>
-      <div v-else @click="$router.push('/m/admin/applications')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square active:scale-95 transition-all">
+      <div v-else @click="$router.push('/m/admin/applications')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
         <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
           <UserPlusIcon class="w-6 h-6 text-rose-500" />
         </div>
