@@ -20,7 +20,7 @@ const navItems = [
   { name: '예약 관리', icon: CalendarIcon, path: '/admin/reservations' },
   { name: '공간 관리', icon: MapIcon, path: '/admin/rooms' },
   { name: '사용자 관리', icon: UserGroupIcon, path: '/admin/users' },
-  { name: '가입 신청 관리', icon: UserPlusIcon, path: '/admin/applications' },
+
   { name: '부서 관리', icon: BuildingOfficeIcon, path: '/admin/departments' },
   { name: '예약 정책 관리', icon: AdjustmentsHorizontalIcon, path: '/admin/policy' },
 ]

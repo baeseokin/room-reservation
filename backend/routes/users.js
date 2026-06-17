@@ -178,39 +178,7 @@ router.delete("/:id", isAdmin, async (req, res) => {
   }
 });
 
-router.patch("/:id/approve", isAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { roleNames } = req.body; // Array of role names like ['사용자'] or ['관리자']
-  
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
 
-    // 1. Approve User
-    await conn.query("UPDATE users SET is_approved = TRUE WHERE id = ?", [id]);
-
-    // 2. Assign Roles if provided
-    if (roleNames && roleNames.length > 0) {
-      // Get role IDs
-      const [roles] = await conn.query("SELECT id FROM roles WHERE role_name IN (?)", [roleNames]);
-      if (roles.length > 0) {
-        // Delete existing roles just in case
-        await conn.query("DELETE FROM user_roles WHERE user_id = ?", [id]);
-        const inserts = roles.map(r => [id, r.id]);
-        await conn.query("INSERT INTO user_roles (user_id, role_id) VALUES ?", [inserts]);
-      }
-    }
-
-    await conn.commit();
-    res.json({ success: true });
-  } catch (err) {
-    await conn.rollback();
-    console.error("Approve User Error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  } finally {
-    conn.release();
-  }
-});
 
 router.post("/:id/reset-password", isAdmin, async (req, res) => {
   const { id } = req.params;

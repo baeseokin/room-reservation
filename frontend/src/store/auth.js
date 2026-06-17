@@ -13,7 +13,7 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.roles?.includes('관리자') ?? false,
   },
   actions: {
-    async adminLogin(userId, password) {
+    async login(userId, password) {
       try {
         const res = await axios.post('/api/auth/login', { userId, password })
         if (res.data.success) {
@@ -23,19 +23,6 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, message: res.data.message }
       } catch (e) {
         return { success: false, message: e.response?.data?.message || '로그인 오류' }
-      }
-    },
-    async loginWithKakao(code) {
-      try {
-        const res = await axios.post('/api/auth/kakao', { code })
-        if (res.data.success) {
-          this.user = res.data.user
-          return true
-        }
-        return false
-      } catch (e) {
-        console.error('Kakao login fail:', e)
-        return false
       }
     },
     async checkSession() {

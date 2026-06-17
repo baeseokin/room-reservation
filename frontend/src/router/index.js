@@ -4,11 +4,11 @@ import { useAuthStore } from '../store/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // ─── 기본 랜딩 (로그인) ────────────────────────────────
+    // ─── 기본 랜딩 (사용자 로그인) ────────────────────────────────
     {
       path: '/',
       name: 'Login',
-      component: () => import('../views/AdminLoginView.vue'),
+      component: () => import('../views/UserLoginView.vue'),
       beforeEnter: (to, from, next) => {
         const auth = useAuthStore()
         if (auth.user) {
@@ -18,13 +18,20 @@ const router = createRouter({
         }
       }
     },
-
-    // ─── 회원가입 ──────────────────────────────────────────
     {
-      path: '/register',
-      name: 'Register',
-      component: () => import('../views/RegisterView.vue')
+      path: '/admin-login',
+      name: 'AdminLogin',
+      component: () => import('../views/AdminLoginView.vue'),
+      beforeEnter: (to, from, next) => {
+        const auth = useAuthStore()
+        if (auth.user) {
+          next({ name: 'AdminReservations' })
+        } else {
+          next()
+        }
+      }
     },
+
     {
       path: '/change-password',
       name: 'ChangePassword',
@@ -93,11 +100,6 @@ const router = createRouter({
           component: () => import('../views/DepartmentManagementView.vue')
         },
         {
-          path: 'applications',
-          name: 'AdminUserApplications',
-          component: () => import('../views/AdminUserApplicationsView.vue')
-        },
-        {
           path: 'policy',
           name: 'AdminPolicy',
           component: () => import('../views/AdminPolicyView.vue')
@@ -153,12 +155,6 @@ const router = createRouter({
           meta: { requiresAdmin: true }
         },
         {
-          path: 'admin/applications',
-          name: 'AdminUserApplicationsMobile',
-          component: () => import('../views/mobile/admin/AdminUserApplicationsViewMobile.vue'),
-          meta: { requiresAdmin: true }
-        },
-        {
           path: 'admin/users',
           name: 'UserManagementMobile',
           component: () => import('../views/mobile/admin/UserManagementViewMobile.vue'),
@@ -190,16 +186,16 @@ const router = createRouter({
         }
       ]
     },
-    // 모바일 전용 로그인/회원가입 (레이아웃 없음)
+    // 모바일 전용 로그인
     {
       path: '/m/login',
       name: 'LoginMobile',
-      component: () => import('../views/mobile/LoginViewMobile.vue')
+      component: () => import('../views/mobile/UserLoginViewMobile.vue')
     },
     {
-      path: '/m/register',
-      name: 'RegisterMobile',
-      component: () => import('../views/mobile/RegisterViewMobile.vue')
+      path: '/m/admin-login',
+      name: 'AdminLoginMobile',
+      component: () => import('../views/mobile/AdminLoginViewMobile.vue')
     }
   ]
 })
@@ -211,7 +207,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Already logged in? Redirect from Login page to Home
-  if (to.name === 'Login' && auth.user) {
+  if ((to.name === 'Login' || to.name === 'AdminLogin') && auth.user) {
+    if (to.name === 'AdminLogin' && auth.isAdmin) return next({ name: 'AdminReservations' })
     return next({ name: 'Home' })
   }
 
@@ -227,7 +224,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Mandatory password change check
-  if (auth.user?.mustChangePassword && !['ChangePassword', 'ChangePasswordMobile', 'Login', 'LoginMobile'].includes(to.name)) {
+  if (auth.user?.mustChangePassword && !['ChangePassword', 'ChangePasswordMobile', 'Login', 'LoginMobile', 'AdminLogin', 'AdminLoginMobile'].includes(to.name)) {
     const target = to.path.startsWith('/m') ? 'ChangePasswordMobile' : 'ChangePassword'
     return next({ name: target })
   }
@@ -237,7 +234,7 @@ router.beforeEach(async (to, from, next) => {
   
   if (isMobile && !to.path.startsWith('/m')) {
     if (to.name === 'Login') return next({ name: 'LoginMobile' })
-    if (to.name === 'Register') return next({ name: 'RegisterMobile' })
+    if (to.name === 'AdminLogin') return next({ name: 'AdminLoginMobile' })
     if (to.name === 'ChangePassword') return next({ name: 'ChangePasswordMobile' })
     
     // For other protected routes, if user is already on /home, go to /m/home

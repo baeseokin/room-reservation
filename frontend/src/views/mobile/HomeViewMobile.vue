@@ -38,13 +38,13 @@
           <div class="text-xl font-black text-slate-900">공간 예약하기</div>
         </div>
       </div>
-      <div v-else @click="$router.push('/m/admin/applications')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
+      <div v-else @click="$router.push('/m/admin/users')" class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col justify-between aspect-square sm:aspect-auto sm:h-40 active:scale-95 transition-all">
         <div class="w-10 h-10 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center">
           <UserPlusIcon class="w-6 h-6 text-rose-500" />
         </div>
         <div>
-          <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">신규 가입 대기</div>
-          <div class="text-3xl font-black text-slate-900">{{ pendingUserCount }}건</div>
+          <div class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">사용자 관리</div>
+          <div class="text-xl font-black text-slate-900">회원 목록</div>
         </div>
       </div>
     </div>
@@ -116,7 +116,7 @@ const auth = useAuthStore()
 const upcomingRes = ref(null)
 const myResCount = ref(0)
 const pendingResCount = ref(0)
-const pendingUserCount = ref(0)
+
 
 onMounted(async () => {
   try {
@@ -159,9 +159,7 @@ onMounted(async () => {
       const pRes = await axios.get('/api/reservations', { params: { status: 'pending' } })
       pendingResCount.value = pRes.data.length
 
-      // Fetch pending users count
-      const pUsers = await axios.get('/api/users')
-      pendingUserCount.value = pUsers.data.filter(u => !u.is_approved).length
+
     }
 
   } catch (e) {
