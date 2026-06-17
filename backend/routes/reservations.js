@@ -38,6 +38,16 @@ const validateReservationPolicy = (policy, dateStr, startTime, endTime) => {
     return `예약 가능 시간은 오전 ${startLimit}부터 오후 ${endLimit}까지입니다.`;
   }
 
+  if (policy.max_booking_months !== undefined) {
+    const today = new Date();
+    // Calculate the last day of (current month + max_booking_months)
+    const limitDate = new Date(today.getFullYear(), today.getMonth() + policy.max_booking_months + 1, 0);
+    const limitDateStr = limitDate.getFullYear() + '-' + String(limitDate.getMonth() + 1).padStart(2, '0') + '-' + String(limitDate.getDate()).padStart(2, '0');
+    if (dateStr > limitDateStr) {
+      return `예약은 ${limitDate.getFullYear()}년 ${limitDate.getMonth() + 1}월까지만 가능합니다.`;
+    }
+  }
+
   return null;
 };
 
@@ -74,18 +84,19 @@ router.get("/policy", async (req, res) => {
  * Admin endpoint to update policy settings
  */
 router.put("/policy", isLogged, isAdmin, async (req, res) => {
-  const { allow_same_day, allow_monday, allow_holidays, start_time, end_time } = req.body;
+  const { allow_same_day, allow_monday, allow_holidays, start_time, end_time, max_booking_months } = req.body;
   try {
     await pool.query(
       `UPDATE reservation_policies 
-       SET allow_same_day = ?, allow_monday = ?, allow_holidays = ?, start_time = ?, end_time = ? 
+       SET allow_same_day = ?, allow_monday = ?, allow_holidays = ?, start_time = ?, end_time = ?, max_booking_months = ? 
        WHERE id = 1`,
       [
         allow_same_day ? 1 : 0,
         allow_monday ? 1 : 0,
         allow_holidays ? 1 : 0,
         start_time,
-        end_time
+        end_time,
+        max_booking_months !== undefined ? max_booking_months : 1
       ]
     );
     res.json({ success: true, message: "Policy updated successfully" });

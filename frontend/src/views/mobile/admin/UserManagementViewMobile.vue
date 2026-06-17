@@ -13,7 +13,8 @@ import {
   TrashIcon,
   ShieldCheckIcon,
   XMarkIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  UserPlusIcon
 } from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
@@ -24,12 +25,15 @@ const showEditModal = ref(false)
 const selectedUser = ref(null)
 const departments = ref([])
 
+const isNewUser = ref(false)
+
 const form = ref({
+  user_id: '',
   user_name: '',
   email: '',
   phone: '',
   dept_name: '',
-  roleIds: []
+  roleIds: [2]
 })
 
 const formatPhone = (val) => {
@@ -80,9 +84,25 @@ const filteredUsers = computed(() => {
   )
 })
 
+const openCreate = () => {
+  isNewUser.value = true
+  selectedUser.value = null
+  form.value = {
+    user_id: '',
+    user_name: '',
+    email: '',
+    phone: '',
+    dept_name: '',
+    roleIds: [2]
+  }
+  showEditModal.value = true
+}
+
 const openEdit = (user) => {
+  isNewUser.value = false
   selectedUser.value = user
   form.value = {
+    user_id: user.user_id,
     user_name: user.user_name,
     email: user.email || '',
     phone: user.phone || '',
@@ -92,14 +112,28 @@ const openEdit = (user) => {
   showEditModal.value = true
 }
 
-const handleUpdate = async () => {
+const handleSubmit = async () => {
+  if (!form.value.user_name) {
+    modal.showAlert('이름을 입력해주세요.')
+    return
+  }
+  if (isNewUser.value && !form.value.user_id) {
+    modal.showAlert('아이디를 입력해주세요.')
+    return
+  }
+
   try {
-    await axios.put(`/api/users/${selectedUser.value.id}`, form.value)
-    modal.showAlert('사용자 정보가 성공적으로 수정되었습니다.')
+    if (isNewUser.value) {
+      await axios.post('/api/users', form.value)
+      modal.showAlert('신규 사용자가 등록되었습니다. (초기 비밀번호: room00!)')
+    } else {
+      await axios.put(`/api/users/${selectedUser.value.id}`, form.value)
+      modal.showAlert('사용자 정보가 성공적으로 수정되었습니다.')
+    }
     showEditModal.value = false
     fetchUsers()
   } catch (error) {
-    modal.showAlert('수정 중 오류가 발생했습니다.')
+    modal.showAlert(error.response?.data?.message || '처리 중 오류가 발생했습니다.')
   }
 }
 
@@ -149,6 +183,9 @@ onMounted(() => {
           <input v-model="searchQuery" type="text" placeholder="이름, ID, 부서 검색..."
             class="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 outline-none shadow-sm transition-all" />
         </div>
+        <button @click="openCreate" class="p-4 bg-indigo-600 text-white rounded-2xl active:scale-95 transition-all shadow-sm shadow-indigo-200">
+          <UserPlusIcon class="w-5 h-5" />
+        </button>
         <button @click="fetchUsers" class="p-4 bg-white border border-slate-200 text-slate-500 rounded-2xl active:scale-95 transition-all shadow-sm">
           <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
         </button>
@@ -228,8 +265,8 @@ onMounted(() => {
           <!-- Modal Header -->
           <div class="flex justify-between items-start">
             <div>
-              <h2 class="text-xl font-black text-slate-900">사용자 정보 수정</h2>
-              <p class="text-slate-400 text-[0.625rem] font-black uppercase tracking-widest mt-1">회원 정보를 변경합니다.</p>
+              <h2 class="text-xl font-black text-slate-900">{{ isNewUser ? '신규 사용자 등록' : '사용자 정보 수정' }}</h2>
+              <p class="text-slate-400 text-[0.625rem] font-black uppercase tracking-widest mt-1">{{ isNewUser ? '새로운 사용자를 등록합니다.' : '회원 정보를 변경합니다.' }}</p>
             </div>
             <button @click="showEditModal = false" class="p-2 text-slate-300 hover:text-slate-900 transition-colors">
               <XMarkIcon class="w-6 h-6" />
@@ -238,17 +275,23 @@ onMounted(() => {
 
           <!-- Form Area -->
           <div class="space-y-5">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid gap-4" :class="isNewUser ? 'grid-cols-2' : 'grid-cols-1'">
+              <div v-if="isNewUser" class="space-y-1.5">
+                <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
+                <input v-model="form.user_id" type="text" placeholder="예: user123"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
+              </div>
               <div class="space-y-1.5">
                 <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
-                <input v-model="form.user_name" type="text"
+                <input v-model="form.user_name" type="text" placeholder="이름 입력"
                   class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
               </div>
-              <div class="space-y-1.5">
-                <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
-                <input v-model="form.phone" type="text"
-                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
-              </div>
+            </div>
+            
+            <div class="space-y-1.5">
+              <label class="block text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+              <input v-model="form.phone" type="text"
+                class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
             </div>
             
             <div class="space-y-1.5">
@@ -295,9 +338,9 @@ onMounted(() => {
                 class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-[0.6875rem] uppercase tracking-widest text-slate-400 active:bg-slate-50">
                 닫기
               </button>
-              <button @click="handleUpdate" 
+              <button @click="handleSubmit" 
                 class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-[0.6875rem] uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-[0.98] transition-transform">
-                수정 완료
+                {{ isNewUser ? '사용자 등록' : '수정 완료' }}
               </button>
             </div>
           </div>

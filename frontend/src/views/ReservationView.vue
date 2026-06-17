@@ -1663,7 +1663,9 @@ onMounted(() => {
                     <li v-for="(rule, idx) in [
                       '사용 후 냉난방기 및 전등을 반드시 꺼주세요.',
                       '음식물 반입은 원칙적으로 금지됩니다.',
-                      '사용 후 비품은 원래 자리에 정리해 주세요.'
+                      '사용 후 비품은 원래 자리에 정리해 주세요.',
+                      '기물 파손 주의, 파손 시 사무실에 알려주세요.',
+                      '개인적인 용도의 사용은 지양해주세요.'
                     ]" :key="idx" class="flex gap-3">
                       <span class="shrink-0 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[0.625rem] font-black text-indigo-600 shadow-sm">{{ idx + 1 }}</span>
                       <p class="text-sm font-bold text-slate-700 leading-snug">{{ rule }}</p>
@@ -1833,6 +1835,16 @@ onMounted(() => {
                   <h4 class="text-sm font-bold text-slate-800">이용 시간 제한</h4>
                   <p class="text-xs text-slate-500 mt-0.5">
                     예약 가능 시간은 **오전 {{ policySettings.start_time.slice(0, 5) }} ~ 오후 {{ policySettings.end_time.slice(0, 5) }}** 사이입니다.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+                <span class="w-7 h-7 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">📅</span>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">예약 기간 제약</h4>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    현재월을 포함하여 +{{ policySettings.max_booking_months !== undefined ? policySettings.max_booking_months : 1 }}개월 후의 말일까지만 예약이 가능합니다.
                   </p>
                 </div>
               </div>

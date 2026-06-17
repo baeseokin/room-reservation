@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 import { useModalStore } from '@/stores/useModalStore'
-import { MagnifyingGlassIcon, ArrowPathIcon, UserIcon, BuildingOfficeIcon, PhoneIcon, PencilSquareIcon, KeyIcon, TrashIcon, XMarkIcon, ShieldCheckIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowPathIcon, UserIcon, BuildingOfficeIcon, PhoneIcon, PencilSquareIcon, KeyIcon, TrashIcon, XMarkIcon, ShieldCheckIcon, ChevronDownIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 
 const modal = useModalStore()
 const users = ref([])
@@ -12,12 +12,15 @@ const showEditModal = ref(false)
 const selectedUser = ref(null)
 const departments = ref([])
 
+const isNewUser = ref(false)
+
 const form = ref({
+  user_id: '',
   user_name: '',
   email: '',
   phone: '',
   dept_name: '',
-  roleIds: []
+  roleIds: [2]
 })
 
 const formatPhone = (val) => {
@@ -68,9 +71,25 @@ const filteredUsers = computed(() => {
   )
 })
 
+const openCreate = () => {
+  isNewUser.value = true
+  selectedUser.value = null
+  form.value = {
+    user_id: '',
+    user_name: '',
+    email: '',
+    phone: '',
+    dept_name: '',
+    roleIds: [2]
+  }
+  showEditModal.value = true
+}
+
 const openEdit = (user) => {
+  isNewUser.value = false
   selectedUser.value = user
   form.value = {
+    user_id: user.user_id,
     user_name: user.user_name,
     email: user.email || '',
     phone: user.phone || '',
@@ -80,14 +99,28 @@ const openEdit = (user) => {
   showEditModal.value = true
 }
 
-const handleUpdate = async () => {
+const handleSubmit = async () => {
+  if (!form.value.user_name) {
+    modal.showAlert('이름을 입력해주세요.')
+    return
+  }
+  if (isNewUser.value && !form.value.user_id) {
+    modal.showAlert('아이디를 입력해주세요.')
+    return
+  }
+
   try {
-    await axios.put(`/api/users/${selectedUser.value.id}`, form.value)
-    modal.showAlert('사용자 정보가 성공적으로 수정되었습니다.')
+    if (isNewUser.value) {
+      await axios.post('/api/users', form.value)
+      modal.showAlert('신규 사용자가 등록되었습니다. (초기 비밀번호: room00!)')
+    } else {
+      await axios.put(`/api/users/${selectedUser.value.id}`, form.value)
+      modal.showAlert('사용자 정보가 성공적으로 수정되었습니다.')
+    }
     showEditModal.value = false
     fetchUsers()
   } catch (error) {
-    modal.showAlert('수정 중 오류가 발생했습니다.')
+    modal.showAlert(error.response?.data?.message || '처리 중 오류가 발생했습니다.')
   }
 }
 
@@ -131,12 +164,16 @@ onMounted(() => {
         <p class="text-slate-500 text-sm font-medium mt-0.5">등록된 사용자 정보를 조회하고 관리합니다.</p>
       </div>
       <div class="flex items-center gap-3">
-        <div class="relative">
+        <div class="relative hidden sm:block">
           <MagnifyingGlassIcon class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input v-model="searchQuery" type="text" placeholder="이름, ID, 부서 검색..."
             class="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-64 shadow-sm transition-all" />
         </div>
-        <button @click="fetchUsers" class="p-3 bg-white border border-slate-200 text-slate-500 rounded-2xl hover:bg-slate-50 transition-all shadow-sm">
+        <button @click="openCreate" class="flex items-center gap-2 px-4 py-3 bg-indigo-600 text-white font-bold text-sm rounded-2xl hover:bg-indigo-700 transition-all shadow-sm">
+          <UserPlusIcon class="w-5 h-5" />
+          신규 등록
+        </button>
+        <button @click="fetchUsers" class="p-3 bg-white border border-slate-200 text-slate-500 rounded-2xl hover:bg-slate-50 transition-all shadow-sm" title="새로고침">
           <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
         </button>
       </div>
@@ -226,8 +263,8 @@ onMounted(() => {
           <!-- Modal Header -->
           <div class="flex justify-between items-start">
             <div>
-              <h2 class="text-2xl font-black text-slate-900">사용자 정보 수정</h2>
-              <p class="text-slate-500 text-sm font-medium mt-0.5">사용자의 기본 정보와 시스템 권한을 변경합니다.</p>
+              <h2 class="text-2xl font-black text-slate-900">{{ isNewUser ? '신규 사용자 등록' : '사용자 정보 수정' }}</h2>
+              <p class="text-slate-500 text-sm font-medium mt-0.5">{{ isNewUser ? '새로운 사용자를 시스템에 등록합니다.' : '사용자의 기본 정보와 시스템 권한을 변경합니다.' }}</p>
             </div>
             <button @click="showEditModal = false" class="p-2 text-slate-300 hover:text-slate-900 transition-colors">
               <XMarkIcon class="w-6 h-6" />
@@ -236,17 +273,23 @@ onMounted(() => {
 
           <!-- Form Area -->
           <div class="space-y-6">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid gap-4" :class="isNewUser ? 'grid-cols-2' : 'grid-cols-1'">
+              <div v-if="isNewUser" class="space-y-2">
+                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">아이디</label>
+                <input v-model="form.user_id" type="text" placeholder="예: user123"
+                  class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
+              </div>
               <div class="space-y-2">
                 <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">이름</label>
-                <input v-model="form.user_name" type="text"
+                <input v-model="form.user_name" type="text" placeholder="이름 입력"
                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
               </div>
-              <div class="space-y-2">
-                <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
-                <input v-model="form.phone" type="text"
-                  class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
-              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">연락처</label>
+              <input v-model="form.phone" type="text"
+                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
             </div>
             <p class="text-[0.625rem] text-indigo-500 font-bold ml-1 -mt-4 leading-tight">
               ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
@@ -291,9 +334,9 @@ onMounted(() => {
                 class="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">
                 취소
               </button>
-              <button @click="handleUpdate" 
+              <button @click="handleSubmit" 
                 class="flex-[2] bg-slate-900 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-xl transition-all active:scale-[0.98]">
-                정보 업데이트
+                {{ isNewUser ? '사용자 등록' : '정보 업데이트' }}
               </button>
             </div>
           </div>

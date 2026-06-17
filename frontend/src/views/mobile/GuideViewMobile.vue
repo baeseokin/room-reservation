@@ -49,6 +49,14 @@
             <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></div>
             <p class="text-sm font-bold text-slate-300 leading-relaxed">사용 후 비품은 원래 자리에 정리해 주세요.</p>
           </li>
+          <li class="flex gap-3 items-start">
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></div>
+            <p class="text-sm font-bold text-slate-300 leading-relaxed">기물 파손 주의, 파손 시 사무실에 알려주세요.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></div>
+            <p class="text-sm font-bold text-slate-300 leading-relaxed">개인적인 용도의 사용은 지양해주세요.</p>
+          </li>
         </ul>
         <BuildingOfficeIcon class="absolute -right-8 -bottom-8 w-48 h-48 text-white/5" />
       </div>

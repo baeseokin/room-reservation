@@ -19,6 +19,7 @@ const policy = ref({
   allow_same_day: 0,
   allow_monday: 0,
   allow_holidays: 0,
+  max_booking_months: 1,
   start_time: '09:00:00',
   end_time: '17:00:00'
 })
@@ -63,6 +64,7 @@ const savePolicy = async () => {
       allow_same_day: policy.value.allow_same_day ? 1 : 0,
       allow_monday: policy.value.allow_monday ? 1 : 0,
       allow_holidays: policy.value.allow_holidays ? 1 : 0,
+      max_booking_months: Number(policy.value.max_booking_months),
       start_time: `${policy.value.start_time}:00`,
       end_time: `${policy.value.end_time}:00`
     })
@@ -164,6 +166,30 @@ onMounted(() => {
                 class="px-4 py-2 rounded-xl text-xs font-bold transition-all min-w-[70px] text-center shadow-sm">
                 {{ policy.allow_holidays ? '허용됨' : '제한됨' }}
               </button>
+            </div>
+            
+            <!-- Max Booking Months Control -->
+            <div class="p-5 rounded-[2rem] border border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                  <CalendarIcon class="w-5 h-5" />
+                </div>
+                <div>
+                  <div class="text-sm font-black text-slate-900">예약 기간 범위 제약</div>
+                  <div class="text-xs text-slate-400 font-bold mt-0.5">현재월 포함 설정한 +x 월 말일까지 예약 가능</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <select v-model="policy.max_booking_months" 
+                  class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                  <option :value="0">현재 월까지</option>
+                  <option :value="1">+1개월 후까지</option>
+                  <option :value="2">+2개월 후까지</option>
+                  <option :value="3">+3개월 후까지</option>
+                  <option :value="6">+6개월 후까지</option>
+                  <option :value="12">+1년 후까지</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>

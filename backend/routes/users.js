@@ -105,11 +105,11 @@ router.post("/", isAdmin, async (req, res) => {
 
     // 1. Hash password
     const saltRounds = 10;
-    const password_hash = await bcrypt.hash(password || "1234", saltRounds);
+    const password_hash = await bcrypt.hash(password || "room00!", saltRounds);
 
     // 2. Insert User
     const [result] = await conn.query(
-      "INSERT INTO users (user_id, user_name, email, phone, dept_name, password_hash) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO users (user_id, user_name, email, phone, dept_name, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1)",
       [user_id, user_name, email, phone, dept_name, password_hash]
     );
     const newUserId = result.insertId;

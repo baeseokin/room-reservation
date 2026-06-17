@@ -229,8 +229,9 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: target })
   }
 
-  // Basic Mobile Detection Redirect
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  // Basic Mobile Detection Redirect (Phones only, not tablets)
+  const isMobile = /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
   
   if (isMobile && !to.path.startsWith('/m')) {
     if (to.name === 'Login') return next({ name: 'LoginMobile' })

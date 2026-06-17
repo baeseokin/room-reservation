@@ -352,6 +352,14 @@
                     <span class="text-indigo-600 font-black">03</span>
                     <p class="text-sm font-bold text-slate-600 leading-relaxed">사용 후 비품은 원래 자리에 정리해 주세요.</p>
                   </div>
+                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
+                    <span class="text-indigo-600 font-black">04</span>
+                    <p class="text-sm font-bold text-slate-600 leading-relaxed">기물 파손 주의, 파손 시 사무실에 알려주세요.</p>
+                  </div>
+                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
+                    <span class="text-indigo-600 font-black">05</span>
+                    <p class="text-sm font-bold text-slate-600 leading-relaxed">개인적인 용도의 사용은 지양해주세요.</p>
+                  </div>
                 </div>
 
                 <label @click="isAgreed = !isAgreed" class="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 transition-all cursor-pointer group active:scale-95"
@@ -466,6 +474,16 @@
                   <h4 class="text-xs font-bold text-slate-800">이용 시간 제한</h4>
                   <p class="text-[0.625rem] text-slate-500 mt-0.5">
                     예약 가능 시간은 **오전 {{ policySettings.start_time.slice(0, 5) }} ~ 오후 {{ policySettings.end_time.slice(0, 5) }}** 사이입니다.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <span class="w-6 h-6 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-sm">📅</span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800">예약 기간 제약</h4>
+                  <p class="text-[0.625rem] text-slate-500 mt-0.5">
+                    현재월을 포함하여 +{{ policySettings.max_booking_months !== undefined ? policySettings.max_booking_months : 1 }}개월 후의 말일까지만 예약이 가능합니다.
                   </p>
                 </div>
               </div>
