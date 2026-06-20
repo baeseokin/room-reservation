@@ -60,9 +60,7 @@
         </button>
       </form>
 
-      <div class="mt-8 flex justify-center gap-6">
-        <router-link to="/m/admin-login" class="text-xs font-black text-slate-400 uppercase tracking-widest">관리자 로그인</router-link>
-      </div>
+
 
       <div class="mt-auto pt-12 text-center">
         <p class="text-[0.625rem] text-slate-300 font-bold uppercase tracking-[0.2em]">© Wonchon Church</p>

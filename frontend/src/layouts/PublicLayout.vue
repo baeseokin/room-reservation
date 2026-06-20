@@ -127,8 +127,6 @@ const navItems = [
   { name: '홈', path: '/home' },
   { name: '공간 예약', path: '/home/reservations' },
   { name: '나의 예약', path: '/home/my-reservations' },
-
-  { name: '내 정보', path: '/home/profile' },
 ]
 
 const getRootFontSize = () => {

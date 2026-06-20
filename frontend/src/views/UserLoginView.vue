@@ -81,23 +81,9 @@
           </button>
         </form>
 
-        <!-- Divider -->
-        <div class="relative my-8">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-slate-100"></div>
-          </div>
-          <div class="relative flex justify-center text-[0.75rem]">
-            <span class="px-3 bg-white text-slate-300 font-black uppercase tracking-widest">or</span>
-          </div>
-        </div>
 
-        <!-- Secondary Actions -->
-        <div class="flex flex-col gap-4 items-center">
-          <router-link to="/admin-login" class="group flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-700 transition-all uppercase tracking-widest">
-            <span>관리자 로그인</span>
-            <ArrowRightIcon class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-          </router-link>
-        </div>
+
+
       </div>
 
       <!-- Footer Info -->
