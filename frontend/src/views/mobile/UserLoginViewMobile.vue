@@ -20,21 +20,22 @@
       </div>
 
       <!-- Error Message -->
-      <div v-if="errorMsg" class="bg-rose-50 text-rose-500 text-xs font-black p-4 rounded-2xl mb-6 text-center border border-rose-100 animate-in fade-in slide-in-from-top-2">
+      <div v-if="errorMsg" class="w-full max-w-[320px] mx-auto bg-rose-50 text-rose-500 text-xs font-black p-4 rounded-2xl mb-6 text-center border border-rose-100 animate-in fade-in slide-in-from-top-2">
         {{ errorMsg }}
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleLogin" class="space-y-4">
+      <form @submit.prevent="handleLogin" class="space-y-4 w-full max-w-[320px] mx-auto">
         <div class="space-y-1.5">
           <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">부서 선택</label>
-          <select v-model="selectedDept" @change="fetchUsers"
-            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer">
-            <option value="" disabled>부서를 선택하세요</option>
-            <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">
-              {{ dept.dept_name }}
-            </option>
-          </select>
+          <button
+            type="button"
+            @click="deptModalOpen = true"
+            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-6 py-5 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer flex justify-between items-center"
+          >
+            <span :class="{'text-slate-400 font-normal': !selectedDept}">{{ selectedDept || '부서를 선택하세요' }}</span>
+            <span class="text-slate-400">⌵</span>
+          </button>
         </div>
 
         <div class="space-y-1.5" v-if="selectedDept">
@@ -61,9 +62,21 @@
         </button>
       </form>
 
-
-
-      <div class="mt-auto pt-12 text-center">
+      <Suspense v-if="deptModalOpen">
+        <DeptPickerMobileAsync
+          :departments="departments"
+          :favorites="favorites"
+          :recent="recent"
+          @close="deptModalOpen = false"
+          @select="onSelectDept"
+          @update:favorites="updateFavorites"
+        />
+        <template #fallback>
+          <div class="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow p-6 text-sm font-bold text-slate-600">부서 선택 UI 불러오는 중…</div>
+          </div>
+        </template>
+      </Suspense>      <div class="mt-auto pt-12 text-center">
         <p class="text-[0.625rem] text-slate-300 font-bold uppercase tracking-[0.2em]">© Wonchon Church</p>
       </div>
     </div>
@@ -71,10 +84,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent, nextTick } from 'vue'
 import { useAuthStore } from '../../store/auth'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+
+const DeptPickerMobileAsync = defineAsyncComponent(() =>
+  import('../../components/mobile/DeptPickerMobile.vue')
+)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -88,7 +105,32 @@ const password = ref('')
 const isLoading = ref(false)
 const errorMsg = ref('')
 
+const deptModalOpen = ref(false)
+const FAVORITE_KEY = "dept_favorites"
+const RECENT_KEY = "dept_recent"
+const favorites = ref([])
+const recent = ref([])
+
+const onSelectDept = async (dept) => {
+  selectedDept.value = dept.dept_name
+  recent.value = [dept.id, ...recent.value.filter(x => x !== dept.id)].slice(0, 5)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
+  deptModalOpen.value = false
+  await nextTick()
+  await fetchUsers()
+}
+
+function updateFavorites(next) {
+  favorites.value = next
+  localStorage.setItem(FAVORITE_KEY, JSON.stringify(favorites.value.slice(0, 50)))
+}
+
 onMounted(async () => {
+  try {
+    favorites.value = JSON.parse(localStorage.getItem(FAVORITE_KEY) || "[]")
+    recent.value = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
+  } catch {}
+
   try {
     const res = await axios.get('/api/users/departments')
     departments.value = res.data.sort((a, b) => a.dept_name.localeCompare(b.dept_name))

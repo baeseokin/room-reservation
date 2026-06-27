@@ -28,16 +28,14 @@
           <!-- Department Select -->
           <div class="space-y-1.5">
             <label class="block text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">부서 선택</label>
-            <select
-              v-model="selectedDept"
-              @change="fetchUsers"
-              class="w-full bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+            <button
+              type="button"
+              @click="deptModalOpen = true"
+              class="w-full bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer flex justify-between items-center"
             >
-              <option value="" disabled>부서를 선택하세요</option>
-              <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">
-                {{ dept.dept_name }}
-              </option>
-            </select>
+              <span :class="{'text-slate-400 font-normal': !selectedDept}">{{ selectedDept || '부서를 선택하세요' }}</span>
+              <span class="text-slate-400">⌵</span>
+            </button>
           </div>
 
           <!-- User Select -->
@@ -87,6 +85,24 @@
 
       </div>
 
+      <!-- 디바이스 유형별 모달을 동적 로딩 -->
+      <Suspense v-if="deptModalOpen">
+        <component
+          :is="isMobile ? DeptPickerMobileAsync : DeptPickerDesktopAsync"
+          :departments="departments"
+          :favorites="favorites"
+          :recent="recent"
+          @close="deptModalOpen = false"
+          @select="onSelectDept"
+          @update:favorites="updateFavorites"
+        />
+        <template #fallback>
+          <div class="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow p-6 text-sm font-bold text-slate-600">부서 선택 UI 불러오는 중…</div>
+          </div>
+        </template>
+      </Suspense>
+
       <!-- Footer Info -->
       <div class="mt-10 text-center space-y-2">
         <p class="text-[0.6875rem] text-slate-300 font-bold uppercase tracking-widest">
@@ -98,11 +114,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, defineAsyncComponent, nextTick } from 'vue'
 import { useAuthStore } from '../store/auth'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { EyeIcon, EyeSlashIcon, ArrowRightIcon } from '@heroicons/vue/24/outline'
+
+const DeptPickerMobileAsync = defineAsyncComponent(() =>
+  import('../components/mobile/DeptPickerMobile.vue')
+)
+const DeptPickerDesktopAsync = defineAsyncComponent(() =>
+  import('../components/DeptPickerDesktop.vue')
+)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -117,7 +140,33 @@ const showPw = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
 
+const isMobile = computed(() => typeof window !== "undefined" && window.innerWidth < 1024)
+const deptModalOpen = ref(false)
+const FAVORITE_KEY = "dept_favorites"
+const RECENT_KEY = "dept_recent"
+const favorites = ref([])
+const recent = ref([])
+
+const onSelectDept = async (dept) => {
+  selectedDept.value = dept.dept_name
+  recent.value = [dept.id, ...recent.value.filter(x => x !== dept.id)].slice(0, 5)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
+  deptModalOpen.value = false
+  await nextTick()
+  await fetchUsers()
+}
+
+function updateFavorites(next) {
+  favorites.value = next
+  localStorage.setItem(FAVORITE_KEY, JSON.stringify(favorites.value.slice(0, 50)))
+}
+
 onMounted(async () => {
+  try {
+    favorites.value = JSON.parse(localStorage.getItem(FAVORITE_KEY) || "[]")
+    recent.value = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
+  } catch {}
+
   try {
     const res = await axios.get('/api/users/departments')
     departments.value = res.data.sort((a, b) => a.dept_name.localeCompare(b.dept_name))
