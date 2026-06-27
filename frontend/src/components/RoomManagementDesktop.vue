@@ -93,7 +93,7 @@ const fetchRooms = async () => {
   isLoading.value = true
   try {
     const res = await axios.get('/api/rooms')
-    rooms.value = res.data
+    rooms.value = res.data.sort((a, b) => a.room_name.localeCompare(b.room_name))
   } finally {
     isLoading.value = false
   }

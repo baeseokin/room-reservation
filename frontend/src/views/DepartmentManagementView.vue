@@ -67,6 +67,14 @@ const treeData = computed(() => {
     }
   })
   
+  // Sort children for each node
+  Object.values(map).forEach(node => {
+    node.children.sort((a, b) => a.dept_name.localeCompare(b.dept_name))
+  })
+  
+  // Sort roots
+  roots.sort((a, b) => a.dept_name.localeCompare(b.dept_name))
+  
   return roots
 })
 

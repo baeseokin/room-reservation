@@ -549,6 +549,19 @@ const fetchPolicy = async () => {
   try {
     const res = await axios.get('/api/reservations/policy')
     policySettings.value = res.data
+    
+    if (!auth.isAdmin) {
+      let candidateDate = new Date()
+      let attempts = 0
+      
+      while (isDateDisabledByPolicy(formatDate(candidateDate)) && attempts < 60) {
+        candidateDate.setDate(candidateDate.getDate() + 1)
+        attempts++
+      }
+      
+      selectedDate.value = formatDate(candidateDate)
+      currentCalDate.value = new Date(candidateDate.getTime())
+    }
   } catch (e) {
     console.error("Fetch policy error:", e)
   }
@@ -559,11 +572,17 @@ const checkDatePolicy = (dateStr) => {
   if (auth.isAdmin) return null
 
   const todayStr = formatDate(new Date())
+  const dateObj = new Date(dateStr + 'T00:00:00')
+  const todayObj = new Date(todayStr + 'T00:00:00')
+
+  if (dateObj < todayObj) {
+    return '과거 일자는 예약할 수 없습니다.'
+  }
+
   if (!policySettings.value.allow_same_day && dateStr === todayStr) {
     return '당일 예약 신청은 불가합니다.'
   }
 
-  const dateObj = new Date(dateStr + 'T00:00:00')
   const dayOfWeek = dateObj.getDay()
   if (!policySettings.value.allow_monday && dayOfWeek === 1) {
     return '월요일은 예약 신청이 불가합니다.'
@@ -703,7 +722,7 @@ const generateCalendarDays = (baseDate) => {
 const availableRooms = ref([])
 
 onMounted(async () => {
-  fetchPolicy()
+  await fetchPolicy()
   const [roomRes] = await Promise.all([
     axios.get('/api/rooms'),
     fetchReservations()

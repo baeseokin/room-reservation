@@ -41,7 +41,8 @@
           <label class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest ml-1">사용자 선택</label>
           <select v-model="selectedUserId"
             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer">
-            <option value="" disabled>이름을 선택하세요</option>
+            <option v-if="users.length === 0" value="" disabled>등록된 사용자가 없습니다</option>
+            <option v-else value="" disabled>이름을 선택하세요</option>
             <option v-for="user in users" :key="user.user_id" :value="user.user_id">
               {{ user.user_name }}({{ user.user_id }})
             </option>
@@ -90,7 +91,7 @@ const errorMsg = ref('')
 onMounted(async () => {
   try {
     const res = await axios.get('/api/users/departments')
-    departments.value = res.data
+    departments.value = res.data.sort((a, b) => a.dept_name.localeCompare(b.dept_name))
   } catch (err) {
     console.error('Failed to load departments', err)
   }

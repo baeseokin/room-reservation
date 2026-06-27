@@ -62,13 +62,16 @@ const fetchDepartments = async () => {
 }
 
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value
-  const query = searchQuery.value.toLowerCase()
-  return users.value.filter(u => 
-    u.user_name.toLowerCase().includes(query) || 
-    u.user_id.toLowerCase().includes(query) ||
-    (u.dept_name && u.dept_name.toLowerCase().includes(query))
-  )
+  let result = users.value
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(u => 
+      u.user_name.toLowerCase().includes(query) || 
+      u.user_id.toLowerCase().includes(query) ||
+      (u.dept_name && u.dept_name.toLowerCase().includes(query))
+    )
+  }
+  return result.slice().sort((a, b) => a.user_name.localeCompare(b.user_name))
 })
 
 const openCreate = () => {
