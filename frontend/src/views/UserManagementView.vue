@@ -55,7 +55,7 @@ const fetchUsers = async () => {
 const fetchDepartments = async () => {
   try {
     const res = await axios.get('/api/departments')
-    departments.value = res.data
+    departments.value = res.data.sort((a, b) => a.dept_name.localeCompare(b.dept_name))
   } catch (error) {
     console.error('Fetch departments error:', error)
   }
