@@ -97,6 +97,22 @@ const hoveredRoom = ref(null)
 const roomTooltipPos = ref({ x: 0, y: 0 })
 const bookingStep = ref('form') // 'form' or 'agreement'
 const isAgreed = ref(false)
+const ruleAgreements = ref([false, false, false, false, false])
+
+const isAllAgreed = computed({
+  get: () => ruleAgreements.value.every(v => v),
+  set: (val) => {
+    ruleAgreements.value = ruleAgreements.value.map(() => val)
+  }
+})
+
+const spaceRules = [
+  { title: '냉난방 및 전등 소등', desc: '사용 후에는 반드시 냉난방기와 전등을 모두 꺼주세요.' },
+  { title: '음식물 반입 금지', desc: '쾌적한 환경을 위해 공간 내 음식물 반입은 원칙적으로 금지됩니다.' },
+  { title: '비품 원위치 및 정리', desc: '사용하신 비품과 기자재는 퇴실 전 원래 자리에 정돈해 주세요.' },
+  { title: '기물 파손 책임', desc: '시설 및 비품 파손에 주의해 주시고, 파손 발생 시 즉시 사무실로 알려주세요.' },
+  { title: '목적 외 사용 금지 (개인 레슨 / 외부 행사 금지)', desc: '본 시설은 교회 공식 사역용 공간입니다. 사적 이익을 위한 개인 레슨이나 사전 승인되지 않은 외부 단체·개인의 행사 및 연습 목적으로는 일절 사용할 수 없습니다.' }
+]
 
 // Calendar Dropdown Logic
 const showCalendar = ref(false)
@@ -571,6 +587,7 @@ const openBooking = (room, time = '09:00', date = null) => {
   form.value.recurring_end_date = formatDate(endDate)
   bookingStep.value = 'form'
   isAgreed.value = false
+  ruleAgreements.value = [false, false, false, false, false]
   showBookingModal.value = true
 }
 
@@ -668,8 +685,8 @@ const submitBooking = async () => {
     return
   }
 
-  if (!isAgreed.value) {
-    return modal.showAlert('공간사용 수칙에 동의하셔야 신청이 가능합니다.')
+  if (!isAllAgreed.value || !isAgreed.value) {
+    return modal.showAlert('모든 공간사용 수칙에 동의하셔야 신청이 가능합니다.')
   }
 
   try {
@@ -1660,28 +1677,52 @@ onMounted(() => {
                     공간 사용 수칙 안내
                   </h3>
                   <ul class="space-y-4">
-                    <li v-for="(rule, idx) in [
-                      '사용 후 냉난방기 및 전등을 반드시 꺼주세요.',
-                      '음식물 반입은 원칙적으로 금지됩니다.',
-                      '사용 후 비품은 원래 자리에 정리해 주세요.',
-                      '기물 파손 주의, 파손 시 사무실에 알려주세요.',
-                      '개인적인 용도의 사용은 지양해주세요.'
-                    ]" :key="idx" class="flex gap-3">
-                      <span class="shrink-0 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[0.625rem] font-black text-indigo-600 shadow-sm">{{ idx + 1 }}</span>
-                      <p class="text-sm font-bold text-slate-700 leading-snug">{{ rule }}</p>
+                    <li v-for="(rule, idx) in spaceRules" :key="idx" class="flex flex-col gap-2" :class="{ 'border-t border-indigo-100/50 pt-4': idx > 0 }">
+                      <div class="flex gap-3">
+                        <span class="shrink-0 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[0.625rem] font-black text-indigo-600 shadow-sm">0{{ idx + 1 }}</span>
+                        <div>
+                          <p class="text-sm font-black text-slate-800">{{ rule.title }}</p>
+                          <p class="text-sm font-bold text-slate-600 mt-1 leading-snug">{{ rule.desc }}</p>
+                        </div>
+                      </div>
+                      <label class="flex items-center gap-2 self-end cursor-pointer group">
+                        <span class="text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">동의:</span>
+                        <div class="w-5 h-5 rounded border flex items-center justify-center transition-all"
+                             :class="[ruleAgreements[idx] ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white group-hover:border-indigo-300']">
+                          <svg v-if="ruleAgreements[idx]" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span class="text-xs font-bold text-slate-600">예</span>
+                        <input type="checkbox" v-model="ruleAgreements[idx]" class="hidden" />
+                      </label>
                     </li>
                   </ul>
                 </div>
 
-                <label class="flex items-center gap-3 p-6 bg-white border border-slate-200 rounded-[2rem] cursor-pointer hover:border-indigo-500 transition-all group">
-                  <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
-                    <input type="checkbox" v-model="isAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all" />
-                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">위 공간 사용 수칙을 확인했으며, 이에 동의합니다.</span>
-                </label>
+                <div class="space-y-3 mt-6">
+                  <label class="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-[1.5rem] cursor-pointer hover:border-indigo-500 transition-all group"
+                         :class="{ 'border-indigo-500 bg-indigo-50/30': isAllAgreed }">
+                    <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
+                      <input type="checkbox" v-model="isAllAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer" />
+                      <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span class="text-sm font-black text-slate-700">전체동의</span>
+                  </label>
+
+                  <label class="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-[1.5rem] cursor-pointer hover:border-indigo-500 transition-all group"
+                         :class="{ 'border-indigo-500 bg-indigo-50/30': isAgreed }">
+                    <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
+                      <input type="checkbox" v-model="isAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer" />
+                      <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span class="text-sm font-black text-slate-700">위 수칙을 확인했으며 이에 동의 합니다.</span>
+                  </label>
+                </div>
               </div>
             </template>
           </div>

@@ -339,37 +339,48 @@
                   </div>
                 </div>
                 
-                <div class="space-y-3 bg-white/60 backdrop-blur-sm p-5 rounded-2xl border border-white">
-                  <div class="flex gap-3">
-                    <span class="text-indigo-600 font-black">01</span>
-                    <p class="text-sm font-bold text-slate-600 leading-relaxed">사용 후 냉난방기 및 전등을 반드시 꺼주세요.</p>
-                  </div>
-                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
-                    <span class="text-indigo-600 font-black">02</span>
-                    <p class="text-sm font-bold text-slate-600 leading-relaxed">음식물 반입은 원칙적으로 금지됩니다.</p>
-                  </div>
-                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
-                    <span class="text-indigo-600 font-black">03</span>
-                    <p class="text-sm font-bold text-slate-600 leading-relaxed">사용 후 비품은 원래 자리에 정리해 주세요.</p>
-                  </div>
-                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
-                    <span class="text-indigo-600 font-black">04</span>
-                    <p class="text-sm font-bold text-slate-600 leading-relaxed">기물 파손 주의, 파손 시 사무실에 알려주세요.</p>
-                  </div>
-                  <div class="flex gap-3 border-t border-indigo-50 pt-3">
-                    <span class="text-indigo-600 font-black">05</span>
-                    <p class="text-sm font-bold text-slate-600 leading-relaxed">개인적인 용도의 사용은 지양해주세요.</p>
+                <div class="space-y-4 bg-white/60 backdrop-blur-sm p-5 rounded-2xl border border-white">
+                  <div v-for="(rule, idx) in spaceRules" :key="idx" class="flex flex-col gap-2" :class="{ 'border-t border-indigo-50 pt-4': idx > 0 }">
+                    <div class="flex gap-3">
+                      <span class="text-indigo-600 font-black">0{{ idx + 1 }}</span>
+                      <div>
+                        <p class="text-sm font-black text-slate-800">{{ rule.title }}</p>
+                        <p class="text-[0.8125rem] font-bold text-slate-600 mt-1 leading-relaxed">{{ rule.desc }}</p>
+                      </div>
+                    </div>
+                    <label class="flex items-center gap-2 self-end cursor-pointer group mt-1">
+                      <span class="text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">동의:</span>
+                      <div class="w-5 h-5 rounded border flex items-center justify-center transition-all"
+                           :class="[ruleAgreements[idx] ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white group-hover:border-indigo-300']">
+                        <CheckIcon v-if="ruleAgreements[idx]" class="w-3 h-3 text-white" />
+                      </div>
+                      <span class="text-xs font-bold text-slate-600">예</span>
+                      <input type="checkbox" v-model="ruleAgreements[idx]" class="hidden" />
+                    </label>
                   </div>
                 </div>
 
-                <label @click="isAgreed = !isAgreed" class="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 transition-all cursor-pointer group active:scale-95"
-                       :class="[isAgreed ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100']">
-                  <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all"
-                       :class="[isAgreed ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200 group-hover:border-indigo-300']">
-                    <CheckIcon v-if="isAgreed" class="w-4 h-4 text-white" />
-                  </div>
-                  <span class="text-sm font-black text-slate-700">위 수칙을 확인했으며 이에 동의합니다.</span>
-                </label>
+                <div class="flex flex-col gap-3 mt-4">
+                  <label class="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 transition-all cursor-pointer group active:scale-95"
+                         :class="[isAllAgreed ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100']">
+                    <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all"
+                         :class="[isAllAgreed ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200 group-hover:border-indigo-300']">
+                      <CheckIcon v-if="isAllAgreed" class="w-4 h-4 text-white" />
+                    </div>
+                    <span class="text-sm font-black text-slate-700">전체동의</span>
+                    <input type="checkbox" v-model="isAllAgreed" class="hidden" />
+                  </label>
+
+                  <label class="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 transition-all cursor-pointer group active:scale-95"
+                         :class="[isAgreed ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100']">
+                    <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all"
+                         :class="[isAgreed ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200 group-hover:border-indigo-300']">
+                      <CheckIcon v-if="isAgreed" class="w-4 h-4 text-white" />
+                    </div>
+                    <span class="text-sm font-black text-slate-700">위 수칙을 확인했으며 이에 동의 합니다.</span>
+                    <input type="checkbox" v-model="isAgreed" class="hidden" />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -641,6 +652,22 @@ const hasSearched = ref(false)
 
 const bookingStep = ref('form') // 'form' or 'agreement'
 const isAgreed = ref(false)
+const ruleAgreements = ref([false, false, false, false, false])
+
+const isAllAgreed = computed({
+  get: () => ruleAgreements.value.every(v => v),
+  set: (val) => {
+    ruleAgreements.value = ruleAgreements.value.map(() => val)
+  }
+})
+
+const spaceRules = [
+  { title: '냉난방 및 전등 소등', desc: '사용 후에는 반드시 냉난방기와 전등을 모두 꺼주세요.' },
+  { title: '음식물 반입 금지', desc: '쾌적한 환경을 위해 공간 내 음식물 반입은 원칙적으로 금지됩니다.' },
+  { title: '비품 원위치 및 정리', desc: '사용하신 비품과 기자재는 퇴실 전 원래 자리에 정돈해 주세요.' },
+  { title: '기물 파손 책임', desc: '시설 및 비품 파손에 주의해 주시고, 파손 발생 시 즉시 사무실로 알려주세요.' },
+  { title: '목적 외 사용 금지 (개인 레슨 / 외부 행사 금지)', desc: '본 시설은 교회 공식 사역용 공간입니다. 사적 이익을 위한 개인 레슨이나 사전 승인되지 않은 외부 단체·개인의 행사 및 연습 목적으로는 일절 사용할 수 없습니다.' }
+]
 
 const form = ref({
   start_time: '09:00',
@@ -825,6 +852,7 @@ const openReservationForm = (room) => {
   // Reset agreement state
   bookingStep.value = 'form'
   isAgreed.value = false
+  ruleAgreements.value = [false, false, false, false, false]
   
   showRoomDetail.value = false
   showReservationForm.value = true
@@ -909,8 +937,8 @@ const submitReservation = async () => {
   }
 
   // If in agreement step
-  if (!isAgreed.value) {
-    modal.showAlert('공간 사용 수칙에 동의해 주세요.')
+  if (!isAllAgreed.value || !isAgreed.value) {
+    modal.showAlert('모든 공간 사용 수칙에 동의해 주세요.')
     return
   }
 
