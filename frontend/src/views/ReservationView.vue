@@ -573,6 +573,11 @@ const openBooking = (room, time = '09:00', date = null) => {
     is_recurring: false,
     recurring_type: 'weekly',
     recurring_end_date: '',
+    recurring_days: [],
+    recurring_month_option: 'date',
+    recurring_month_date: new Date().getDate(),
+    recurring_month_nth_week: Math.ceil(new Date().getDate() / 7),
+    recurring_month_nth_day: new Date().getDay(),
     requester_name: authStore.user?.userName || '',
     requester_phone: authStore.user?.phone || ''
   }
@@ -598,9 +603,21 @@ const recurringCalendarPosition = ref({ top: 0, left: 0 })
 
 const toggleRecurringCalendar = (event) => {
   const rect = event.currentTarget.getBoundingClientRect()
-  recurringCalendarPosition.value = {
-    top: rect.bottom,
-    left: rect.left
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const calendarHeight = 350; // Approximate height
+
+  if (spaceBelow < calendarHeight && rect.top > calendarHeight) {
+    recurringCalendarPosition.value = {
+      bottom: window.innerHeight - rect.top + 8, // 8px margin
+      left: rect.left,
+      isAbove: true
+    }
+  } else {
+    recurringCalendarPosition.value = {
+      top: rect.bottom + 8, // 8px margin
+      left: rect.left,
+      isAbove: false
+    }
   }
   
   if (!showRecurringCalendar.value && form.value.recurring_end_date) {
@@ -1745,8 +1762,12 @@ onMounted(() => {
     <Teleport to="body">
       <div v-if="showRecurringCalendar" class="fixed inset-0 z-[5000]" @click="showRecurringCalendar = false"></div>
       <div v-if="showRecurringCalendar" 
-           :style="{ top: (recurringCalendarPosition.top + 8) + 'px', left: recurringCalendarPosition.left + 'px' }" 
-           class="fixed z-[5001] bg-white rounded-[2rem] shadow-2xl border border-slate-200/60 p-6 w-[320px] transform -translate-x-1/2 mt-2"
+           :style="{ 
+             top: recurringCalendarPosition.top !== undefined ? recurringCalendarPosition.top + 'px' : 'auto', 
+             bottom: recurringCalendarPosition.bottom !== undefined ? recurringCalendarPosition.bottom + 'px' : 'auto', 
+             left: recurringCalendarPosition.left + 'px' 
+           }" 
+           class="fixed z-[5001] bg-white rounded-[2rem] shadow-2xl border border-slate-200/60 p-6 w-[320px] transform -translate-x-1/2"
            :class="{'translate-x-0': recurringCalendarPosition.left < 160}">
          <div class="flex justify-between items-center mb-6">
            <div class="flex items-center gap-2">

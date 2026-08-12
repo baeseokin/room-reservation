@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 pb-32">
     <div class="flex justify-between items-center">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">예약 승인 관리</h2>
@@ -31,16 +31,24 @@
     </div>
 
     <div v-else class="space-y-4">
+      <div v-if="filteredReservations.length > 0" class="flex items-center gap-2 px-2 pb-1">
+        <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" />
+        <label for="selectAll" class="text-[0.6875rem] font-black text-slate-600 uppercase tracking-widest cursor-pointer">전체 선택</label>
+      </div>
+
       <div v-for="res in filteredReservations" :key="res.id" 
         class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
         <div class="flex justify-between items-start">
           <div class="flex flex-col">
-            <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-tighter mb-2 border">
-              {{ statusMap[res.status]?.label }}
-            </span>
-            <h3 class="text-base font-black text-slate-900 leading-tight">{{ res.title || '신청 제목 없음' }}</h3>
+            <div class="flex items-center gap-2 mb-2">
+              <input type="checkbox" v-model="selectedIds" :value="res.id" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 shrink-0" />
+              <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-tighter border">
+                {{ statusMap[res.status]?.label }}
+              </span>
+            </div>
+            <h3 class="text-base font-black text-slate-900 leading-tight pr-4">{{ res.title || '신청 제목 없음' }}</h3>
           </div>
-          <div class="text-right">
+          <div class="text-right shrink-0">
             <div class="text-[0.625rem] font-black text-indigo-600 uppercase tracking-widest">{{ res.room_name }}</div>
             <div class="text-[0.625rem] font-bold text-slate-300 uppercase">{{ res.floor }}</div>
           </div>
@@ -68,11 +76,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Floating Action Bar for Bulk Actions -->
+    <div v-if="selectedIds.length > 0" class="fixed bottom-24 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
+      <div class="bg-slate-900/95 backdrop-blur-md rounded-[2rem] p-4 flex items-center justify-between shadow-2xl border border-slate-700">
+        <div class="text-white text-xs font-black px-2">{{ selectedIds.length }}개 선택됨</div>
+        <div class="flex gap-2">
+          <button @click="bulkReject" class="px-4 py-2 bg-rose-500/20 text-rose-300 text-xs font-black rounded-xl hover:bg-rose-500/30 transition-all uppercase tracking-widest">
+            일괄 거부
+          </button>
+          <button @click="bulkApprove" class="px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-widest">
+            일괄 승인
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 import { 
   UserIcon, 
@@ -90,6 +113,22 @@ const allReservations = ref([])
 const loading = ref(false)
 const filterStatus = ref('pending')
 const searchQuery = ref('')
+const selectedIds = ref([])
+
+watch(filterStatus, () => selectedIds.value = [])
+
+const isAllSelected = computed(() => {
+  if (filteredReservations.value.length === 0) return false
+  return selectedIds.value.length === filteredReservations.value.length
+})
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = filteredReservations.value.map(r => r.id)
+  }
+}
 
 const statusMap = {
   pending: { label: '대기중', class: 'bg-amber-50 text-amber-600 border-amber-100' },
@@ -155,6 +194,34 @@ const reject = async (res) => {
     fetchReservations()
   } catch (e) {
     modal.showAlert('반려 처리 중 오류가 발생했습니다.')
+  }
+}
+
+const bulkApprove = async () => {
+  if (!selectedIds.value.length) return
+  if (!await modal.showConfirm(`선택한 ${selectedIds.value.length}건을 일괄 승인하시겠습니까?`)) return
+  try {
+    await axios.patch('/api/reservations/bulk-approve', { ids: selectedIds.value })
+    modal.showAlert('일괄 승인되었습니다.')
+    selectedIds.value = []
+    fetchReservations()
+  } catch (e) {
+    modal.showAlert('처리 중 오류가 발생했습니다.')
+  }
+}
+
+const bulkReject = async () => {
+  if (!selectedIds.value.length) return
+  const reason = await modal.showPrompt('일괄 거부 사유를 입력하세요 (선택)', '예: 해당 시간에는 교회 행사가 예정되어 있습니다.')
+  if (reason === null) return
+  
+  try {
+    await axios.patch('/api/reservations/bulk-reject', { ids: selectedIds.value, reject_reason: reason })
+    modal.showAlert('일괄 반려 처리되었습니다.')
+    selectedIds.value = []
+    fetchReservations()
+  } catch (e) {
+    modal.showAlert('처리 중 오류가 발생했습니다.')
   }
 }
 </script>
