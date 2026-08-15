@@ -371,13 +371,76 @@ const filteredReservations = computed(() => {
     }
 
     return matchesSearch
-  }).sort((a, b) => {
+  })
+})
+
+const currentViewDates = computed(() => {
+  if (calendarSubMode.value === 'month') {
+    return calendarDays.value.map(d => formatDate(d.date))
+  } else if (calendarSubMode.value === 'week') {
+    return weekDates.value
+  } else {
+    return [selectedDate.value]
+  }
+})
+
+const getAllBlockedInstances = computed(() => {
+  const instances = []
+  for (const date of currentViewDates.value) {
+    for (const room of rooms.value) {
+      const blocked = getBlockedForRoomAndDate(room, date)
+      for (const bt of blocked) {
+        instances.push({
+          id: `blocked-${room.id}-${bt.id}-${date}`,
+          is_blocked: true,
+          reservation_date: date,
+          start_time: bt.start_time,
+          end_time: bt.end_time,
+          room_name: room.room_name,
+          floor: room.floor,
+          title: bt.reason || '관리자 설정',
+          requester_name: '관리자',
+          status: 'blocked'
+        })
+      }
+    }
+  }
+  return instances
+})
+
+const filteredItems = computed(() => {
+  const items = [...filteredReservations.value]
+  
+  if (statusFilter.value === 'all' || statusFilter.value === 'blocked') {
+    const searchLower = searchQuery.value?.toLowerCase() || ''
+    const filteredBlocked = getAllBlockedInstances.value.filter(bt => {
+      const matchesSearch = !searchLower || 
+        bt.requester_name.includes(searchLower) || 
+        bt.title.includes(searchLower) ||
+        bt.room_name.toLowerCase().includes(searchLower)
+        
+      if (viewMode.value === 'list') {
+        const now = currentTime.value
+        const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+        const btEndStr = `${bt.reservation_date} ${bt.end_time}`
+        if (btEndStr < nowStr) return false
+      }
+      return matchesSearch
+    })
+    items.push(...filteredBlocked)
+  }
+  
+  return items.sort((a, b) => {
     if (a.reservation_date !== b.reservation_date) {
       return a.reservation_date.localeCompare(b.reservation_date)
     }
     return a.start_time.localeCompare(b.start_time)
   })
 })
+
+const getBlockedInstancesForDate = (dateStr) => {
+  return getAllBlockedInstances.value.filter(b => b.reservation_date === dateStr).sort((a,b) => a.start_time.localeCompare(b.start_time))
+}
 
 const fetchData = async () => {
   try {
@@ -684,6 +747,10 @@ const submitBooking = async () => {
     if (form.value.start_time < startLimit || form.value.end_time > endLimit) {
       return modal.showAlert(`예약 가능 시간은 오전 ${startLimit}부터 오후 ${endLimit}까지입니다.`)
     }
+  }
+
+  if (form.value.start_time >= form.value.end_time) {
+    return modal.showAlert('종료 시간은 시작 시간보다 이후여야 합니다.')
   }
 
   if (!form.value.title?.trim()) return modal.showAlert('신청명을 입력해주세요.')
@@ -1091,21 +1158,21 @@ onMounted(() => {
         <div v-if="calendarSubMode === 'month'" class="flex-1 overflow-auto px-12 pb-4">
           <!-- Sticky Header Container to cover top padding area -->
           <div class="sticky top-0 z-30 bg-white pt-4">
-            <div class="grid grid-cols-7 gap-px bg-slate-200 border-x border-t border-slate-200 rounded-t-3xl shadow-sm">
+            <div class="grid grid-cols-7 gap-px bg-slate-300 border-x border-t border-slate-300 rounded-t-3xl shadow-sm">
               <div v-for="(d, i) in ['일', '월', '화', '수', '목', '금', '토']" :key="d" 
                    :class="[
                      i === 0 ? 'text-rose-600 rounded-tl-[1.4rem]' : 
                      i === 6 ? 'text-blue-600 rounded-tr-[1.4rem]' : 
                      'text-slate-900'
                    ]"
-                   class="bg-violet-100 py-3 text-center text-[0.75rem] font-black uppercase tracking-[0.2em] border-b border-violet-200/50 outline outline-1 outline-violet-100">
+                   class="bg-violet-100 py-3 text-center text-sm font-black uppercase tracking-[0.2em] border-b border-violet-300 outline outline-1 outline-violet-100">
                 {{ d }}
               </div>
             </div>
           </div>
 
           <!-- Calendar Grid Content -->
-          <div class="grid grid-cols-7 gap-px bg-slate-200 border-x border-b border-slate-200 rounded-b-3xl shadow-sm">
+          <div class="grid grid-cols-7 gap-px bg-slate-300 border-x border-b border-slate-300 rounded-b-3xl shadow-sm">
             <div v-for="(d, idx) in calendarDays" :key="idx" 
                  @click="selectCalendarDateMonthView(d.date)"
                  :class="[
@@ -1122,24 +1189,24 @@ onMounted(() => {
                           d.date.getDay() === 0 || getHoliday(formatDate(d.date)) ? (d.current ? 'text-rose-500' : 'text-rose-300') : 
                           d.date.getDay() === 6 ? (d.current ? 'text-blue-500' : 'text-blue-300') : ''
                         ]" 
-                        class="text-xs font-black">{{ d.day }}</span>
+                        class="text-sm font-black">{{ d.day }}</span>
                   <span v-if="getHoliday(formatDate(d.date))" 
                         :class="d.current ? 'text-rose-500' : 'text-rose-300'"
-                        class="text-[0.75rem] font-black truncate max-w-[80px]">{{ getHoliday(formatDate(d.date)) }}</span>
+                        class="text-sm font-black truncate max-w-[80px]">{{ getHoliday(formatDate(d.date)) }}</span>
                 </div>
               </div>
               <div class="space-y-1">
                 <div v-for="res in getReservationsForDate(formatDate(d.date)).slice(0, 4)" :key="res.id"
                      @click.stop="openDetail(res)"
                      :class="[
-                       isEnded(res) ? 'bg-slate-200 text-slate-400 shadow-none' : 
-                       res.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-600 text-white shadow-sm'
+                       isEnded(res) ? 'bg-slate-200 text-slate-700 shadow-sm border border-slate-300' : 
+                       res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
                      ]"
-                     class="text-[0.75rem] font-bold px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-all">
-                  <span v-if="res.status === 'pending'" class="text-[0.75rem] opacity-70">[대기]</span>
+                     class="text-sm font-bold px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-all">
+                  <span v-if="res.status === 'pending'" class="text-[0.6rem] bg-white/30 px-1 py-0.5 rounded mr-1">대기</span>
                   {{ res.start_time.slice(0,5) }} [{{ res.room_name.split(' ')[0] }}] {{ res.title || '예약' }}
                 </div>
-                <div v-if="getReservationsForDate(formatDate(d.date)).length > 4" class="text-[0.75rem] font-black text-slate-400 pl-1 mt-1">
+                <div v-if="getReservationsForDate(formatDate(d.date)).length > 4" class="text-sm font-black text-slate-500 pl-1 mt-1">
                   + {{ getReservationsForDate(formatDate(d.date)).length - 4 }}개
                 </div>
               </div>
@@ -1154,13 +1221,13 @@ onMounted(() => {
               <!-- Sticky Header Row -->
               <div class="flex sticky top-0 z-[60]">
                 <!-- Corner Header -->
-                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center justify-center px-4 h-12">
-                  <span class="text-[0.75rem] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
+                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-300 flex items-center justify-center px-4 h-12">
+                  <span class="text-sm font-black text-slate-900 uppercase tracking-widest">Rooms</span>
                 </div>
                 <!-- Week Dates Header -->
-                <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-12">
+                <div class="flex-1 flex bg-violet-100 border-b border-violet-300 h-12">
                   <div v-for="(date, idx) in weekDates" :key="date" 
-                       class="flex-1 min-w-[140px] border-r border-slate-100 flex items-center justify-center gap-2">
+                       class="flex-1 min-w-[140px] border-r border-slate-300 flex items-center justify-center gap-2">
                     <div class="flex items-center gap-1.5">
                       <span :class="[idx === 0 || getHoliday(date) ? 'text-rose-500' : idx === 6 ? 'text-blue-500' : 'text-slate-600']" 
                             class="text-[0.75rem] font-black uppercase">{{ ['일', '월', '화', '수', '목', '금', '토'][idx] }}</span>
@@ -1177,13 +1244,13 @@ onMounted(() => {
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-12 z-[50]">
                   <div class="w-40 sticky left-0 z-[55] bg-slate-900 border-r border-b border-slate-800 h-10 px-4 flex items-center justify-between shadow-lg">
-                    <span class="text-[0.75rem] font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <span class="text-sm font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
                     <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/10 rounded transition-colors group/floor">
                       <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-400 transition-transform group-hover/floor:text-white" />
                     </button>
                   </div>
-                  <div class="flex-1 flex bg-slate-50 border-b border-slate-200 h-10">
-                    <div v-for="date in weekDates" :key="'floor-pad-' + date" class="flex-1 min-w-[140px] border-r border-slate-200/50"></div>
+                  <div class="flex-1 flex bg-slate-50 border-b border-slate-300 h-10">
+                    <div v-for="date in weekDates" :key="'floor-pad-' + date" class="flex-1 min-w-[140px] border-r border-slate-300"></div>
                   </div>
                 </div>
 
@@ -1191,32 +1258,32 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'week-room-row-' + room.id" class="flex border-b border-slate-100 group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[0.875rem] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-base font-bold text-slate-900 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Cells Grid -->
                     <div class="flex-1 flex">
                       <div v-for="date in weekDates" :key="'cell-' + room.id + '-' + date" 
                            @click="selectWeekDateCell(date)"
                            :class="[(!authStore.isAdmin && isDateDisabledByPolicy(date)) ? 'bg-slate-100/50 opacity-50 cursor-not-allowed' : 'hover:bg-slate-50/50 cursor-pointer']"
-                           class="flex-1 min-w-[140px] border-r border-slate-100 p-2 space-y-1.5 overflow-hidden transition-colors">
+                           class="flex-1 min-w-[140px] border-r border-slate-300 p-2 space-y-1.5 overflow-hidden transition-colors">
                         <!-- Blocked Times in Week View -->
                         <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
-                             class="text-[0.75rem] font-black px-1.5 py-1 rounded truncate bg-orange-900/10 text-orange-900/60 border border-dashed border-orange-900/20">
+                             class="text-sm font-black px-1.5 py-1 rounded truncate bg-rose-100/90 text-rose-900 border border-dashed border-rose-300 opacity-90">
                           <span class="mr-1">[불가]</span> {{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }} {{ bt.reason || '관리자 설정' }}
                         </div>
 
                         <div v-for="res in getReservationsForRoomAndDate(room.id, date).slice(0, 2)" :key="res.id"
                              @click.stop="openDetail(res)"
                              :class="[
-                               isEnded(res) ? 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none' : 
-                               res.status === 'pending' ? 'bg-amber-400 text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm'
+                               isEnded(res) ? 'bg-slate-200 text-slate-700 border border-slate-300 shadow-sm' : 
+                               res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
                              ]"
-                             class="text-[0.75rem] font-black px-1.5 py-1 rounded truncate transition-all">
-                          <span v-if="res.status === 'pending'" class="mr-1 text-[0.4375rem] bg-white/30 px-1 rounded">대기</span>
+                             class="text-sm font-black px-1.5 py-1 rounded truncate transition-all">
+                          <span v-if="res.status === 'pending'" class="mr-1 text-xs font-bold bg-white/30 px-2 py-0.5 rounded-full">대기</span>
                           ({{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }}) {{ res.title || '예약' }}
                         </div>
                         <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 3" class="text-[0.75rem] font-black text-slate-400 px-1">
@@ -1238,13 +1305,13 @@ onMounted(() => {
               <!-- Sticky Header Row -->
               <div class="flex sticky top-0 z-[60]">
                 <!-- Corner Header -->
-                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center justify-center px-4 h-12">
+                <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-300 flex items-center justify-center px-4 h-12">
                   <span class="text-sm font-black text-slate-900 uppercase tracking-widest">Rooms</span>
                 </div>
                 <!-- Time Slots Header -->
-                <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-12">
+                <div class="flex-1 flex bg-violet-100 border-b border-violet-300 h-12">
                   <div v-for="time in dayTimeSlots" :key="'day-time-' + time" 
-                       class="w-[80px] shrink-0 h-full flex items-center border-r border-slate-300">
+                       class="w-[80px] shrink-0 h-full flex items-center justify-center border-r border-slate-300">
                      <span class="text-sm font-black text-slate-900 px-2">{{ time }}</span>
                   </div>
                 </div>
@@ -1269,7 +1336,7 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'day-room-row-' + room.id" class="flex border-b border-slate-100 relative group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-300 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
@@ -1335,7 +1402,7 @@ onMounted(() => {
              class="px-5 py-1.5 rounded-lg text-xs font-black transition-all">{{ s.name }}</button>
            </div>
            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-             <div class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredReservations.length }}</span> items</div>
+             <div class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">Found <span class="text-indigo-600">{{ filteredItems.length }}</span> items</div>
              <button @click="openBooking(null)" 
                      class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-1.5 shrink-0">
                <CalendarIcon class="w-3.5 h-3.5" />
@@ -1343,20 +1410,24 @@ onMounted(() => {
              </button>
            </div>
         </div>
-        <div v-if="filteredReservations.length === 0" class="py-24 text-center border-2 border-dashed border-slate-100 rounded-[3rem]">
+        <div v-if="filteredItems.length === 0" class="py-24 text-center border-2 border-dashed border-slate-100 rounded-[3rem]">
            <CalendarIcon class="w-12 h-12 text-slate-200 mx-auto mb-4" />
            <p class="text-sm font-black text-slate-300 uppercase tracking-widest">예약 내역이 없습니다</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="res in filteredReservations" :key="'list-res-' + res.id" @click="openDetail(res)"
-               :class="[isEnded(res) ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-600']"
+          <div v-for="res in filteredItems" :key="'list-res-' + res.id" @click="!res.is_blocked && openDetail(res)"
+               :class="[
+                 res.is_blocked ? 'bg-rose-50 border-rose-200 cursor-not-allowed opacity-90' :
+                 isEnded(res) ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-600'
+               ]"
                class="border rounded-2xl p-5 transition-all cursor-pointer group h-full relative">
             <div class="flex justify-between items-start mb-3">
               <div class="flex items-center gap-2">
-                <span class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[0.75rem] font-black uppercase tracking-tighter">{{ res.floor }}{{ res.floor.includes('B') ? '' : 'F' }}</span>
-                <span class="text-xs font-black text-slate-900 group-hover:text-indigo-600">{{ res.room_name }}</span>
+                <span :class="res.is_blocked ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-600'" class="px-2.5 py-1 rounded-lg text-[0.75rem] font-black uppercase tracking-tighter">{{ res.floor }}{{ res.floor.includes('B') ? '' : 'F' }}</span>
+                <span :class="res.is_blocked ? 'text-rose-900 group-hover:text-rose-700' : 'text-slate-900 group-hover:text-indigo-600'" class="text-xs font-black">{{ res.room_name }}</span>
               </div>
-              <span :class="[res.status === 'approved' ? 'bg-indigo-600 text-white' : 'bg-amber-100 text-amber-700']" class="px-2 py-0.5 rounded-md text-[0.75rem] font-black uppercase shadow-sm">{{ res.status === 'approved' ? 'Approved' : 'Pending' }}</span>
+              <span v-if="res.is_blocked" class="bg-rose-600 text-white px-2 py-0.5 rounded-md text-[0.75rem] font-black uppercase shadow-sm">Blocked</span>
+              <span v-else :class="[res.status === 'approved' ? 'bg-indigo-600 text-white' : 'bg-amber-100 text-amber-700']" class="px-2 py-0.5 rounded-md text-[0.75rem] font-black uppercase shadow-sm">{{ res.status === 'approved' ? 'Approved' : 'Pending' }}</span>
             </div>
             <div class="flex items-center gap-2 mb-3">
               <CalendarIcon class="w-3 h-3 text-indigo-500" />
@@ -1533,6 +1604,16 @@ onMounted(() => {
                     [{{ r.floor }}{{ r.floor.includes('B') ? '' : 'F' }}] {{ r.room_name }}
                   </option>
                 </select>
+              </div>
+
+              <!-- Date Selection -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <CalendarIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  예약 일자
+                </label>
+                <input type="date" v-model="selectedDate"
+                       class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer" />
               </div>
 
               <!-- Application Title Input -->
