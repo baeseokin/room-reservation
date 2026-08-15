@@ -145,16 +145,15 @@ onMounted(() => {
             </div>
 
             <!-- Department Combo Box -->
-            <div class="space-y-2 group">
-              <label class="block text-[0.75rem] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서</label>
+            <div class="space-y-2 group opacity-75">
+              <label class="block text-[0.75rem] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서 (수정 불가)</label>
               <div class="relative">
-                <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
+                <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl border-2 border-transparent transition-all">
                   <BuildingOfficeIcon class="w-6 h-6 text-slate-300" />
-                  <select v-model="profile.dept_name" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 appearance-none cursor-pointer">
+                  <select v-model="profile.dept_name" disabled class="w-full bg-transparent border-none p-0 font-black text-slate-500 focus:ring-0 appearance-none cursor-not-allowed">
                     <option value="">부서 미지정</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                   </select>
-                  <ChevronDownIcon class="w-5 h-5 text-slate-300 pointer-events-none" />
                 </div>
               </div>
             </div>
