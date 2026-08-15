@@ -1239,13 +1239,13 @@ onMounted(() => {
               <div class="flex sticky top-0 z-[60]">
                 <!-- Corner Header -->
                 <div class="w-40 sticky left-0 z-[70] bg-violet-100 border-r border-b border-violet-200/50 flex items-center justify-center px-4 h-12">
-                  <span class="text-[0.75rem] font-black text-slate-900 uppercase tracking-widest">Rooms</span>
+                  <span class="text-sm font-black text-slate-900 uppercase tracking-widest">Rooms</span>
                 </div>
                 <!-- Time Slots Header -->
                 <div class="flex-1 flex bg-violet-100 border-b border-violet-200/50 h-12">
                   <div v-for="time in dayTimeSlots" :key="'day-time-' + time" 
-                       class="w-[80px] shrink-0 h-full flex items-center border-r border-slate-100">
-                     <span class="text-[0.75rem] font-black text-slate-900 px-2">{{ time }}</span>
+                       class="w-[80px] shrink-0 h-full flex items-center border-r border-slate-300">
+                     <span class="text-sm font-black text-slate-900 px-2">{{ time }}</span>
                   </div>
                 </div>
               </div>
@@ -1255,13 +1255,13 @@ onMounted(() => {
                 <!-- Floor Sticky Header Row -->
                 <div class="flex sticky top-10 z-[50]">
                   <div class="w-40 sticky left-0 z-[55] bg-slate-900 border-r border-b border-slate-800 h-10 px-4 flex items-center justify-between shadow-lg">
-                    <span class="text-[0.75rem] font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
+                    <span class="text-sm font-black text-white uppercase tracking-widest">{{ floor.includes('B') ? floor : floor + 'F' }}</span>
                     <button @click="toggleFloor(floor)" class="p-1 hover:bg-white/10 rounded transition-colors group/floor">
                       <ChevronDownIcon :class="{'rotate-180': !isFloorExpanded(floor)}" class="w-3.5 h-3.5 text-slate-400 transition-transform group-hover/floor:text-white" />
                     </button>
                   </div>
-                  <div class="flex-1 flex bg-slate-50 border-b border-slate-200 h-10">
-                    <div v-for="time in dayTimeSlots" :key="'day-floor-pad-' + time" class="w-[80px] shrink-0 border-r border-slate-200/50"></div>
+                  <div class="flex-1 flex bg-slate-50 border-b border-slate-300 h-10">
+                    <div v-for="time in dayTimeSlots" :key="'day-floor-pad-' + time" class="w-[80px] shrink-0 border-r border-slate-300"></div>
                   </div>
                 </div>
 
@@ -1269,11 +1269,11 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'day-room-row-' + room.id" class="flex border-b border-slate-100 relative group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-200 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-white border-r border-slate-300 group-hover:bg-violet-50/30 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
-                      <span class="text-[0.875rem] font-bold text-slate-600 line-clamp-3 leading-tight">{{ room.room_name }}</span>
+                      <span class="text-base font-bold text-slate-900 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Timeline Grid Area -->
                     <div class="flex-1 relative h-28">
@@ -1282,9 +1282,9 @@ onMounted(() => {
                              @mousedown="handleMouseDown(room, time)"
                              @mouseover="handleMouseOver(room, time)"
                              :class="[
-                               isSlotBlocked(room, selectedDate, time) ? 'bg-slate-100/50 cursor-not-allowed' : 'hover-stripe-blue cursor-crosshair'
+                               isSlotBlocked(room, selectedDate, time) ? 'bg-slate-200 cursor-not-allowed stripe-bg' : 'hover-stripe-blue cursor-crosshair'
                              ]"
-                             class="w-[80px] shrink-0 h-full border-r border-slate-100/50 transition-colors relative">
+                             class="w-[80px] shrink-0 h-full border-r border-slate-300 transition-colors relative">
                           <div v-if="isTimeInRange(room, time)" class="absolute inset-0 selected-stripe-blue z-10"></div>
                         </div>
                       </div>
@@ -1293,8 +1293,8 @@ onMounted(() => {
                       <div class="absolute inset-0 pointer-events-none">
                         <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
                              :style="getBlockedStyle(bt)"
-                             class="absolute top-2 bottom-2 bg-orange-900/10 border border-orange-900/20 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
-                          <span class="text-[0.75rem] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">{{ bt.reason || 'Reserved for maintenance' }}</span>
+                             class="absolute top-2 bottom-2 bg-rose-100/90 border border-rose-300 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
+                          <span class="text-sm font-black text-rose-900 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg] opacity-90">{{ bt.reason || 'Reserved for maintenance' }}</span>
                         </div>
                       </div>
 
@@ -1304,16 +1304,16 @@ onMounted(() => {
                           <div @click.stop="openDetail(res)"
                                :style="{ ...getDayReservationStyle(res), top: (6 + rIdx * 32) + 'px' }"
                                :class="[
-                                 isEnded(res) ? 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none' : 
-                                 res.status === 'pending' ? 'bg-amber-400 text-white shadow-md' : 'bg-indigo-600 text-white shadow-sm'
+                                 isEnded(res) ? 'bg-slate-200 text-slate-700 border border-slate-300 shadow-sm' : 
+                                 res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
                                ]"
-                               class="absolute h-7 rounded flex items-center px-2 text-[0.75rem] font-black truncate z-20 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-transform">
-                            <span v-if="res.status === 'pending'" class="mr-1 text-[0.75rem] bg-white/20 px-1.5 py-0.5 rounded-full">대기</span>
+                               class="absolute h-7 rounded flex items-center px-2 text-sm font-black truncate z-20 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-transform">
+                            <span v-if="res.status === 'pending'" class="mr-1 text-xs font-bold bg-white/30 px-2 py-0.5 rounded-full">대기</span>
                             {{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }} | {{ res.title || '예약' }}
                           </div>
                         </template>
                         <div v-if="getReservationsForRoomAndDate(room.id, selectedDate).length > 3" 
-                             class="absolute bottom-1.5 right-4 text-[0.75rem] font-black text-slate-400 bg-white/80 px-2 py-0.5 rounded-full border border-slate-100">
+                             class="absolute bottom-1.5 right-4 text-xs font-black text-slate-500 bg-white/90 px-2 py-0.5 rounded-full border border-slate-300 shadow-sm">
                           + {{ getReservationsForRoomAndDate(room.id, selectedDate).length - 3 }}개
                         </div>
                       </div>
