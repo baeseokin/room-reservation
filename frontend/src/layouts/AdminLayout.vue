@@ -111,12 +111,12 @@ const decreaseFontSize = () => {
     </aside>
 
     <!-- Mobile Header -->
-    <div class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 text-white flex items-center justify-between px-6 z-40">
+    <div class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 text-white flex items-center gap-4 px-6 z-40">
+      <button @click="isSidebarOpen = true"><Bars3Icon class="w-7 h-7" /></button>
       <div class="flex items-center gap-2">
         <ShieldCheckIcon class="w-5 h-5 text-indigo-400" />
         <span class="font-black text-base">관리자 패널</span>
       </div>
-      <button @click="isSidebarOpen = true"><Bars3Icon class="w-7 h-7" /></button>
     </div>
 
     <!-- Mobile Drawer -->
