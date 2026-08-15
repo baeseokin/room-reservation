@@ -55,6 +55,7 @@ async function sendNewReservationToAdmin(reservation, adminPhone) {
           "#{공간명}": reservation.room_name,
           "#{층}": reservation.floor ? `${reservation.floor}층` : "",
           "#{URL}": "admin/applications",
+          "#{반려사유}": ""
         },
       },
     ],
@@ -86,6 +87,7 @@ async function sendApprovalAlimTalk(reservation) {
           "#{공간명}": reservation.room_name,
           "#{층}": reservation.floor ? `${reservation.floor}층` : "",
           "#{URL}": "home/my-reservations",
+          "#{반려사유}": ""
         },
       },
     ],
