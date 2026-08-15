@@ -1258,7 +1258,7 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'week-room-row-' + room.id" class="flex border-b border-slate-100 group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-40 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
@@ -1276,7 +1276,7 @@ onMounted(() => {
                           <span class="mr-1">[불가]</span> {{ bt.start_time.slice(0,5) }}-{{ bt.end_time.slice(0,5) }} {{ bt.reason || '관리자 설정' }}
                         </div>
 
-                        <div v-for="res in getReservationsForRoomAndDate(room.id, date).slice(0, 2)" :key="res.id"
+                        <div v-for="res in getReservationsForRoomAndDate(room.id, date).slice(0, 4)" :key="res.id"
                              @click.stop="openDetail(res)"
                              :class="[
                                isEnded(res) ? 'bg-slate-200 text-slate-700 border border-slate-300 shadow-sm' : 
@@ -1286,8 +1286,8 @@ onMounted(() => {
                           <span v-if="res.status === 'pending'" class="mr-1 text-xs font-bold bg-white/30 px-2 py-0.5 rounded-full">대기</span>
                           ({{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }}) {{ res.title || '예약' }}
                         </div>
-                        <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 3" class="text-[0.75rem] font-black text-slate-400 px-1">
-                          + {{ getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length - 2 }}개
+                        <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 4" class="text-[0.75rem] font-black text-slate-400 px-1">
+                          + {{ getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length - 4 }}개
                         </div>
                       </div>
                     </div>
@@ -1336,14 +1336,14 @@ onMounted(() => {
                 <template v-if="isFloorExpanded(floor)">
                   <div v-for="room in roomsByFloor[floor]" :key="'day-room-row-' + room.id" class="flex border-b border-slate-100 relative group">
                     <!-- Sticky Room Sidebar -->
-                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-28 px-4 flex items-center justify-center text-center cursor-help"
+                    <div class="w-40 sticky left-0 z-30 bg-indigo-50/40 border-r border-slate-300 group-hover:bg-indigo-100/60 transition-colors h-40 px-4 flex items-center justify-center text-center cursor-help"
                          @mouseenter="handleRoomMouseEnter(room, $event)"
                          @mousemove="handleRoomMouseMove($event)"
                          @mouseleave="handleRoomMouseLeave">
                       <span class="text-base font-bold text-slate-900 line-clamp-3 leading-tight">{{ room.room_name }}</span>
                     </div>
                     <!-- Timeline Grid Area -->
-                    <div class="flex-1 relative h-28">
+                    <div class="flex-1 relative h-40">
                       <div class="absolute inset-0 flex" @mouseleave="handleMouseUp">
                         <div v-for="time in dayTimeSlots" :key="'cell-' + room.id + '-' + time" 
                              @mousedown="handleMouseDown(room, time)"
@@ -1367,7 +1367,7 @@ onMounted(() => {
 
                       <!-- Reservations Stack -->
                       <div class="absolute inset-0 pointer-events-none">
-                        <template v-for="(res, rIdx) in getReservationsForRoomAndDate(room.id, selectedDate).sort((a,b) => a.start_time.localeCompare(b.start_time)).slice(0, 3)" :key="res.id">
+                        <template v-for="(res, rIdx) in getReservationsForRoomAndDate(room.id, selectedDate).sort((a,b) => a.start_time.localeCompare(b.start_time)).slice(0, 4)" :key="res.id">
                           <div @click.stop="openDetail(res)"
                                :style="{ ...getDayReservationStyle(res), top: (6 + rIdx * 32) + 'px' }"
                                :class="[
@@ -1379,9 +1379,9 @@ onMounted(() => {
                             {{ res.start_time.slice(0,5) }}~{{ res.end_time.slice(0,5) }} | {{ res.title || '예약' }}
                           </div>
                         </template>
-                        <div v-if="getReservationsForRoomAndDate(room.id, selectedDate).length > 3" 
+                        <div v-if="getReservationsForRoomAndDate(room.id, selectedDate).length > 4" 
                              class="absolute bottom-1.5 right-4 text-xs font-black text-slate-500 bg-white/90 px-2 py-0.5 rounded-full border border-slate-300 shadow-sm">
-                          + {{ getReservationsForRoomAndDate(room.id, selectedDate).length - 3 }}개
+                          + {{ getReservationsForRoomAndDate(room.id, selectedDate).length - 4 }}개
                         </div>
                       </div>
                     </div>
