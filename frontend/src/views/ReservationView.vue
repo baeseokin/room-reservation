@@ -1294,7 +1294,7 @@ onMounted(() => {
                         <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
                              :style="getBlockedStyle(bt)"
                              class="absolute top-2 bottom-2 bg-orange-900/10 border border-orange-900/20 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-lg">
-                          <span class="text-[0.75rem] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">Reserved for maintenance</span>
+                          <span class="text-[0.75rem] font-black text-orange-900/40 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">{{ bt.reason || 'Reserved for maintenance' }}</span>
                         </div>
                       </div>
 
