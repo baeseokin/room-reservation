@@ -239,8 +239,11 @@ router.beforeEach(async (to, from, next) => {
     if (to.name === 'ChangePassword') return next({ name: 'ChangePasswordMobile' })
     
     // For other protected routes, if user is already on /home, go to /m/home
-    if (to.path.startsWith('/home')) {
-      return next({ path: to.path.replace('/home', '/m/home') })
+    if (to.path === '/home' || to.path === '/home/') {
+      return next({ path: '/m/home' })
+    }
+    if (to.path.startsWith('/home/')) {
+      return next({ path: to.path.replace('/home/', '/m/') })
     }
     if (to.path.startsWith('/admin')) {
       return next({ path: to.path.replace('/admin', '/m/admin') })
