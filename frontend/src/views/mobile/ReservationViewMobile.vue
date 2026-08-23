@@ -8,17 +8,39 @@
       </div>
     </div>
 
-    <!-- Date Picker Trigger (Moved Above Switcher) -->
-    <button @click="showCalendar = true" 
-      class="w-full bg-indigo-50 border border-indigo-100 px-6 py-4 rounded-2xl flex items-center justify-between active:scale-[0.98] transition-all">
-       <div class="flex items-center gap-3">
-         <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-           <CalendarDaysIcon class="w-5 h-5 text-indigo-600" />
-         </div>
-         <span class="text-base font-black text-indigo-900">{{ formattedSelectedDate }}</span>
+    <!-- Inline Mini Calendar -->
+    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50">
+       <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-2">
+            <CalendarDaysIcon class="w-5 h-5 text-indigo-600" />
+            <h3 class="text-base font-black text-slate-900 tracking-tight">날짜 선택</h3>
+          </div>
+          <div class="flex gap-1 items-center bg-slate-50 rounded-xl p-1">
+             <button @click="moveMonth(-1)" class="p-1.5 hover:bg-white rounded-lg transition-colors shadow-sm"><ChevronLeftIcon class="w-4 h-4 text-slate-400" /></button>
+             <span class="text-xs font-black text-slate-900 w-16 text-center">{{ currentCalDate.getFullYear() }}.{{ String(currentCalDate.getMonth() + 1).padStart(2, '0') }}</span>
+             <button @click="moveMonth(1)" class="p-1.5 hover:bg-white rounded-lg transition-colors shadow-sm"><ChevronRightIcon class="w-4 h-4 text-slate-400" /></button>
+          </div>
        </div>
-       <ChevronDownIcon class="w-5 h-5 text-indigo-300" />
-    </button>
+
+       <div class="grid grid-cols-7 gap-1 mb-2">
+          <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[0.625rem] font-black text-slate-400 uppercase">{{ d }}</span>
+       </div>
+       <div class="grid grid-cols-7 gap-1">
+          <button v-for="(day, idx) in calendarDays" :key="idx"
+            @click="day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? modal.showAlert(checkDatePolicy(formatDate(day.date))) : selectDate(day.date)"
+            :disabled="!day.current"
+            :class="[
+              day.current ? 'text-slate-700' : 'text-slate-200',
+              day.current && !isSelected(day.date) && !isDateDisabledByPolicy(formatDate(day.date)) ? 'hover:bg-slate-50' : '',
+              isToday(day.date) && !isSelected(day.date) ? 'text-indigo-600 font-black' : '',
+              isSelected(day.date) ? 'bg-indigo-600 !text-white shadow-md hover:bg-indigo-500' : '',
+              day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? 'opacity-30 cursor-not-allowed' : ''
+            ]"
+            class="aspect-square flex items-center justify-center text-xs font-bold rounded-xl transition-all active:scale-95">
+            {{ day.day }}
+          </button>
+       </div>
+    </div>
 
     <!-- Mode Switcher -->
     <div class="bg-slate-100 p-1.5 rounded-[2rem] flex items-center gap-1">
@@ -123,12 +145,17 @@
           <div class="relative bg-white rounded-t-[3rem] p-8 max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full duration-300">
              <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8 shrink-0"></div>
              
-             <div class="space-y-1 mb-8 shrink-0">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }}</h3>
-                  <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">{{ selectedRoom?.floor }}</span>
+             <div class="space-y-4 mb-8 shrink-0">
+                <div v-if="selectedRoom?.image_url" class="w-full h-48 rounded-[2rem] overflow-hidden shadow-inner bg-slate-50 shrink-0">
+                  <img :src="selectedRoom?.image_url" class="w-full h-full object-cover" />
                 </div>
-                <p class="text-slate-400 text-xs font-bold">{{ selectedDate }} 예약 현황</p>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }}</h3>
+                    <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">{{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</span>
+                  </div>
+                  <p class="text-slate-400 text-xs font-bold">{{ selectedDate }} 예약 현황</p>
+                </div>
              </div>
 
               <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
@@ -152,8 +179,11 @@
                          {{ res.start_time.slice(0, 5) }}
                       </div>
                       <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                         <div class="text-sm font-black text-slate-800">{{ res.title || '공간 사용' }}</div>
-                         <div class="text-[0.625rem] font-bold text-indigo-400 uppercase mt-0.5">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
+                         <div class="flex justify-between items-start gap-2">
+                           <div class="text-sm font-black text-slate-800 break-words flex-1">{{ res.title || '공간 사용' }}</div>
+                           <div v-if="res.requester_name" class="text-[0.625rem] font-bold text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded shrink-0">{{ res.requester_name }}</div>
+                         </div>
+                         <div class="text-[0.625rem] font-bold text-indigo-400 uppercase mt-1">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
                       </div>
                    </div>
                 </template>
@@ -168,43 +198,7 @@
        </div>
     </Teleport>
 
-    <!-- Calendar Bottom Sheet -->
-    <Teleport to="body">
-       <div v-if="showCalendar" class="fixed inset-0 z-[200] flex flex-col justify-end">
-          <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showCalendar = false"></div>
-          <div class="relative bg-white rounded-t-[3rem] p-8 animate-in slide-in-from-bottom-full duration-300">
-             <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8"></div>
-             
-             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black text-slate-900 tracking-tight">날짜 선택</h3>
-                <div class="flex gap-1">
-                   <button @click="moveMonth(-1)" class="p-2 hover:bg-slate-50 rounded-xl"><ChevronLeftIcon class="w-5 h-5 text-slate-400" /></button>
-                   <span class="text-sm font-black text-slate-900 w-24 text-center py-2">{{ currentCalDate.getFullYear() }}.{{ String(currentCalDate.getMonth() + 1).padStart(2, '0') }}</span>
-                   <button @click="moveMonth(1)" class="p-2 hover:bg-slate-50 rounded-xl"><ChevronRightIcon class="w-5 h-5 text-slate-400" /></button>
-                </div>
-             </div>
 
-             <div class="grid grid-cols-7 gap-2 mb-2">
-                <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[0.625rem] font-black text-slate-300 uppercase">{{ d }}</span>
-             </div>
-             <div class="grid grid-cols-7 gap-2">
-                <button v-for="(day, idx) in calendarDays" :key="idx"
-                  @click="day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? modal.showAlert(checkDatePolicy(formatDate(day.date))) : selectDate(day.date)"
-                  :disabled="!day.current"
-                  :class="[
-                    day.current ? 'text-slate-700' : 'text-slate-100',
-                    isToday(day.date) ? 'text-indigo-600' : '',
-                    isSelected(day.date) ? 'bg-indigo-600 !text-white shadow-lg' : '',
-                    day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? 'opacity-30 cursor-not-allowed bg-slate-100/50' : ''
-                  ]"
-                  class="aspect-square flex items-center justify-center text-xs font-black rounded-xl transition-all active:scale-90">
-                  {{ day.day }}
-                </button>
-             </div>
-             <button @click="showCalendar = false" class="w-full mt-8 py-5 bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-widest rounded-3xl">닫기</button>
-          </div>
-       </div>
-    </Teleport>
 
     <!-- Reservation Form Bottom Sheet -->
     <Teleport to="body">
@@ -214,9 +208,14 @@
           <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8"></div>
           
           <div class="space-y-6">
-            <div class="space-y-1">
-              <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }} 예약</h3>
-              <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">{{ selectedDate }} / {{ selectedRoom?.floor }}</p>
+            <div class="space-y-4">
+              <div v-if="selectedRoom?.image_url" class="w-full h-48 rounded-[2rem] overflow-hidden shadow-inner bg-slate-50 shrink-0">
+                <img :src="selectedRoom?.image_url" class="w-full h-full object-cover" />
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }} 예약</h3>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">{{ selectedDate }} / {{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</p>
+              </div>
             </div>
 
             <!-- Step 1: Form Data -->
