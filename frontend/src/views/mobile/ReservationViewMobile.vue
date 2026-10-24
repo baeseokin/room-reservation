@@ -67,8 +67,8 @@
       <!-- Room List -->
       <div class="space-y-4">
         <div v-for="room in filteredRooms" :key="room.id" 
-          @click="openRoomDetail(room)"
-          class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
+          @click="openReservationForm(room)"
+          class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer">
           <div class="flex items-center gap-4">
             <div class="w-16 h-16 rounded-[1.4rem] bg-slate-50 overflow-hidden flex shrink-0 items-center justify-center font-black text-slate-400 shadow-inner">
               <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover" />
@@ -84,7 +84,7 @@
           </div>
           <div class="flex flex-col items-end gap-1">
              <ChevronRightIcon class="w-5 h-5 text-slate-300" />
-             <span class="text-[0.5625rem] font-black text-indigo-400 uppercase tracking-tighter">현황보기</span>
+             <span class="text-[0.5625rem] font-black text-indigo-500 uppercase tracking-tighter">예약하기</span>
           </div>
         </div>
       </div>
@@ -138,132 +138,128 @@
        </div>
     </div>
 
-    <!-- Room Detail Bottom Sheet (Timeline) -->
-    <Teleport to="body">
-       <div v-if="showRoomDetail" class="fixed inset-0 z-[100] flex flex-col justify-end">
-          <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRoomDetail = false"></div>
-          <div class="relative bg-white rounded-t-[3rem] p-8 max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full duration-300">
-             <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8 shrink-0"></div>
-             
-             <div class="space-y-4 mb-8 shrink-0">
-                <div v-if="selectedRoom?.image_url" class="w-full h-48 rounded-[2rem] overflow-hidden shadow-inner bg-slate-50 shrink-0">
-                  <img :src="selectedRoom?.image_url" class="w-full h-full object-cover" />
-                </div>
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }}</h3>
-                    <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">{{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</span>
-                  </div>
-                  <p class="text-slate-400 text-xs font-bold">{{ selectedDate }} 예약 현황</p>
-                </div>
-             </div>
-
-              <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                <div v-if="roomReservations.length === 0 && currentRoomBlockedTimes.length === 0" class="py-12 text-center bg-slate-50 rounded-3xl">
-                   <p class="text-sm font-bold text-slate-400">당일 예약 내역이 없습니다.<br>원하시는 시간에 예약해 보세요!</p>
-                </div>
-                <template v-else>
-                   <!-- Blocked Times -->
-                   <div v-for="bt in currentRoomBlockedTimes" :key="'bt-'+bt.id" class="flex gap-4 items-start opacity-70">
-                      <div class="w-16 text-[0.625rem] font-black text-rose-300 uppercase py-1 border-r border-rose-100">
-                         {{ bt.start_time.slice(0, 5) }}
-                      </div>
-                      <div class="flex-1 bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                         <div class="text-sm font-black text-rose-800">{{ bt.reason || '관리자 설정 예약 불가' }}</div>
-                         <div class="text-[0.625rem] font-bold text-rose-400 uppercase mt-0.5">{{ bt.start_time.slice(0, 5) }} - {{ bt.end_time.slice(0, 5) }}</div>
-                      </div>
-                   </div>
-                   <!-- Actual Reservations -->
-                   <div v-for="res in roomReservations" :key="res.id" class="flex gap-4 items-start">
-                      <div class="w-16 text-[0.625rem] font-black text-slate-300 uppercase py-1 border-r border-slate-100">
-                         {{ res.start_time.slice(0, 5) }}
-                      </div>
-                      <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                         <div class="flex justify-between items-start gap-2">
-                           <div class="text-sm font-black text-slate-800 break-words flex-1">{{ res.title || '공간 사용' }}</div>
-                           <div v-if="res.requester_name" class="text-[0.625rem] font-bold text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded shrink-0">{{ res.requester_name }}</div>
-                         </div>
-                         <div class="text-[0.625rem] font-bold text-indigo-400 uppercase mt-1">{{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}</div>
-                      </div>
-                   </div>
-                </template>
-              </div>
-
-             <div class="pt-8 shrink-0">
-                <button @click="openReservationForm(selectedRoom)" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                   이 공간 예약하기
-                </button>
-             </div>
-          </div>
-       </div>
-    </Teleport>
-
-
-
-    <!-- Reservation Form Bottom Sheet -->
+    <!-- Combined Reservation Form Bottom Sheet -->
     <Teleport to="body">
       <div v-if="showReservationForm" class="fixed inset-0 z-[150] flex flex-col justify-end">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showReservationForm = false"></div>
-        <div class="relative bg-white rounded-t-[3rem] p-8 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-300">
-          <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8"></div>
+        <div class="relative bg-white rounded-t-[2.5rem] p-6 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-300">
+          <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-5"></div>
           
-          <div class="space-y-6">
-            <div class="space-y-4">
-              <div v-if="selectedRoom?.image_url" class="w-full h-48 rounded-[2rem] overflow-hidden shadow-inner bg-slate-50 shrink-0">
+          <div class="space-y-4">
+            <!-- Room Header (Only in form step) -->
+            <div v-if="bookingStep === 'form'" class="space-y-3">
+              <div v-if="selectedRoom?.image_url" class="w-full h-36 rounded-2xl overflow-hidden shadow-inner bg-slate-50 shrink-0">
                 <img :src="selectedRoom?.image_url" class="w-full h-full object-cover" />
               </div>
-              <div class="space-y-1">
-                <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }} 예약</h3>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">{{ selectedDate }} / {{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</p>
+              <div class="space-y-0.5">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }} 예약</h3>
+                  <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase">{{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</span>
+                </div>
+                <p class="text-slate-400 text-[0.6875rem] font-bold uppercase tracking-wider">{{ selectedDate }} / 정원 {{ selectedRoom?.capacity }}명</p>
               </div>
             </div>
 
             <!-- Step 1: Form Data -->
-            <div v-if="bookingStep === 'form'" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <!-- Time Selection (In form) -->
-              <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
-                  <label class="text-[0.625rem] font-black text-slate-400 uppercase text-center block tracking-widest">시작 시간</label>
-                  <select v-model="form.start_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
-                     <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
-                  </select>
+            <div v-if="bookingStep === 'form'" class="space-y-3.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              
+              <!-- 1. Existing Reservations Status (Simple Badge Design) -->
+              <div class="space-y-2">
+                <div class="px-0.5">
+                  <label class="text-[0.6875rem] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                    당일 예약 현황
+                  </label>
                 </div>
-                <div class="bg-slate-50 border border-slate-200 p-5 rounded-[2rem] space-y-1">
-                  <label class="text-[0.625rem] font-black text-slate-400 uppercase text-center block tracking-widest">종료 시간</label>
-                  <select v-model="form.end_time" class="w-full bg-transparent border-none font-black text-center text-slate-700 focus:ring-0">
-                     <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
-                  </select>
+
+                <div v-if="currentRoomSchedule.length === 0" class="py-2.5 px-3.5 text-center bg-slate-50/80 rounded-xl border border-dashed border-slate-200">
+                  <p class="text-xs font-bold text-slate-400">당일 예약 내역이 없습니다. (원하는 시간에 예약 가능)</p>
+                </div>
+                <div v-else class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                  <div v-for="item in currentRoomSchedule" :key="item.id"
+                       class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
+                       :class="item.type === 'blocked' ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'">
+                    <!-- Time Badge -->
+                    <span class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
+                          :class="item.type === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-slate-800 text-white'">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-rose-500' : 'bg-emerald-400'"></span>
+                      {{ item.start_time }} - {{ item.end_time }}
+                    </span>
+                    <!-- Title Badge -->
+                    <span class="px-2 py-0.5 font-bold text-xs truncate max-w-[180px] flex items-center gap-1"
+                          :class="item.type === 'blocked' ? 'text-rose-800' : 'text-slate-800'">
+                      <span>{{ item.title }}</span>
+                      <span v-if="item.requester_name" class="text-[0.625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
-                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">신청 명칭</label>
-                <input v-model="form.title" type="text" placeholder="예: 청년부 모임" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 focus:ring-0" />
+              <!-- 2. Time Selection (In form) -->
+              <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-2.5">
+                  <div class="bg-slate-50 border rounded-2xl px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20"
+                       :class="[timeConflictError ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 focus-within:border-indigo-500']">
+                    <label class="text-[0.625rem] font-black uppercase tracking-wider block"
+                           :class="[timeConflictError ? 'text-rose-400' : 'text-slate-400']">시작 시간</label>
+                    <div class="relative flex items-center mt-0.5">
+                      <select v-model="form.start_time" class="w-full bg-transparent border-none p-0 text-sm font-black text-slate-800 focus:ring-0 appearance-none pr-5">
+                         <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                      <ChevronDownIcon class="w-4 h-4 text-slate-400 absolute right-0 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div class="bg-slate-50 border rounded-2xl px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20"
+                       :class="[timeConflictError ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200 focus-within:border-indigo-500']">
+                    <label class="text-[0.625rem] font-black uppercase tracking-wider block"
+                           :class="[timeConflictError ? 'text-rose-400' : 'text-slate-400']">종료 시간</label>
+                    <div class="relative flex items-center mt-0.5">
+                      <select v-model="form.end_time" class="w-full bg-transparent border-none p-0 text-sm font-black text-slate-800 focus:ring-0 appearance-none pr-5">
+                         <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                      <ChevronDownIcon class="w-4 h-4 text-slate-400 absolute right-0 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Immediate '예약 불가' message under time selectors -->
+                <div v-if="timeConflictError" class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
+                  <span class="text-[0.625rem] font-black bg-rose-500 text-white px-2 py-0.5 rounded-md shrink-0">예약 불가</span>
+                  <p class="text-xs font-bold text-rose-600 leading-tight">{{ timeConflictError }}</p>
+                </div>
               </div>
 
-              <div class="bg-slate-50 border border-slate-200 p-6 rounded-[2rem] space-y-2">
-                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">상세 내용</label>
-                <textarea v-model="form.reason" placeholder="사용 목적을 입력하세요" class="w-full bg-transparent border-none font-bold text-slate-700 p-0 h-24 resize-none focus:ring-0"></textarea>
+              <!-- Title -->
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-wider block">신청 명칭</label>
+                <input v-model="form.title" type="text" placeholder="예: 청년부 모임" class="w-full bg-transparent border-none p-0 mt-0.5 text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:ring-0" />
               </div>
 
-              <div class="bg-white border border-slate-200 p-6 rounded-[2rem] space-y-4">
+              <!-- Reason -->
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
+                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-wider block">상세 내용 (사용 목적)</label>
+                <textarea v-model="form.reason" placeholder="사용 목적을 입력하세요" class="w-full bg-transparent border-none p-0 mt-0.5 text-sm font-medium text-slate-800 placeholder:text-slate-300 h-16 resize-none focus:ring-0 leading-relaxed"></textarea>
+              </div>
+
+              <!-- 3. Recurring settings: ONLY FOR ADMIN -->
+              <div v-if="auth.isAdmin" class="bg-white border border-slate-200 p-4 rounded-2xl space-y-3">
                 <div class="flex items-center justify-between">
-                  <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">반복 예약 설정</label>
+                  <label class="text-[0.6875rem] font-black text-slate-600 uppercase tracking-wider">반복 예약 설정</label>
                   <button @click="form.is_recurring = !form.is_recurring" 
                           :class="[form.is_recurring ? 'bg-indigo-600' : 'bg-slate-200']"
-                          class="w-10 h-5 rounded-full relative transition-colors duration-200 focus:outline-none">
-                    <div :class="[form.is_recurring ? 'translate-x-5' : 'translate-x-1']"
+                          class="w-9 h-5 rounded-full relative transition-colors duration-200 focus:outline-none">
+                    <div :class="[form.is_recurring ? 'translate-x-4' : 'translate-x-0.5']"
                          class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow-sm"></div>
                   </button>
                 </div>
 
-                <div v-if="form.is_recurring" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div v-if="form.is_recurring" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <!-- Recurrence Type -->
                   <div class="flex gap-2">
                     <button v-for="type in [['daily', '매일'], ['weekly', '매주'], ['monthly', '매월']]" :key="type[0]"
                             @click="form.recurring_type = type[0]"
                             :class="[form.recurring_type === type[0] ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-400']"
-                            class="flex-1 py-3 rounded-xl text-[0.625rem] font-black uppercase tracking-widest transition-all">
+                            class="flex-1 py-2 rounded-xl text-[0.625rem] font-black uppercase tracking-widest transition-all">
                       {{ type[1] }}
                     </button>
                   </div>
@@ -383,15 +379,25 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 pt-4">
-               <button @click="bookingStep === 'agreement' ? (bookingStep = 'form') : (showReservationForm = false)" 
-                       class="py-5 bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-widest rounded-[2rem]">
-                 {{ bookingStep === 'agreement' ? '이전으로' : '취소' }}
-               </button>
-               <button @click="submitReservation" 
-                       class="py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[2rem] shadow-xl shadow-slate-200 active:scale-95 transition-all">
-                 {{ bookingStep === 'agreement' ? '신청 완료' : '다음 단계' }}
-               </button>
+            <!-- Bottom Buttons & Error Notice -->
+            <div class="space-y-3 pt-4">
+
+              <div class="grid grid-cols-2 gap-3">
+                 <button @click="bookingStep === 'agreement' ? (bookingStep = 'form') : (showReservationForm = false)" 
+                         class="py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest rounded-2xl transition-all">
+                   {{ bookingStep === 'agreement' ? '이전으로' : '취소' }}
+                 </button>
+                 <button @click="submitReservation" 
+                         :disabled="bookingStep === 'form' && !!timeConflictError"
+                         :class="[
+                           bookingStep === 'form' && timeConflictError 
+                             ? 'bg-rose-100 text-rose-400 cursor-not-allowed shadow-none' 
+                             : 'bg-slate-900 text-white shadow-lg shadow-slate-200 active:scale-95'
+                         ]"
+                         class="py-4 font-black text-xs uppercase tracking-widest rounded-2xl transition-all">
+                   {{ bookingStep === 'agreement' ? '신청 완료' : (timeConflictError ? '예약 불가' : '다음 단계') }}
+                 </button>
+              </div>
             </div>
           </div>
         </div>
@@ -708,7 +714,7 @@ const formattedSelectedDate = computed(() => {
 
 const timeSlots = computed(() => {
   const slots = []
-  for (let h = 7; h <= 22; h++) {
+  for (let h = 7; h <= 23; h++) {
     const hh = String(h).padStart(2, '0')
     slots.push(`${hh}:00`, `${hh}:30`)
   }
@@ -766,6 +772,10 @@ const fetchReservations = async () => {
   try {
     const res = await axios.get(`/api/reservations?date=${selectedDate.value}`)
     reservations.value = res.data
+    if (selectedRoom.value) {
+      roomReservations.value = reservations.value.filter(r => r.room_id === selectedRoom.value.id && r.status !== 'rejected' && r.status !== 'cancelled')
+      currentRoomBlockedTimes.value = getBlockedForRoomAndDate(selectedRoom.value, selectedDate.value)
+    }
   } catch (e) {}
 }
 
@@ -826,12 +836,81 @@ const getBlockedForRoomAndDate = (room, date) => {
   })
 }
 
-const openRoomDetail = async (room) => {
-  selectedRoom.value = room
-  roomReservations.value = reservations.value.filter(r => r.room_id === room.id)
-  currentRoomBlockedTimes.value = getBlockedForRoomAndDate(room, selectedDate.value)
-  showRoomDetail.value = true
-}
+const currentRoomSchedule = computed(() => {
+  const items = []
+  
+  currentRoomBlockedTimes.value.forEach(bt => {
+    items.push({
+      id: `bt-${bt.id}`,
+      type: 'blocked',
+      title: bt.reason || '관리자 설정 예약 불가',
+      requester_name: null,
+      start_time: bt.start_time.slice(0, 5),
+      end_time: bt.end_time.slice(0, 5)
+    })
+  })
+
+  roomReservations.value.forEach(res => {
+    if (res.status === 'rejected' || res.status === 'cancelled') return
+    items.push({
+      id: `res-${res.id}`,
+      type: 'reservation',
+      title: res.title || '공간 사용',
+      requester_name: res.requester_name,
+      start_time: res.start_time.slice(0, 5),
+      end_time: res.end_time.slice(0, 5)
+    })
+  })
+
+  return items.sort((a, b) => a.start_time.localeCompare(b.start_time))
+})
+
+const timeConflictError = computed(() => {
+  if (!form.value.start_time || !form.value.end_time) return null
+
+  // 1. Check end > start
+  if (form.value.start_time >= form.value.end_time) {
+    return '종료 시간은 시작 시간보다 늦어야 합니다.'
+  }
+
+  // 2. Policy limit check (non-admin)
+  if (!auth.isAdmin && policySettings.value) {
+    const startLimit = (policySettings.value.start_time || '09:00:00').slice(0, 5)
+    const endLimit = (policySettings.value.end_time || '17:00:00').slice(0, 5)
+    if (form.value.start_time < startLimit || form.value.end_time > endLimit) {
+      return `예약 가능 시간은 오전 ${startLimit} ~ 오후 ${endLimit} 사이입니다.`
+    }
+  }
+
+  // 3. Blocked times overlap
+  const blockedConflict = currentRoomBlockedTimes.value.find(bt => {
+    const s1 = bt.start_time.slice(0, 5)
+    const e1 = bt.end_time.slice(0, 5)
+    const s2 = form.value.start_time
+    const e2 = form.value.end_time
+    return (s1 < e2 && e1 > s2)
+  })
+  if (blockedConflict) {
+    return `해당 시간에 예약 불가 일정이 있습니다. (${blockedConflict.reason || '관리자 설정 예약 불가'})`
+  }
+
+  // 4. Existing reservation overlap
+  const resConflict = roomReservations.value.find(r => {
+    if (r.status === 'rejected' || r.status === 'cancelled') return false
+    const s1 = r.start_time.slice(0, 5)
+    const e1 = r.end_time.slice(0, 5)
+    const s2 = form.value.start_time
+    const e2 = form.value.end_time
+    return (s1 < e2 && e1 > s2)
+  })
+  if (resConflict) {
+    const title = resConflict.title || '기존 예약'
+    const name = resConflict.requester_name ? `(${resConflict.requester_name})` : ''
+    return `이미 예약된 일정이 있어 예약이 불가능합니다. [${resConflict.start_time.slice(0, 5)}~${resConflict.end_time.slice(0, 5)} ${title} ${name}]`
+  }
+
+  return null
+})
 
 const openReservationForm = (room) => {
   if (!auth.isAdmin) {
@@ -843,11 +922,21 @@ const openReservationForm = (room) => {
   }
 
   selectedRoom.value = room
+  roomReservations.value = reservations.value.filter(r => r.room_id === room.id && r.status !== 'rejected' && r.status !== 'cancelled')
+  currentRoomBlockedTimes.value = getBlockedForRoomAndDate(room, selectedDate.value)
+
   if (mode.value === 'time') {
     form.value.start_time = searchForm.value.start_time
     form.value.end_time = searchForm.value.end_time
+  } else {
+    form.value.start_time = '09:00'
+    form.value.end_time = '10:00'
   }
   
+  form.value.title = ''
+  form.value.reason = ''
+  form.value.is_recurring = false
+
   // Reset agreement state
   bookingStep.value = 'form'
   isAgreed.value = false
@@ -857,13 +946,15 @@ const openReservationForm = (room) => {
   showReservationForm.value = true
 }
 
+const openRoomDetail = openReservationForm
+
 const searchAvailableRooms = () => {
   hasSearched.value = true
   const { start_time, end_time } = searchForm.value
   
   availableRooms.value = rooms.value.filter(room => {
     // 1. Check reservation conflicts
-    const resList = reservations.value.filter(r => r.room_id === room.id && r.status !== 'rejected')
+    const resList = reservations.value.filter(r => r.room_id === room.id && r.status !== 'rejected' && r.status !== 'cancelled')
     const isResConflict = resList.some(r => {
       const s1 = r.start_time.slice(0,5)
       const e1 = r.end_time.slice(0,5)
@@ -916,9 +1007,19 @@ const submitReservation = async () => {
   }
 
   if (bookingStep.value === 'form') {
+    if (timeConflictError.value) {
+      modal.showAlert(timeConflictError.value)
+      return
+    }
+
     if (!form.value.title?.trim()) { modal.showAlert('신청명을 입력해주세요.'); return; }
     if (form.value.start_time >= form.value.end_time) { modal.showAlert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
     
+    // Only admin can do recurring
+    if (!auth.isAdmin) {
+      form.value.is_recurring = false
+    }
+
     if (form.value.is_recurring) {
       if (!form.value.recurring_end_date) {
         modal.showAlert('반복 종료일을 선택해 주세요.');
@@ -941,9 +1042,16 @@ const submitReservation = async () => {
     return
   }
 
+  if (timeConflictError.value) {
+    modal.showAlert(timeConflictError.value)
+    bookingStep.value = 'form'
+    return
+  }
+
   try {
     const payload = {
       ...form.value,
+      is_recurring: auth.isAdmin ? form.value.is_recurring : false,
       room_id: selectedRoom.value.id,
       reservation_date: selectedDate.value,
       requester_name: auth.user.userName,
@@ -958,6 +1066,25 @@ const submitReservation = async () => {
     modal.showAlert(e.response?.data?.message || '예약 실패')
   }
 }
+
+const addOneHour = (timeStr) => {
+  if (!timeStr) return ''
+  const [h, m] = timeStr.split(':').map(Number)
+  const nextH = Math.min(23, h + 1)
+  return `${String(nextH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+watch(() => form.value.start_time, (newStart) => {
+  if (newStart) {
+    form.value.end_time = addOneHour(newStart)
+  }
+})
+
+watch(() => searchForm.value.start_time, (newStart) => {
+  if (newStart) {
+    searchForm.value.end_time = addOneHour(newStart)
+  }
+})
 
 watch(selectedDate, () => {
   fetchReservations()

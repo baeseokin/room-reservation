@@ -189,6 +189,12 @@ router.post("/", async (req, res) => {
     // 0. Validate reservation rules (skipped for admins)
     const isAdminUser = req.session?.user && req.session.user.roles.includes("관리자");
     console.log("[DEBUG Backend POST /] user:", req.session?.user, "isAdminUser:", isAdminUser);
+
+    if (is_recurring && !isAdminUser) {
+      await conn.rollback();
+      return res.status(403).json({ success: false, message: "반복 예약은 관리자만 등록할 수 있습니다." });
+    }
+
     if (!isAdminUser && !is_recurring) {
       const errMsg = validateReservationPolicy(policy, reservation_date, start_time, end_time);
       if (errMsg) {
