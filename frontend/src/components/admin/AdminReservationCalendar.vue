@@ -648,74 +648,77 @@ defineExpose({ fetchData, openReservationById })
 <template>
   <div class="flex flex-col bg-slate-50/50 rounded-3xl border border-slate-200/80 overflow-hidden shadow-xl shadow-slate-200/40">
     <!-- Header: Mode switch, SubMode, Date Picker -->
-    <header class="bg-white border-b border-slate-200/70 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 z-20">
+    <header class="bg-white border-b border-slate-200/70 px-3.5 sm:px-4 lg:px-6 py-2.5 sm:py-3.5 flex flex-nowrap justify-between items-center gap-2 sm:gap-4 overflow-x-auto scrollbar-none z-20">
       <!-- Left Controls -->
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
         <!-- View Mode (Calendar/List) -->
-        <div class="bg-slate-100 p-1 rounded-2xl flex gap-1 shadow-inner">
+        <div class="bg-slate-100 p-1 rounded-2xl flex gap-1 shadow-inner shrink-0">
           <button @click="viewMode = 'calendar'" 
                   :class="[viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-400 font-bold hover:text-slate-700']" 
-                  class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs">
-            <CalendarIcon class="w-4 h-4" />
+                  class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 text-xs whitespace-nowrap">
+            <CalendarIcon class="w-4 h-4 shrink-0" />
             <span>캘린더</span>
           </button>
           <button @click="viewMode = 'list'" 
                   :class="[viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-400 font-bold hover:text-slate-700']" 
-                  class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs">
-            <ListBulletIcon class="w-4 h-4" />
+                  class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 text-xs whitespace-nowrap">
+            <ListBulletIcon class="w-4 h-4 shrink-0" />
             <span>목록형</span>
           </button>
         </div>
 
         <!-- Month, Week, Day Toggles (Calendar mode) -->
-        <div v-if="viewMode === 'calendar'" class="bg-slate-100 p-1 rounded-2xl flex gap-1 shadow-inner">
+        <div v-if="viewMode === 'calendar'" class="bg-slate-100 p-1 rounded-2xl flex gap-0.5 sm:gap-1 shadow-inner shrink-0">
           <button v-for="m in ['month', 'week', 'day']" :key="m" @click="calendarSubMode = m"
                   :class="[calendarSubMode === m ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold hover:text-slate-800']"
-                  class="px-4 py-2 rounded-xl transition-all text-xs uppercase tracking-tight">
+                  class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all text-xs uppercase tracking-tight whitespace-nowrap">
             {{ m === 'month' ? '월' : m === 'week' ? '주' : '일' }}
           </button>
         </div>
 
         <!-- Date Navigator -->
-        <div class="flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm p-0.5">
-          <button @click="changeDate(-1)" class="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-700">
+        <div class="flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm p-0.5 shrink-0">
+          <button @click="changeDate(-1)" class="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-700 shrink-0">
             <ChevronLeftIcon class="w-4 h-4" />
           </button>
           
-          <button @click="toggleCalendar" class="px-4 py-1.5 flex items-center gap-2 group hover:bg-slate-50 rounded-xl transition-colors">
-            <span class="text-sm font-black text-slate-900 group-hover:text-indigo-600">{{ formattedDisplayDate }}</span>
-            <span v-if="calendarSubMode === 'day' && getHoliday(selectedDate)" class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-md text-[0.6875rem] font-black uppercase">
+          <button @click="toggleCalendar" class="px-2.5 sm:px-3.5 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 group hover:bg-slate-50 rounded-xl transition-colors whitespace-nowrap">
+            <span class="text-xs sm:text-sm font-black text-slate-900 group-hover:text-indigo-600">{{ formattedDisplayDate }}</span>
+            <span v-if="calendarSubMode === 'day' && getHoliday(selectedDate)" class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-md text-[0.6875rem] font-black uppercase whitespace-nowrap">
               {{ getHoliday(selectedDate) }}
             </span>
-            <CalendarIcon class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            <CalendarIcon class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
           </button>
 
-          <button @click="changeDate(1)" class="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-700">
+          <button @click="changeDate(1)" class="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-700 shrink-0">
             <ChevronRightIcon class="w-4 h-4" />
           </button>
         </div>
 
         <button @click="selectedDate = formatDate(new Date())" 
-                class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white text-xs font-black rounded-2xl transition-all shadow-sm active:scale-95 uppercase">
+                class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white text-xs font-black rounded-2xl transition-all shadow-sm active:scale-95 uppercase whitespace-nowrap shrink-0">
           Today
         </button>
       </div>
 
       <!-- Right Controls: Legend & Refresh -->
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 bg-indigo-600 rounded-md shadow-sm"></span> 승인완료
+      <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 text-xs font-bold text-slate-500 whitespace-nowrap shrink-0">
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-indigo-600 rounded-md shadow-sm shrink-0"></span>
+            <span class="whitespace-nowrap">승인완료</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 bg-amber-500 rounded-md shadow-sm"></span> 승인대기
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-500 rounded-md shadow-sm shrink-0"></span>
+            <span class="whitespace-nowrap">승인대기</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 bg-slate-300 rounded-md shadow-sm"></span> 종료됨
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-300 rounded-md shadow-sm shrink-0"></span>
+            <span class="whitespace-nowrap">종료됨</span>
           </div>
         </div>
 
-        <button @click="fetchData" class="p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors" title="새로고침">
+        <button @click="fetchData" class="p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors shrink-0" title="새로고침">
           <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': isLoading }" />
         </button>
       </div>

@@ -459,7 +459,7 @@ const groupedReservations = computed(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-6xl mx-auto space-y-6 min-h-screen font-sans">
+  <div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 min-h-screen font-sans">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="space-y-1">
@@ -480,9 +480,9 @@ const groupedReservations = computed(() => {
     </div>
 
     <!-- Filter & Controls Bar (Admin List View Style) -->
-    <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+    <div class="flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-start md:items-center bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm">
       <!-- Left: Status Filter Buttons -->
-      <div class="flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
+      <div class="inline-flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0 self-start md:self-auto">
         <button v-for="s in [
           { id: 'all', name: '전체' }, 
           { id: 'approved', name: '승인완료' }, 
@@ -492,20 +492,15 @@ const groupedReservations = computed(() => {
         ]" :key="s.id" 
                 @click="statusFilter = s.id"
                 :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold hover:text-slate-800']"
-                class="px-4 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
-          <span>{{ s.name }}</span>
-          <span v-if="statusCounts[s.id] !== undefined" 
-                :class="[statusFilter === s.id ? 'bg-indigo-50 text-indigo-600 font-black' : 'bg-slate-200/70 text-slate-500 font-bold']"
-                class="text-[0.6875rem] px-1.5 py-0.2 rounded-full">
-            {{ statusCounts[s.id] }}
-          </span>
+                class="px-3 sm:px-4 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer">
+          {{ s.name }}
         </button>
       </div>
 
       <!-- Right: Period Filter Buttons & Search -->
-      <div class="flex flex-wrap items-center gap-3 justify-end">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 justify-end w-full md:w-auto shrink-0">
         <!-- Period Filter -->
-        <div class="flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
+        <div class="inline-flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
           <button v-for="period in [
             { id: '3m', name: '~3개월' },
             { id: '6m', name: '~6개월' },
@@ -513,13 +508,13 @@ const groupedReservations = computed(() => {
           ]" :key="period.id"
                   @click="periodFilter = period.id"
                   :class="[periodFilter === period.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold hover:text-slate-800']"
-                  class="px-3.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer">
+                  class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer">
             {{ period.name }}
           </button>
         </div>
 
         <!-- Search Bar -->
-        <div class="relative w-full sm:w-64">
+        <div class="relative w-full sm:w-48 lg:w-64">
           <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="text" v-model="searchQuery" placeholder="공간명, 신청명 검색..." 
                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400" />
@@ -532,17 +527,17 @@ const groupedReservations = computed(() => {
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100">
-            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">공간 / 층</th>
-            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">날짜 / 시간</th>
-            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">신청명</th>
-            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">상태</th>
-            <th class="px-8 py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest text-center">관리</th>
+            <th class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">공간 / 층</th>
+            <th class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">날짜 / 시간</th>
+            <th class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">신청명</th>
+            <th class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">상태</th>
+            <th class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">관리</th>
           </tr>
         </thead>
         <tbody>
           <template v-if="loading">
             <tr v-for="i in 3" :key="'loader-'+i" class="animate-pulse">
-              <td colspan="5" class="px-8 py-6 bg-slate-50/50"></td>
+              <td colspan="5" class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 bg-slate-50/50"></td>
             </tr>
           </template>
           <!-- Empty State -->
@@ -557,44 +552,44 @@ const groupedReservations = computed(() => {
             <tr v-if="group.isGroup" 
                 @click="toggleGroup(group.id)"
                 class="group bg-indigo-50/20 hover:bg-indigo-50/40 transition-colors cursor-pointer border-b border-slate-50">
-              <td class="px-8 py-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600 shrink-0">
                     {{ group.floor }}
                   </div>
-                  <div class="flex flex-col">
-                    <span class="font-bold text-slate-800">{{ group.room_name }}</span>
-                    <span class="text-[0.5625rem] font-black text-indigo-400 uppercase tracking-widest">반복 예약</span>
+                  <div class="flex flex-col min-w-0">
+                    <span class="font-bold text-slate-800 truncate">{{ group.room_name }}</span>
+                    <span class="text-[0.5625rem] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">반복 예약</span>
                   </div>
                 </div>
               </td>
-              <td class="px-8 py-6">
-                 <div class="font-bold text-indigo-600 flex items-center gap-2">
-                   {{ formatDateWithDay(group.items[0].reservation_date) }} ~ 
-                   <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-black">총 {{ group.items.length }}건</span>
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                 <div class="font-bold text-indigo-600 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                   <span>{{ formatDateWithDay(group.items[0].reservation_date) }} ~</span>
+                   <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-black whitespace-nowrap shrink-0">총 {{ group.items.length }}건</span>
                  </div>
-                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase whitespace-nowrap">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
               </td>
-              <td class="px-8 py-6">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                 <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
                 <div class="text-[0.75rem] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
               </td>
-              <td class="px-8 py-6">
-                <span v-if="group.items.every(i => i.status === 'cancelled')" class="px-3 py-1 bg-red-50 text-red-500 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <span v-if="group.items.every(i => i.status === 'cancelled')" class="px-3 py-1 bg-red-50 text-red-500 rounded-full text-[0.75rem] font-black uppercase tracking-tighter whitespace-nowrap">
                   전체 취소됨
                 </span>
-                <span v-else-if="group.items.some(i => i.status === 'cancelled')" class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                <span v-else-if="group.items.some(i => i.status === 'cancelled')" class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter whitespace-nowrap">
                   일부 취소 ({{ group.items.filter(i => i.status !== 'cancelled').length }}/{{ group.items.length }})
                 </span>
-                <span v-else class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                <span v-else class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter whitespace-nowrap">
                   반복 진행중
                 </span>
               </td>
-              <td class="px-8 py-6 text-center">
-                <div class="flex items-center justify-center gap-2">
-                   <span class="text-[0.625rem] font-black text-slate-400 uppercase">{{ expandedGroups.has(group.id) ? '닫기' : '상세보기' }}</span>
-                   <ChevronDownIcon v-if="!expandedGroups.has(group.id)" class="w-4 h-4 text-slate-400" />
-                   <ChevronUpIcon v-else class="w-4 h-4 text-indigo-600" />
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-center">
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2">
+                   <span class="text-[0.625rem] font-black text-slate-400 uppercase whitespace-nowrap">{{ expandedGroups.has(group.id) ? '닫기' : '상세보기' }}</span>
+                   <ChevronDownIcon v-if="!expandedGroups.has(group.id)" class="w-4 h-4 text-slate-400 shrink-0" />
+                   <ChevronUpIcon v-else class="w-4 h-4 text-indigo-600 shrink-0" />
                 </div>
               </td>
             </tr>
@@ -604,22 +599,22 @@ const groupedReservations = computed(() => {
                 v-for="res in group.items" :key="res.id"
                 @click.stop="openEditModal(res)"
                 class="group bg-white hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50/50">
-              <td class="px-8 py-4 pl-20 relative">
-                <div class="absolute left-10 top-1/2 -translate-y-1/2 w-4 h-[1px] bg-slate-200"></div>
-                <div class="text-[0.6875rem] font-bold text-slate-400">일자별 상세</div>
+              <td class="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 pl-12 sm:pl-20 relative">
+                <div class="absolute left-6 sm:left-10 top-1/2 -translate-y-1/2 w-4 h-[1px] bg-slate-200"></div>
+                <div class="text-[0.6875rem] font-bold text-slate-400 whitespace-nowrap">일자별 상세</div>
               </td>
-              <td class="px-8 py-4">
-                 <div class="text-sm font-bold text-slate-700">{{ formatDateWithDay(res.reservation_date) }}</div>
+              <td class="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4">
+                 <div class="text-sm font-bold text-slate-700 whitespace-nowrap">{{ formatDateWithDay(res.reservation_date) }}</div>
               </td>
-              <td class="px-8 py-4">
-                <div class="text-xs font-medium text-slate-500">{{ res.start_time.slice(0,5) }} - {{ res.end_time.slice(0,5) }}</div>
+              <td class="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4">
+                <div class="text-xs font-medium text-slate-500 whitespace-nowrap">{{ res.start_time.slice(0,5) }} - {{ res.end_time.slice(0,5) }}</div>
               </td>
-              <td class="px-8 py-4">
-                <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[0.625rem] font-black uppercase tracking-tighter">
+              <td class="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4">
+                <span :class="statusMap[getEffectiveStatus(res)]?.class" class="px-2 py-0.5 rounded-full text-[0.625rem] font-black uppercase tracking-tighter whitespace-nowrap">
                   {{ statusMap[getEffectiveStatus(res)]?.label }}
                 </span>
               </td>
-              <td class="px-8 py-4 text-center">
+              <td class="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 text-center">
                  <button class="p-1.5 bg-slate-50 hover:bg-slate-900 rounded-lg transition-all text-slate-300 hover:text-white">
                     <PencilSquareIcon class="w-4 h-4" />
                  </button>
@@ -630,28 +625,28 @@ const groupedReservations = computed(() => {
             <tr v-if="!group.isGroup" 
                 @click="openEditModal(group)"
                 class="group hover:bg-indigo-50/30 transition-colors cursor-pointer border-b border-slate-100">
-              <td class="px-8 py-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
                     {{ group.floor }}
                   </div>
-                  <span class="font-bold text-slate-800">{{ group.room_name }}</span>
+                  <span class="font-bold text-slate-800 truncate">{{ group.room_name }}</span>
                 </div>
               </td>
-              <td class="px-8 py-6">
-                 <div class="font-bold text-slate-800">{{ formatDateWithDay(group.reservation_date) }}</div>
-                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                 <div class="font-bold text-slate-800 whitespace-nowrap">{{ formatDateWithDay(group.reservation_date) }}</div>
+                 <div class="text-[0.75rem] font-black text-indigo-400 mt-1 uppercase whitespace-nowrap">{{ group.start_time.slice(0,5) }} - {{ group.end_time.slice(0,5) }}</div>
               </td>
-              <td class="px-8 py-6">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                 <div class="font-black text-slate-900 leading-tight">{{ group.title || '신청명 없음' }}</div>
                 <div class="text-[0.75rem] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
               </td>
-              <td class="px-8 py-6">
-                <span :class="statusMap[getEffectiveStatus(group)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <span :class="statusMap[getEffectiveStatus(group)]?.class || 'bg-slate-50 text-slate-500'" class="px-3 py-1 rounded-full text-[0.75rem] font-black uppercase tracking-tighter whitespace-nowrap">
                   {{ statusMap[getEffectiveStatus(group)]?.label || getEffectiveStatus(group) }}
                 </span>
               </td>
-              <td class="px-8 py-6 text-center">
+              <td class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-center">
                  <button class="p-2 bg-slate-50 hover:bg-slate-900 rounded-xl transition-all text-slate-300 hover:text-white">
                     <PencilSquareIcon class="w-5 h-5" />
                  </button>

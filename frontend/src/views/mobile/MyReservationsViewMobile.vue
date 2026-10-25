@@ -43,15 +43,8 @@
                     ? 'bg-white text-indigo-600 shadow-sm font-black' 
                     : 'text-slate-500 font-bold hover:text-slate-800'
                 ]"
-                class="px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0">
-          <span>{{ s.name }}</span>
-          <span v-if="statusCounts[s.id] !== undefined" 
-                :class="[
-                  statusFilter === s.id ? 'bg-indigo-50 text-indigo-600 font-black' : 'bg-slate-200/70 text-slate-500'
-                ]"
-                class="text-[0.625rem] px-1.5 py-0.2 rounded-full">
-            {{ statusCounts[s.id] }}
-          </span>
+                class="px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all shrink-0">
+          {{ s.name }}
         </button>
       </div>
 
