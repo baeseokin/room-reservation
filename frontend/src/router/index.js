@@ -232,8 +232,9 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 1. Device Detection (Mobile phones only, not tablets/desktops)
-  const isMobile = /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                   (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
+  const isMobile = (/iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))) &&
+                   (typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   // 2. Device-based URL Normalization
   if (isMobile && !to.path.startsWith('/m')) {
