@@ -142,7 +142,7 @@
     <Teleport to="body">
       <div v-if="showReservationForm" class="fixed inset-0 z-[150] flex flex-col justify-end">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showReservationForm = false"></div>
-        <div class="relative bg-white rounded-t-[2.5rem] p-6 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-300">
+        <div ref="bookingModalSheetRef" class="relative bg-white rounded-t-[2.5rem] p-6 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-300">
           <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-5"></div>
           
           <div class="space-y-4">
@@ -319,6 +319,12 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Non-Admin Notice for Recurring Reservation -->
+              <div v-else class="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-slate-500">
+                <InformationCircleIcon class="w-4 h-4 text-slate-400 shrink-0" />
+                <span>반복 예약 설정은 관리자에게 문의하여 주세요.</span>
+              </div>
             </div>
 
             <!-- Step 2: Agreement -->
@@ -329,7 +335,7 @@
                     <ShieldCheckIcon class="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 class="text-lg font-black text-slate-900 tracking-tight">공간 사용 수칙 동의</h4>
+                    <h4 ref="agreementTitleRef" id="agreement-title" tabindex="-1" class="text-lg font-black text-slate-900 tracking-tight outline-none">공간 사용 수칙 동의</h4>
                     <p class="text-[0.625rem] font-bold text-indigo-400 uppercase tracking-widest">안전하고 쾌적한 사용을 위해 꼭 읽어주세요.</p>
                   </div>
                 </div>
@@ -529,7 +535,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../store/auth'
 import { 
@@ -550,6 +557,7 @@ import {
 import { useModalStore } from '@/stores/useModalStore'
 import { getHoliday } from '@/utils/holidays'
 
+const route = useRoute()
 const modal = useModalStore()
 const auth = useAuthStore()
 
@@ -656,6 +664,39 @@ const recurringEndCalDate = ref(new Date())
 const hasSearched = ref(false)
 
 const bookingStep = ref('form') // 'form' or 'agreement'
+const bookingModalSheetRef = ref(null)
+const agreementTitleRef = ref(null)
+
+const scrollToAgreementTop = () => {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur()
+  }
+  if (bookingModalSheetRef.value) {
+    bookingModalSheetRef.value.scrollTop = 0
+    if (typeof bookingModalSheetRef.value.scrollTo === 'function') {
+      bookingModalSheetRef.value.scrollTo({ top: 0, behavior: 'instant' })
+    }
+  }
+  const el = agreementTitleRef.value || document.getElementById('agreement-title')
+  if (el) {
+    el.focus({ preventScroll: true })
+  }
+  if (bookingModalSheetRef.value) {
+    bookingModalSheetRef.value.scrollTop = 0
+  }
+}
+
+watch(bookingStep, async (newStep) => {
+  if (newStep === 'agreement') {
+    await nextTick()
+    scrollToAgreementTop()
+    requestAnimationFrame(scrollToAgreementTop)
+    setTimeout(scrollToAgreementTop, 50)
+    setTimeout(scrollToAgreementTop, 150)
+    setTimeout(scrollToAgreementTop, 300)
+  }
+})
+
 const isAgreed = ref(false)
 const ruleAgreements = ref([false, false, false, false, false])
 
@@ -763,8 +804,36 @@ onMounted(async () => {
 
   const todayStr = formatDate(new Date())
   const hideUntil = localStorage.getItem('hide-reservation-notice')
-  if (hideUntil !== todayStr) {
+  if (hideUntil !== todayStr && !route.query.reapply) {
     showNoticeModal.value = true
+  }
+
+  if (route.query.reapply) {
+    showNoticeModal.value = false
+    if (route.query.date) {
+      selectedDate.value = String(route.query.date)
+      currentCalDate.value = new Date(String(route.query.date) + 'T00:00:00')
+      await fetchReservations()
+    }
+    const targetRoomId = Number(route.query.room_id)
+    const targetRoom = rooms.value.find(r => r.id === targetRoomId)
+    if (targetRoom) {
+      selectedRoom.value = targetRoom
+      selectedFloor.value = targetRoom.floor
+      roomReservations.value = reservations.value.filter(r => r.room_id === targetRoom.id && r.status !== 'rejected' && r.status !== 'cancelled')
+      currentRoomBlockedTimes.value = getBlockedForRoomAndDate(targetRoom, selectedDate.value)
+
+      form.value.title = route.query.title ? String(route.query.title) : ''
+      form.value.reason = route.query.reason ? String(route.query.reason) : ''
+      form.value.start_time = route.query.start_time ? String(route.query.start_time) : '09:00'
+      form.value.end_time = route.query.end_time ? String(route.query.end_time) : addOneHour(form.value.start_time)
+      form.value.is_recurring = false
+
+      bookingStep.value = 'form'
+      isAgreed.value = false
+      ruleAgreements.value = [false, false, false, false, false]
+      showReservationForm.value = true
+    }
   }
 })
 
@@ -1033,6 +1102,12 @@ const submitReservation = async () => {
     
     // Go to agreement step
     bookingStep.value = 'agreement'
+    await nextTick()
+    scrollToAgreementTop()
+    requestAnimationFrame(scrollToAgreementTop)
+    setTimeout(scrollToAgreementTop, 50)
+    setTimeout(scrollToAgreementTop, 150)
+    setTimeout(scrollToAgreementTop, 300)
     return
   }
 

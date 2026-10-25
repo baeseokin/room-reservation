@@ -11,8 +11,11 @@ cd "$(dirname "$0")"
 echo "------------------------------------------"
 echo "📅 실행 일시: $(date)"
 
-# 1️⃣ 실행 중인 프로세스 찾기 (정확한 매칭을 위해 SCRIPT 파일명 검색)
-PID=$(ps -ef | grep "$SCRIPT" | grep -v grep | awk '{print $2}')
+# 1️⃣ 실행 중인 프로세스 찾기 (포트 3002 또는 room-reservation backend/server.js)
+PID=$(lsof -ti :3002)
+if [ -z "$PID" ]; then
+  PID=$(ps -ef | grep "$NODE_PATH.*$SCRIPT" | grep -v grep | awk '{print $2}')
+fi
 
 if [ -n "$PID" ]; then
   echo "🔴 기존 프로세스 종료 중... (PID: $PID)"
@@ -26,10 +29,11 @@ fi
 if [ -f "$NODE_PATH" ]; then
   echo "🚀 서버 시작 중... (Log: $LOG_FILE)"
   nohup "$NODE_PATH" "$SCRIPT" > "$LOG_FILE" 2>&1 &
+  disown
   
   # 잠시 대기 후 PID 확인
   sleep 1
-  NEW_PID=$(ps -ef | grep "$SCRIPT" | grep -v grep | awk '{print $2}')
+  NEW_PID=$(lsof -ti :3002)
   if [ -n "$NEW_PID" ]; then
     echo "✅ 서버가 정상적으로 시작되었습니다. (New PID: $NEW_PID)"
     echo "📜 로그를 보려면 다음 명령어를 입력하세요: tail -f $LOG_FILE"

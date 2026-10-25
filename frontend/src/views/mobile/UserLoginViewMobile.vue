@@ -86,7 +86,7 @@
 <script setup>
 import { ref, onMounted, defineAsyncComponent, nextTick } from 'vue'
 import { useAuthStore } from '../../store/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 
 const DeptPickerMobileAsync = defineAsyncComponent(() =>
@@ -95,6 +95,7 @@ const DeptPickerMobileAsync = defineAsyncComponent(() =>
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const departments = ref([])
 const users = ref([])
@@ -165,9 +166,16 @@ const handleLogin = async () => {
   if (result.success) {
     if (auth.user.mustChangePassword) {
       router.push('/m/change-password')
-    } else {
-      router.push('/m/home')
+      return
     }
+
+    const redirect = route.query.redirect
+    if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+      router.push(redirect)
+      return
+    }
+
+    router.push('/m/home')
   } else {
     errorMsg.value = result.message || '로그인 실패'
   }

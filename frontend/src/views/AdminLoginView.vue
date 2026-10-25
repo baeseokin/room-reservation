@@ -98,11 +98,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../store/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { EyeIcon, EyeSlashIcon, ArrowRightIcon } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const userId = ref('')
 const password = ref('')
@@ -127,9 +128,15 @@ const handleLogin = async () => {
       return
     }
 
+    const redirect = route.query.redirect
+    if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+      router.push(redirect)
+      return
+    }
+
     // Redirect based on role
     if (auth.isAdmin) {
-      router.push('/admin')
+      router.push('/admin/reservations')
     } else {
       router.push('/home')
     }

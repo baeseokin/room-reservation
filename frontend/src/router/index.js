@@ -200,57 +200,84 @@ const router = createRouter({
   ]
 })
 
+function mapPcToMobile(path) {
+  if (path === '/' || path === '') return '/m/login'
+  if (path === '/admin-login') return '/m/admin-login'
+  if (path === '/change-password') return '/m/change-password'
+  if (path === '/home' || path === '/home/') return '/m/home'
+  if (path.startsWith('/home/')) return path.replace('/home/', '/m/')
+  if (path === '/admin' || path === '/admin/') return '/m/admin/reservations'
+  if (path.startsWith('/admin/')) return path.replace('/admin/', '/m/admin/')
+  return '/m/home'
+}
+
+function mapMobileToPc(path) {
+  if (path === '/m/login' || path === '/m/login/') return '/'
+  if (path === '/m/admin-login' || path === '/m/admin-login/') return '/admin-login'
+  if (path === '/m/change-password' || path === '/m/change-password/') return '/change-password'
+  if (path === '/m/home' || path === '/m/home/') return '/home'
+  if (path === '/m/reservations') return '/home/reservations'
+  if (path === '/m/my-reservations') return '/home/my-reservations'
+  if (path === '/m/profile') return '/home/profile'
+  if (path === '/m/admin' || path === '/m/admin/') return '/admin/reservations'
+  if (path.startsWith('/m/admin/')) return path.replace('/m/admin/', '/admin/')
+  if (path.startsWith('/m/')) return path.replace('/m/', '/home/')
+  return '/home'
+}
+
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
   if (!auth.initialized) {
     await auth.checkSession()
   }
 
-  // Already logged in? Redirect from Login page to Home
-  if ((to.name === 'Login' || to.name === 'AdminLogin') && auth.user) {
-    if (to.name === 'AdminLogin' && auth.isAdmin) return next({ name: 'AdminReservations' })
-    return next({ name: 'Home' })
-  }
-
-  // Auth-required routes
-  if (to.meta.requiresAuth && !auth.user) {
-    return next({ name: 'Login' })
-  }
-
-  // Admin-required routes
-  if (to.meta.requiresAdmin) {
-    if (!auth.user) return next({ name: 'Login' })
-    if (!auth.isAdmin) return next({ path: '/home' })
-  }
-
-  // Mandatory password change check
-  if (auth.user?.mustChangePassword && !['ChangePassword', 'ChangePasswordMobile', 'Login', 'LoginMobile', 'AdminLogin', 'AdminLoginMobile'].includes(to.name)) {
-    const target = to.path.startsWith('/m') ? 'ChangePasswordMobile' : 'ChangePassword'
-    return next({ name: target })
-  }
-
-  // Basic Mobile Detection Redirect (Phones only, not tablets)
+  // 1. Device Detection (Mobile phones only, not tablets/desktops)
   const isMobile = /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                    (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
-  
+
+  // 2. Device-based URL Normalization
   if (isMobile && !to.path.startsWith('/m')) {
-    if (to.name === 'Login') return next({ name: 'LoginMobile' })
-    if (to.name === 'AdminLogin') return next({ name: 'AdminLoginMobile' })
-    if (to.name === 'ChangePassword') return next({ name: 'ChangePasswordMobile' })
-    
-    // For other protected routes, if user is already on /home, go to /m/home
-    if (to.path === '/home' || to.path === '/home/') {
-      return next({ path: '/m/home' })
+    const targetPath = mapPcToMobile(to.path)
+    return next({ path: targetPath, query: to.query, hash: to.hash })
+  }
+  if (!isMobile && to.path.startsWith('/m')) {
+    const targetPath = mapMobileToPc(to.path)
+    return next({ path: targetPath, query: to.query, hash: to.hash })
+  }
+
+  // 3. Already logged in? Redirect from Login page to target or Home
+  const isLoginPage = ['Login', 'LoginMobile', 'AdminLogin', 'AdminLoginMobile'].includes(to.name)
+  if (isLoginPage && auth.user) {
+    if (to.query?.redirect) {
+      return next({ path: to.query.redirect })
     }
-    if (to.path.startsWith('/home/')) {
-      return next({ path: to.path.replace('/home/', '/m/') })
+    if ((to.name === 'AdminLogin' || to.name === 'AdminLoginMobile') && auth.isAdmin) {
+      return next({ path: isMobile ? '/m/admin/reservations' : '/admin/reservations' })
     }
-    if (to.path.startsWith('/admin')) {
-      return next({ path: to.path.replace('/admin', '/m/admin') })
+    return next({ path: isMobile ? '/m/home' : '/home' })
+  }
+
+  // 4. Auth-required routes
+  if (to.meta.requiresAuth && !auth.user) {
+    const loginTarget = isMobile ? '/m/login' : '/'
+    return next({ path: loginTarget, query: { redirect: to.fullPath } })
+  }
+
+  // 5. Admin-required routes
+  if (to.meta.requiresAdmin) {
+    if (!auth.user) {
+      const adminLoginTarget = isMobile ? '/m/admin-login' : '/admin-login'
+      return next({ path: adminLoginTarget, query: { redirect: to.fullPath } })
     }
-    
-    // Default mobile entry
-    return next({ path: '/m/home' })
+    if (!auth.isAdmin) {
+      return next({ path: isMobile ? '/m/home' : '/home' })
+    }
+  }
+
+  // 6. Mandatory password change check
+  if (auth.user?.mustChangePassword && !['ChangePassword', 'ChangePasswordMobile', 'Login', 'LoginMobile', 'AdminLogin', 'AdminLoginMobile'].includes(to.name)) {
+    const target = isMobile ? 'ChangePasswordMobile' : 'ChangePassword'
+    return next({ name: target })
   }
 
   next()

@@ -1,6 +1,7 @@
 <script setup>
 // MyReservationsView.vue - Optimized Layout & Custom Calendar
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
 import { 
@@ -19,11 +20,14 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   ArrowPathIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  XCircleIcon
 } from '@heroicons/vue/24/outline'
 
 import { useModalStore } from '@/stores/useModalStore'
 
+const route = useRoute()
+const router = useRouter()
 const modal = useModalStore()
 const auth = useAuthStore()
 const reservations = ref([])
@@ -35,6 +39,24 @@ const searchQuery = ref('')
 // Edit Modal State
 const showEditModal = ref(false)
 const editingRes = ref(null)
+
+const handleReapply = (res) => {
+  if (!res) return
+  showEditModal.value = false
+  router.push({
+    path: '/home/reservations',
+    query: {
+      reapply: '1',
+      room_id: res.room_id,
+      date: res.reservation_date,
+      start_time: res.start_time ? String(res.start_time).slice(0, 5) : '09:00',
+      end_time: res.end_time ? String(res.end_time).slice(0, 5) : '10:00',
+      title: res.title || '',
+      reason: res.reason || ''
+    }
+  })
+}
+
 const editForm = ref({
   title: '',
   reservation_date: '',
@@ -124,8 +146,30 @@ const calendarDays = computed(() => {
 const fetchMyReservations = async () => {
   loading.value = true
   try {
-    const res = await axios.get(`/api/reservations?user_id=${auth.user.id}`)
+    const res = await axios.get(`/api/reservations?user_id=${auth.user.id}&status=all`)
     reservations.value = res.data
+
+    if (route.query.id) {
+      const targetId = Number(route.query.id)
+      let target = reservations.value.find(r => r.id === targetId)
+      if (!target) {
+        try {
+          const singleRes = await axios.get(`/api/reservations?id=${targetId}&status=all`)
+          if (singleRes.data && singleRes.data.length > 0) {
+            target = singleRes.data[0]
+            reservations.value.unshift(target)
+          }
+        } catch (_) {}
+      }
+      if (target) {
+        if (target.is_recurring) {
+          const key = `group_${target.room_id}_${target.title}_${target.start_time}_${target.end_time}`
+          expandedGroups.value.add(key)
+        }
+        await nextTick()
+        openEditModal(target)
+      }
+    }
   } catch (error) {
     console.error('Fetch failed:', error)
   } finally {
@@ -253,6 +297,49 @@ const formatDateWithDay = (dateStr) => {
   return `${dateStr}(${days[d.getDay()]})`
 }
 
+const formatDateTime = (dt) => {
+  if (!dt) return ''
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return String(dt).slice(0, 16)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${day} ${h}:${min}`
+}
+
+const getSortedChangeLogs = (res) => {
+  if (!res) return []
+  if (res.change_logs && res.change_logs.length > 0) {
+    return [...res.change_logs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  }
+  if (res.reject_reason) {
+    return [{
+      id: 'legacy',
+      action_type: res.status,
+      reason: res.reject_reason,
+      created_at: res.updated_at || res.created_at
+    }]
+  }
+  return []
+}
+
+const getActionLabel = (type) => {
+  if (!type) return '변경'
+  if (type === 'modify' || type.includes('변경')) return '변경'
+  if (type === 'reject' || type === 'rejected' || type.includes('반려')) return '반려'
+  if (type === 'cancel' || type === 'cancelled' || type.includes('취소')) return '취소'
+  return '변경'
+}
+
+const getActionBadgeClass = (type) => {
+  const label = getActionLabel(type)
+  if (label === '반려') return 'bg-rose-100 text-rose-700 border-rose-200'
+  if (label === '취소') return 'bg-amber-100 text-amber-700 border-amber-200'
+  return 'bg-blue-100 text-blue-700 border-blue-200'
+}
+
 onMounted(fetchMyReservations)
 
 const expandedGroups = ref(new Set())
@@ -264,15 +351,54 @@ const toggleGroup = (groupId) => {
   }
 }
 
-const filteredReservations = computed(() => {
-  const now = new Date();
-  const currentYMD = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-  const currentHM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+const statusFilter = ref('all')
+const periodFilter = ref('3m') // '3m', '6m', '1y'
 
+const getPeriodStartDate = (period) => {
+  const d = new Date()
+  if (period === '3m') {
+    d.setMonth(d.getMonth() - 3)
+  } else if (period === '6m') {
+    d.setMonth(d.getMonth() - 6)
+  } else if (period === '1y') {
+    d.setFullYear(d.getFullYear() - 1)
+  }
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const periodFilteredReservations = computed(() => {
+  const startDate = getPeriodStartDate(periodFilter.value)
   return reservations.value.filter(res => {
-    // Expiration check
-    const isExpired = res.reservation_date < currentYMD || (res.reservation_date === currentYMD && res.end_time <= currentHM);
-    if (isExpired) return false;
+    const isTarget = route.query.id && String(res.id) === String(route.query.id)
+    if (!isTarget && res.reservation_date && res.reservation_date < startDate) {
+      return false
+    }
+    return true
+  })
+})
+
+const statusCounts = computed(() => {
+  const counts = { all: 0, approved: 0, pending: 0, cancelled: 0, rejected: 0 }
+  periodFilteredReservations.value.forEach(res => {
+    counts.all++
+    if (counts[res.status] !== undefined) {
+      counts[res.status]++
+    }
+  })
+  return counts
+})
+
+const filteredReservations = computed(() => {
+  return periodFilteredReservations.value.filter(res => {
+    const isTarget = route.query.id && String(res.id) === String(route.query.id);
+
+    // Status filter check
+    if (statusFilter.value !== 'all' && res.status !== statusFilter.value && !isTarget) {
+      return false;
+    }
 
     // Search query check
     if (searchQuery.value) {
@@ -333,27 +459,71 @@ const groupedReservations = computed(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-6xl mx-auto space-y-10 min-h-screen font-sans">
+  <div class="p-8 max-w-6xl mx-auto space-y-6 min-h-screen font-sans">
     <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-      <div class="space-y-2">
-        <h1 class="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-          <CalendarDaysIcon class="w-10 h-10 text-indigo-600" />
-          나의 예약 현황
-          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[0.875rem] font-black px-3 py-1 rounded-full leading-none">{{ filteredReservations.length }}</span>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="space-y-1">
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+          <CalendarDaysIcon class="w-8 h-8 text-indigo-600" />
+          <span>나의 예약 현황</span>
+          <span v-if="filteredReservations.length > 0" class="bg-indigo-600 text-white text-[0.8125rem] font-black px-2.5 py-0.5 rounded-full leading-none">
+            {{ filteredReservations.length }}
+          </span>
         </h1>
-        <p class="text-slate-400 font-bold uppercase tracking-widest text-[0.75rem]">관리 및 예약 공간</p>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">관리 및 예약 공간</p>
       </div>
 
-      <!-- Unified Search -->
-      <div class="relative group">
-        <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon class="w-5 h-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+      <button @click="fetchMyReservations" class="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+        <ArrowPathIcon class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+        새로고침
+      </button>
+    </div>
+
+    <!-- Filter & Controls Bar (Admin List View Style) -->
+    <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+      <!-- Left: Status Filter Buttons -->
+      <div class="flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
+        <button v-for="s in [
+          { id: 'all', name: '전체' }, 
+          { id: 'approved', name: '승인완료' }, 
+          { id: 'pending', name: '승인대기' },
+          { id: 'cancelled', name: '취소' },
+          { id: 'rejected', name: '반려' }
+        ]" :key="s.id" 
+                @click="statusFilter = s.id"
+                :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold hover:text-slate-800']"
+                class="px-4 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+          <span>{{ s.name }}</span>
+          <span v-if="statusCounts[s.id] !== undefined" 
+                :class="[statusFilter === s.id ? 'bg-indigo-50 text-indigo-600 font-black' : 'bg-slate-200/70 text-slate-500 font-bold']"
+                class="text-[0.6875rem] px-1.5 py-0.2 rounded-full">
+            {{ statusCounts[s.id] }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Right: Period Filter Buttons & Search -->
+      <div class="flex flex-wrap items-center gap-3 justify-end">
+        <!-- Period Filter -->
+        <div class="flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
+          <button v-for="period in [
+            { id: '3m', name: '~3개월' },
+            { id: '6m', name: '~6개월' },
+            { id: '1y', name: '~1년' }
+          ]" :key="period.id"
+                  @click="periodFilter = period.id"
+                  :class="[periodFilter === period.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold hover:text-slate-800']"
+                  class="px-3.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer">
+            {{ period.name }}
+          </button>
         </div>
-        <input v-model="searchQuery" 
-               type="text" 
-               placeholder="공간명, 신청명, 내용으로 검색..." 
-               class="bg-white pl-14 pr-8 py-4 w-[400px] rounded-[2rem] border border-slate-200 shadow-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none font-bold text-slate-700 placeholder:text-slate-300 transition-all" />
+
+        <!-- Search Bar -->
+        <div class="relative w-full sm:w-64">
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input type="text" v-model="searchQuery" placeholder="공간명, 신청명 검색..." 
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400" />
+        </div>
       </div>
     </div>
 
@@ -375,10 +545,12 @@ const groupedReservations = computed(() => {
               <td colspan="5" class="px-8 py-6 bg-slate-50/50"></td>
             </tr>
           </template>
-          <tr v-else-if="groupedReservations.length === 0">
-             <td colspan="5" class="px-8 py-20 text-center">
-                <div class="text-slate-300 font-bold">조회된 예약 내역이 없습니다.</div>
-             </td>
+          <!-- Empty State -->
+          <tr v-if="!loading && groupedReservations.length === 0">
+            <td colspan="5" class="py-20 text-center border-t border-slate-100">
+              <CalendarDaysIcon class="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p class="text-sm font-black text-slate-400">조건에 부합하는 예약 내역이 없습니다.</p>
+            </td>
           </tr>
           <template v-for="group in groupedReservations" :key="group.id">
             <!-- Group Header Row (For Recurring) -->
@@ -408,7 +580,13 @@ const groupedReservations = computed(() => {
                 <div class="text-[0.75rem] text-slate-400 font-bold mt-1 max-w-[200px] truncate italic">{{ group.reason }}</div>
               </td>
               <td class="px-8 py-6">
-                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                <span v-if="group.items.every(i => i.status === 'cancelled')" class="px-3 py-1 bg-red-50 text-red-500 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                  전체 취소됨
+                </span>
+                <span v-else-if="group.items.some(i => i.status === 'cancelled')" class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                  일부 취소 ({{ group.items.filter(i => i.status !== 'cancelled').length }}/{{ group.items.length }})
+                </span>
+                <span v-else class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
                   반복 진행중
                 </span>
               </td>
@@ -490,8 +668,13 @@ const groupedReservations = computed(() => {
         <div class="p-10 space-y-8 text-left">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
-              <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes.room_name }}</h2>
+              <div class="flex items-center gap-2">
+                <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest">예약 상세 정보</span>
+                <span v-if="editingRes" :class="statusMap[getEffectiveStatus(editingRes)]?.class" class="px-3 py-1 rounded-full text-[0.75rem] font-black uppercase tracking-tighter">
+                  {{ statusMap[getEffectiveStatus(editingRes)]?.label }}
+                </span>
+              </div>
+              <h2 class="text-2xl font-black text-slate-900 pt-2">{{ editForm.title || editingRes?.room_name }}</h2>
             </div>
             <button @click="showEditModal = false" class="p-2 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all">
               <XMarkIcon class="w-6 h-6" />
@@ -556,11 +739,76 @@ const groupedReservations = computed(() => {
             <textarea v-model="editForm.reason" readonly class="w-full bg-transparent border-none p-0 font-bold text-slate-700 h-20 resize-none focus:ring-0 font-sans cursor-default" placeholder="목적을 입력하세요"></textarea>
           </div>
 
+          <!-- 승인 / 반려 / 신청 시간 안내 -->
+          <div v-if="editingRes?.status === 'approved' && editingRes?.updated_at" class="bg-emerald-50/70 border border-emerald-200/60 p-4 rounded-2xl flex items-center justify-between">
+            <span class="text-xs font-black text-emerald-700">승인 시간</span>
+            <span class="text-xs font-black text-emerald-800">{{ formatDateTime(editingRes.updated_at) }}</span>
+          </div>
+          <div v-else-if="editingRes?.status === 'rejected' && editingRes?.updated_at" class="bg-rose-50/70 border border-rose-200/60 p-4 rounded-2xl flex items-center justify-between">
+            <span class="text-xs font-black text-rose-700">반려 시간</span>
+            <span class="text-xs font-black text-rose-800">{{ formatDateTime(editingRes.updated_at) }}</span>
+          </div>
+          <div v-else-if="editingRes?.created_at" class="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-center justify-between">
+            <span class="text-xs font-black text-slate-500">신청 시간</span>
+            <span class="text-xs font-bold text-slate-700">{{ formatDateTime(editingRes.created_at) }}</span>
+          </div>
+
+          <!-- 변경이력 (처리 시간, 사유 시간 오름차순 표시) -->
+          <div v-if="getSortedChangeLogs(editingRes).length > 0" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+            <div class="flex items-center gap-1.5 text-slate-700 font-black text-xs">
+              <ClockIcon class="w-4 h-4 text-indigo-600" />
+              <span>변경이력</span>
+            </div>
+            <div class="space-y-2">
+              <div 
+                v-for="(log, idx) in getSortedChangeLogs(editingRes)" 
+                :key="log.id || idx"
+                class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs space-y-1"
+              >
+                <div class="flex items-center justify-between text-[0.6875rem]">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[0.625rem] font-black border" :class="getActionBadgeClass(log.action_type)">
+                    {{ getActionLabel(log.action_type) }}
+                  </span>
+                  <span class="font-bold text-slate-500">{{ formatDateTime(log.created_at) }}</span>
+                </div>
+                <p class="text-xs font-bold text-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {{ log.reason }}
+                </p>
+              </div>
+            </div>
+          </div>
+
 
           <!-- Actions -->
           <div class="flex gap-4 pt-4 border-t border-slate-100">
-             <button @click="cancelReservation(editingRes.id)" class="flex-1 py-5 bg-rose-50 text-rose-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-rose-100 transition-all active:scale-95">예약 취소 / 삭제</button>
-             <button @click="showEditModal = false" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">닫기</button>
+             <!-- 1. 반려된 경우: "닫기"와 "재 신청" 버튼 -->
+             <template v-if="editingRes?.status === 'rejected'">
+               <button @click="showEditModal = false" class="w-1/3 py-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black uppercase tracking-widest text-xs rounded-[2rem] active:scale-95 transition-all">
+                 닫기
+               </button>
+               <button @click="handleReapply(editingRes)" class="flex-1 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2">
+                 <ArrowPathIcon class="w-4 h-4" />
+                 <span>재 신청</span>
+               </button>
+             </template>
+
+             <!-- 2. 취소 가능한 상태 (대기중 / 승인됨): "예약 취소"와 "닫기" -->
+             <template v-else-if="editingRes?.status !== 'cancelled' && getEffectiveStatus(editingRes) !== 'finished'">
+               <button @click="cancelReservation(editingRes.id)" 
+                       class="flex-1 py-5 bg-rose-50 text-rose-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-rose-100 transition-all active:scale-95">
+                 예약 취소 / 삭제
+               </button>
+               <button @click="showEditModal = false" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">
+                 닫기
+               </button>
+             </template>
+
+             <!-- 3. 취소됨 / 종료됨: "닫기" -->
+             <template v-else>
+               <button @click="showEditModal = false" class="flex-1 bg-slate-900 text-white py-5 font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl active:scale-95 transition-all">
+                 닫기
+               </button>
+             </template>
           </div>
         </div>
       </div>

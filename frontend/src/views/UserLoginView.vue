@@ -116,7 +116,7 @@
 <script setup>
 import { ref, onMounted, computed, defineAsyncComponent, nextTick } from 'vue'
 import { useAuthStore } from '../store/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { EyeIcon, EyeSlashIcon, ArrowRightIcon } from '@heroicons/vue/24/outline'
 
@@ -129,6 +129,7 @@ const DeptPickerDesktopAsync = defineAsyncComponent(() =>
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const departments = ref([])
 const users = ref([])
@@ -201,6 +202,12 @@ const handleLogin = async () => {
   if (result.success) {
     if (auth.user.mustChangePassword) {
       router.push({ name: 'ChangePassword' })
+      return
+    }
+
+    const redirect = route.query.redirect
+    if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+      router.push(redirect)
       return
     }
 

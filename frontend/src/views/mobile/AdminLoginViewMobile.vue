@@ -58,10 +58,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../../store/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const userId = ref('')
 const password = ref('')
@@ -80,9 +81,16 @@ const handleLogin = async () => {
   if (result.success) {
     if (auth.user.mustChangePassword) {
       router.push('/m/change-password')
-    } else {
-      router.push('/m/admin')
+      return
     }
+
+    const redirect = route.query.redirect
+    if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+      router.push(redirect)
+      return
+    }
+
+    router.push('/m/admin/reservations')
   } else {
     errorMsg.value = result.message || '로그인 실패'
   }

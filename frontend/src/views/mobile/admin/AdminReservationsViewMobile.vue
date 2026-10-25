@@ -31,17 +31,22 @@
     </div>
 
     <div v-else class="space-y-4">
-      <div v-if="filteredReservations.length > 0" class="flex items-center gap-2 px-2 pb-1">
-        <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" />
-        <label for="selectAll" class="text-[0.6875rem] font-black text-slate-600 uppercase tracking-widest cursor-pointer">전체 선택</label>
+      <div v-if="selectableReservations.length > 0" class="flex items-center justify-between px-2 pb-1">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer" />
+          <span class="text-[0.6875rem] font-black text-slate-600 uppercase tracking-widest">전체 선택</span>
+        </label>
+        <span class="text-[0.6875rem] font-black text-slate-400">대기 <strong class="text-indigo-600">{{ selectableReservations.length }}</strong>건</span>
       </div>
 
       <div v-for="res in filteredReservations" :key="res.id" 
-        class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
+        :id="'res-' + res.id"
+        :class="[highlightedId === res.id ? 'ring-4 ring-indigo-500/40 shadow-indigo-200' : '']"
+        class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4 transition-all">
         <div class="flex justify-between items-start">
           <div class="flex flex-col">
             <div class="flex items-center gap-2 mb-2">
-              <input type="checkbox" v-model="selectedIds" :value="res.id" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 shrink-0" />
+              <input v-if="res.status === 'pending'" type="checkbox" v-model="selectedIds" :value="res.id" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 shrink-0 cursor-pointer" />
               <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-tighter border">
                 {{ statusMap[res.status]?.label }}
               </span>
@@ -95,7 +100,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { 
   UserIcon, 
@@ -107,6 +113,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useModalStore } from '@/stores/useModalStore'
 
+const route = useRoute()
 const modal = useModalStore()
 
 const allReservations = ref([])
@@ -114,19 +121,24 @@ const loading = ref(false)
 const filterStatus = ref('pending')
 const searchQuery = ref('')
 const selectedIds = ref([])
+const highlightedId = ref(null)
 
 watch(filterStatus, () => selectedIds.value = [])
 
+const selectableReservations = computed(() => {
+  return filteredReservations.value.filter(r => r.status === 'pending')
+})
+
 const isAllSelected = computed(() => {
-  if (filteredReservations.value.length === 0) return false
-  return selectedIds.value.length === filteredReservations.value.length
+  if (selectableReservations.value.length === 0) return false
+  return selectableReservations.value.every(r => selectedIds.value.includes(r.id))
 })
 
 const toggleSelectAll = () => {
   if (isAllSelected.value) {
     selectedIds.value = []
   } else {
-    selectedIds.value = filteredReservations.value.map(r => r.id)
+    selectedIds.value = selectableReservations.value.map(r => r.id)
   }
 }
 
@@ -171,7 +183,21 @@ const filteredReservations = computed(() => {
   return list
 })
 
-onMounted(fetchReservations)
+onMounted(async () => {
+  await fetchReservations()
+  if (route.query.id) {
+    const targetId = Number(route.query.id)
+    highlightedId.value = targetId
+    const target = allReservations.value.find(r => r.id === targetId)
+    if (target) {
+      filterStatus.value = target.status
+    } else {
+      filterStatus.value = 'all'
+    }
+    await nextTick()
+    document.getElementById('res-' + targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+})
 
 const approve = async (res) => {
   if (!await modal.showConfirm('승인하시겠습니까? 신청자에게 알림톡이 발송됩니다.')) return
