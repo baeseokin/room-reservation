@@ -56,75 +56,11 @@ function cleanPhone(phone) {
 }
 
 /**
- * 처리자와 수신인이 동일인인지 확인
- */
-function isSameUser(actor, recipient) {
-  if (!actor || !recipient) return false;
-
-  const actorId = actor.id || actor.userId;
-  const recipientId = recipient.id || recipient.userId || recipient.requester_id;
-  if (actorId && recipientId && String(actorId) === String(recipientId)) {
-    return true;
-  }
-
-  const actorPhone = cleanPhone(actor.phone || actor.requester_phone);
-  const recipientPhone = cleanPhone(recipient.phone || recipient.requester_phone);
-  if (actorPhone && recipientPhone && actorPhone === recipientPhone) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * 동일인 발송 스킵 로깅 (server.log에 출력)
- */
-function logSkipSelfNotification({ status, actor, recipient, reservationTitle, roomName, reservationDate }) {
-  const actorName = actor?.userName || actor?.name || actor?.requester_name || "알 수 없음";
-  const actorPhone = cleanPhone(actor?.phone || actor?.requester_phone) || "-";
-  const actorId = actor?.id || actor?.userId || "-";
-
-  const recipientName = recipient?.userName || recipient?.name || recipient?.requester_name || "알 수 없음";
-  const recipientPhone = cleanPhone(recipient?.phone || recipient?.requester_phone) || "-";
-  const recipientId = recipient?.id || recipient?.userId || recipient?.requester_id || "-";
-
-  console.log(`================================================================`);
-  console.log(`⏭️  [카카오 알림톡 발송 건너뜀 (처리자 == 수신인)]`);
-  console.log(` ▫️ 진행상태        : ${status}`);
-  console.log(` ▫️ 처리자(발송 주체): ${actorName} (ID: ${actorId}, ☎ ${actorPhone})`);
-  console.log(` ▫️ 수신인(대상자)  : ${recipientName} (ID: ${recipientId}, ☎ ${recipientPhone})`);
-  if (roomName || reservationTitle) {
-    console.log(` ▫️ 예약정보        : ${reservationDate || ''} | ${roomName || ''} (${reservationTitle || ''})`);
-  }
-  console.log(` ▫️ 사유            : 처리자와 수신인이 동일하여 알림톡을 발송하지 않습니다.`);
-  console.log(`================================================================`);
-}
-
-/**
  * 새 예약 신청 → 관리자에게 알림
  */
 async function sendNewReservationToAdmin(reservation, adminPhone, actor = null) {
   console.log("✅ sendNewReservationToAdmin reservation :", reservation);
   console.log("✅ sendNewReservationToAdmin adminPhone :", adminPhone);
-
-  const requesterActor = actor || {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-  const adminRecipient = { phone: adminPhone, userName: "관리자" };
-
-  if (isSameUser(requesterActor, adminRecipient)) {
-    logSkipSelfNotification({
-      status: "신청",
-      actor: requesterActor,
-      recipient: adminRecipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
 
   const templateId = envPick("SENDON_TEMPLATE_NEW_RESERVATION", "");
   if (!templateId) {
@@ -159,24 +95,6 @@ async function sendNewReservationToAdmin(reservation, adminPhone, actor = null) 
 async function sendApprovalAlimTalk(reservation, actor = null) {
   console.log("✅ sendApprovalAlimTalk reservation :", reservation);
 
-  const recipient = {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-
-  if (actor && isSameUser(actor, recipient)) {
-    logSkipSelfNotification({
-      status: "승인",
-      actor,
-      recipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
-
   const templateId = envPick("SENDON_TEMPLATE_APPROVED", "");
   if (!templateId || !reservation.requester_phone) {
     console.warn("⚠️  승인 알림톡 설정 미비 — 건너뜀");
@@ -210,24 +128,6 @@ async function sendApprovalAlimTalk(reservation, actor = null) {
 async function sendRejectionAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendRejectionAlimTalk reservation :", reservation);
   console.log("✅ sendRejectionAlimTalk reason :", reason);
-
-  const recipient = {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-
-  if (actor && isSameUser(actor, recipient)) {
-    logSkipSelfNotification({
-      status: "거절",
-      actor,
-      recipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
 
   const templateId = envPick("SENDON_TEMPLATE_REJECTED", "");
   if (!templateId || !reservation.requester_phone) {
@@ -266,24 +166,6 @@ async function sendRejectionAlimTalk(reservation, reason, actor = null) {
 async function sendCancellationAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendCancellationAlimTalk reservation :", reservation, "reason :", reason);
 
-  const recipient = {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-
-  if (actor && isSameUser(actor, recipient)) {
-    logSkipSelfNotification({
-      status: "취소",
-      actor,
-      recipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
-
   const templateId = envPick("SENDON_TEMPLATE_REJECTED", envPick("SENDON_TEMPLATE_APPROVED", ""));
   if (!templateId || !reservation.requester_phone) {
     console.warn("⚠️  취소 알림톡 설정 미비 — 건너뜀");
@@ -321,24 +203,6 @@ async function sendCancellationAlimTalk(reservation, reason, actor = null) {
 async function sendModificationAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendModificationAlimTalk reservation :", reservation, "reason :", reason);
 
-  const recipient = {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-
-  if (actor && isSameUser(actor, recipient)) {
-    logSkipSelfNotification({
-      status: "변경",
-      actor,
-      recipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
-
   const templateId = envPick("SENDON_TEMPLATE_APPROVED", envPick("SENDON_TEMPLATE_REJECTED", ""));
   if (!templateId || !reservation.requester_phone) {
     console.warn("⚠️  변경 알림톡 설정 미비 — 건너뜀");
@@ -374,24 +238,6 @@ async function sendModificationAlimTalk(reservation, reason, actor = null) {
  * 조율 요청 알림톡
  */
 async function sendInquiryAlimTalk(reservation, userName, content, actor = null) {
-  const recipient = {
-    id: reservation.requester_id,
-    userName: reservation.requester_name,
-    phone: reservation.requester_phone
-  };
-
-  if (actor && isSameUser(actor, recipient)) {
-    logSkipSelfNotification({
-      status: "조율요청",
-      actor,
-      recipient,
-      reservationTitle: reservation.title,
-      roomName: reservation.room_name,
-      reservationDate: reservation.reservation_date
-    });
-    return { success: true, skipped: true, message: "Skipped: actor is recipient" };
-  }
-
   const templateId = envPick("SENDON_TEMPLATE_INQUIRY", envPick("SENDON_TEMPLATE_APPROVED", ""));
   if (!templateId || !reservation.requester_phone) return;
   const dateStr = reservation.reservation_date instanceof Date

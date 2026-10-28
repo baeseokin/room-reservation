@@ -167,3 +167,16 @@ CREATE TABLE IF NOT EXISTS `reservation_policies` (
 INSERT INTO `reservation_policies` (`id`, `allow_same_day`, `allow_monday`, `allow_holidays`, `start_time`, `end_time`)
 VALUES (1, 0, 0, 0, '09:00:00', '17:00:00')
 ON DUPLICATE KEY UPDATE id=id;
+
+-- roomdb.reservation_change_logs definition
+CREATE TABLE IF NOT EXISTS `reservation_change_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `reservation_id` int(11) NOT NULL,
+  `action_type` varchar(50) NOT NULL COMMENT 'reject, modify, cancel 등',
+  `reason` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `reservation_id` (`reservation_id`),
+  CONSTRAINT `reservation_change_logs_ibfk_1` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
