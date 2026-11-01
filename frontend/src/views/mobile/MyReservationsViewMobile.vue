@@ -1,70 +1,68 @@
 <template>
-  <div class="space-y-4 pb-24 relative select-none">
-    <!-- 1. Top Month Navigator Header -->
-    <div class="px-5 pt-1">
-      <div class="flex items-center justify-between">
-        <div class="relative flex items-center gap-1 group">
-          <button
-            @click="prevMonth"
-            class="p-2 -ml-2 text-slate-400 hover:text-slate-800 active:scale-90 transition-transform"
-            title="이전 달"
-          >
-            <ChevronLeftIcon class="w-5 h-5 stroke-[2.5]" />
-          </button>
+  <div
+    class="flex flex-col relative select-none overscroll-none"
+    @touchstart="onCalendarTouchStart"
+    @touchmove="onCalendarTouchMove"
+    @touchend="onCalendarTouchEnd"
+    @touchcancel="onCalendarTouchEnd"
+    @mousedown="onCalendarMouseDown"
+  >
+    <!-- 1. Fixed Top Header Section (상단 완전 고정: 월 네비게이터 + 요일 헤더) -->
+    <div class="fixed-calendar-header sticky top-[3.75rem] z-30 bg-slate-50 pt-1 pb-1 space-y-2 select-none touch-none">
+      <!-- 1-1. Top Month Navigator Header -->
+      <div class="px-5">
+        <div class="flex items-center justify-between">
+          <div class="relative flex items-center gap-1 group">
+            <button
+              @click="prevMonth"
+              class="p-2 -ml-2 text-slate-400 hover:text-slate-800 active:scale-90 transition-transform"
+              title="이전 달"
+            >
+              <ChevronLeftIcon class="w-5 h-5 stroke-[2.5]" />
+            </button>
 
-          <!-- Click to pick year/month via native picker -->
-          <button
-            @click="triggerDatePicker"
-            class="flex items-center gap-1.5 px-2 py-1 rounded-xl hover:bg-slate-100 active:scale-95 transition-all"
-          >
-            <span class="text-xl font-black text-slate-900 tracking-tight">
-              {{ monthHeaderTitle }}
+            <!-- Click to pick year/month via native picker -->
+            <button
+              @click="triggerDatePicker"
+              class="flex items-center gap-1.5 px-2 py-1 rounded-xl hover:bg-slate-100 active:scale-95 transition-all"
+            >
+              <span class="text-xl font-black text-slate-900 tracking-tight">
+                {{ monthHeaderTitle }}
+              </span>
+              <span class="text-xs text-slate-400 font-bold group-hover:text-slate-600">▾</span>
+            </button>
+
+            <button
+              @click="nextMonth"
+              class="p-2 text-slate-400 hover:text-slate-800 active:scale-90 transition-transform"
+              title="다음 달"
+            >
+              <ChevronRightIcon class="w-5 h-5 stroke-[2.5]" />
+            </button>
+
+            <!-- Hidden Native Month Picker -->
+            <input
+              ref="dateInputRef"
+              type="month"
+              class="sr-only"
+              @change="onNativeMonthPick"
+            />
+          </div>
+
+          <!-- Right: Status Summary Pill (승인완료 / 대기중) -->
+          <div class="flex items-center gap-1 text-[11px] font-bold">
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-black">
+              승인 {{ approvedCount }}
             </span>
-            <span class="text-xs text-slate-400 font-bold group-hover:text-slate-600">▾</span>
-          </button>
-
-          <button
-            @click="nextMonth"
-            class="p-2 text-slate-400 hover:text-slate-800 active:scale-90 transition-transform"
-            title="다음 달"
-          >
-            <ChevronRightIcon class="w-5 h-5 stroke-[2.5]" />
-          </button>
-
-          <!-- Hidden Native Month Picker -->
-          <input
-            ref="dateInputRef"
-            type="month"
-            class="sr-only"
-            @change="onNativeMonthPick"
-          />
-        </div>
-
-        <!-- Right: Status Summary Pill (승인완료 / 대기중) -->
-        <div class="flex items-center gap-1 text-[11px] font-bold">
-          <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-black">
-            승인 {{ approvedCount }}
-          </span>
-          <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-black">
-            대기 {{ pendingCount }}
-          </span>
+            <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-black">
+              대기 {{ pendingCount }}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 2. Calendar Card Container (Horizontal Swipe & Vertical Collapse Gestures) -->
-    <div
-      class="bg-white rounded-3xl shadow-sm border border-slate-100/80 overflow-hidden touch-pan-y"
-      @touchstart="onCalendarTouchStart"
-      @touchmove="onCalendarTouchMove"
-      @touchend="onCalendarTouchEnd"
-      @touchcancel="onCalendarTouchEnd"
-      @mousedown="onCalendarMouseDown"
-      @mousemove="onCalendarMouseMove"
-      @mouseup="onCalendarMouseUp"
-    >
-      <!-- Weekday Headers (일 ~ 토) -->
-      <div class="grid grid-cols-7 pt-3 pb-2 border-b border-slate-100 text-center text-xs font-black">
+      <!-- 1-2. Weekday Headers (일 ~ 토) - 상단 고정 헤더 -->
+      <div class="bg-white rounded-t-3xl shadow-sm border-t border-x border-slate-100/80 grid grid-cols-7 pt-3 pb-2 border-b border-slate-100 text-center text-xs font-black">
         <span class="text-rose-500">일</span>
         <span class="text-slate-600">월</span>
         <span class="text-slate-600">화</span>
@@ -73,7 +71,12 @@
         <span class="text-slate-600">금</span>
         <span class="text-blue-600">토</span>
       </div>
+    </div>
 
+    <!-- 2. Movable Calendar Body Card Container (터치 드래그로 위아래 움직이는 영역) -->
+    <div
+      class="bg-white rounded-b-3xl shadow-sm border-b border-x border-slate-100/80 overflow-hidden"
+    >
       <!-- Calendar Grid Body (with Smooth Horizontal Swipe Animation) -->
       <div
         class="overflow-hidden"
@@ -130,7 +133,7 @@
               <!-- Collapsed Mode: Dots below Date -->
               <div
                 v-if="effectiveCollapseProgress > 0.6"
-                class="flex items-center justify-center gap-1 pt-1 h-3"
+                class="flex items-center justify-center gap-1 pt-1 h-3 pointer-events-none"
               >
                 <span
                   v-for="(dotColor, dIdx) in getCellDotColors(cell)"
@@ -143,13 +146,12 @@
               <!-- Expanded Mode: Up to 2 event bars + overflow count -->
               <div
                 v-else
-                class="space-y-0.5 pt-1 min-h-[2.5rem]"
+                class="space-y-0.5 pt-1 min-h-[2.5rem] pointer-events-none"
               >
                 <div
                   v-for="item in cell.items.slice(0, 2)"
                   :key="item.id"
-                  @click.stop="handleCellItemTap(item)"
-                  class="px-1.5 py-0.5 rounded text-[10px] font-bold truncate leading-tight transition-transform active:scale-95"
+                  class="px-1.5 py-0.5 rounded text-[10px] font-bold truncate leading-tight"
                   :class="getExpandedBarClass(item)"
                   :title="`${item.title || item.room_name} (${fmtTime(item.start_time)}~${fmtTime(item.end_time)})`"
                 >
@@ -168,22 +170,22 @@
         </div>
       </div>
 
+      <!-- Grab Handle Bar (터치 드래그 바 - 위/아래 드래그 및 탭 지원) -->
+      <div
+        @click="toggleCalendarCollapse()"
+        class="py-2.5 cursor-pointer flex flex-col items-center group touch-none select-none border-t border-slate-100 bg-white hover:bg-slate-50 transition-colors"
+        :title="isCalendarCollapsed ? '아래로 당기거나 터치하여 전체 캘린더 펼치기' : '위로 밀거나 터치하여 캘린더 접기'"
+      >
+        <div class="w-10 h-1.5 bg-slate-300 group-hover:bg-slate-400 rounded-full transition-colors"></div>
+      </div>
+
       <!-- 3. Bottom Schedule List Panel (터치 드래그에 맞춰 자연스럽게 슬라이드) -->
       <div
         v-show="effectiveCollapseProgress > 0.01"
         class="border-t border-slate-100 bg-white px-5 overflow-hidden"
         :style="schedulePanelStyle"
       >
-        <div class="pt-2 pb-6 space-y-4 min-h-[15rem]">
-          <!-- Grab Handle (Tap to expand/collapse) -->
-          <div
-            @click="toggleCalendarCollapse(false)"
-            class="py-2 cursor-pointer flex flex-col items-center group touch-none"
-            title="터치하거나 아래로 내려 전체 캘린더 펼치기"
-          >
-            <div class="w-10 h-1 bg-slate-300 group-hover:bg-slate-400 rounded-full transition-colors"></div>
-          </div>
-
+        <div class="pt-3 pb-6 space-y-4 min-h-[15rem]">
           <!-- Selected Date Title -->
           <div class="flex items-center justify-between gap-2 flex-wrap">
             <div class="flex items-center gap-2">
@@ -210,7 +212,7 @@
             </div>
           </div>
 
-          <div v-else class="space-y-2.5 max-h-[22rem] overflow-y-auto pr-0.5">
+          <div v-else class="space-y-2.5 max-h-[22rem] overflow-y-auto overscroll-contain pr-0.5 touch-pan-y" style="-webkit-overflow-scrolling: touch;">
             <div
               v-for="item in selectedDayItems"
               :key="item.id"
@@ -255,6 +257,12 @@
         </div>
       </div>
     </div>
+
+    <!-- 3. Bottom Grey Background Area (캘린더 하단 회색 배경 터치 드래그 영역) -->
+    <div
+      class="flex-1 min-h-[6rem] -mx-5 px-5 cursor-pointer touch-none"
+      title="위/아래로 드래그하여 캘린더 접기/펼치기"
+    ></div>
 
     <!-- 4. Bottom Floating Controls: [오늘 ›] + [고정일정 포함] & [돋보기 / +] FAB -->
     <div class="fixed bottom-20 inset-x-0 pointer-events-none z-40 px-6 flex items-end justify-between">
@@ -986,7 +994,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
@@ -1291,7 +1299,8 @@ const cellHeightStyle = computed(() => {
 const calendarGridTransformStyle = computed(() => {
   const p = effectiveCollapseProgress.value
   const wIdx = activeWeekIndex.value
-  const targetShiftRem = -wIdx * 3.25
+  const curRowH = 5.25 - p * (5.25 - 3.25)
+  const targetShiftRem = -wIdx * curRowH
   const curShift = p * targetShiftRem
   const x = swipeTranslateX.value
   return {
@@ -1315,28 +1324,66 @@ const schedulePanelStyle = computed(() => {
 let touchStartX = 0
 let touchStartY = 0
 let gestureMode = null
+let startInScrollableList = false
+let listScrollTopStart = 0
+let scrollableEl = null
+let isMouseDown = false
 const swipeTranslateX = ref(0)
 const isSwipingX = ref(false)
 
 const onCalendarTouchStart = (e) => {
+  if (e.target.closest('button, input, select, a') || e.target.closest('.fixed-calendar-header')) {
+    gestureMode = 'ignored'
+    return
+  }
   const t = e.touches[0]
   touchStartX = t.clientX
   touchStartY = t.clientY
   gestureMode = null
   dragDeltaY.value = 0
   swipeTranslateX.value = 0
+
+  scrollableEl = e.target.closest('.overflow-y-auto')
+  if (scrollableEl) {
+    startInScrollableList = true
+    listScrollTopStart = scrollableEl.scrollTop
+  } else {
+    startInScrollableList = false
+    listScrollTopStart = 0
+  }
 }
 
 const onCalendarTouchMove = (e) => {
+  if (gestureMode === 'ignored') {
+    if (e.cancelable) e.preventDefault()
+    return
+  }
   const t = e.touches[0]
   const dx = t.clientX - touchStartX
   const dy = t.clientY - touchStartY
 
+  // If touch started inside scrollable list:
+  if (startInScrollableList && isCalendarCollapsed.value) {
+    const atTop = !scrollableEl || scrollableEl.scrollTop <= 2
+    if (atTop && dy > 15) {
+      startInScrollableList = false
+      gestureMode = 'vertical'
+      isDraggingY.value = true
+    } else {
+      return
+    }
+  }
+
+  // Prevent browser window from scrolling vertically when touching outside scrollable list
+  if (e.cancelable) {
+    e.preventDefault()
+  }
+
   if (!gestureMode) {
-    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
       gestureMode = 'horizontal'
       isSwipingX.value = true
-    } else if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) {
+    } else if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
       gestureMode = 'vertical'
       isDraggingY.value = true
     }
@@ -1346,12 +1393,16 @@ const onCalendarTouchMove = (e) => {
     swipeTranslateX.value = dx * 0.75
   } else if (gestureMode === 'vertical') {
     dragDeltaY.value = dy
-    const factor = isCalendarCollapsed.value ? 160 : -160
-    dragProgress.value = Math.max(-1, Math.min(1, dy / factor))
+    const DRAG_SPAN = 150
+    dragProgress.value = Math.max(-1, Math.min(1, -dy / DRAG_SPAN))
   }
 }
 
 const onCalendarTouchEnd = () => {
+  if (gestureMode === 'ignored') {
+    gestureMode = null
+    return
+  }
   if (gestureMode === 'horizontal') {
     const threshold = 60
     if (swipeTranslateX.value < -threshold) {
@@ -1364,9 +1415,13 @@ const onCalendarTouchEnd = () => {
   } else if (gestureMode === 'vertical') {
     const threshold = 35
     if (isCalendarCollapsed.value) {
-      if (dragDeltaY.value > threshold) toggleCalendarCollapse(false)
+      if (dragDeltaY.value > threshold || effectiveCollapseProgress.value < 0.6) {
+        toggleCalendarCollapse(false)
+      }
     } else {
-      if (dragDeltaY.value < -threshold) toggleCalendarCollapse(true)
+      if (dragDeltaY.value < -threshold || effectiveCollapseProgress.value > 0.4) {
+        toggleCalendarCollapse(true)
+      }
     }
     dragProgress.value = 0
     isDraggingY.value = false
@@ -1375,21 +1430,67 @@ const onCalendarTouchEnd = () => {
 }
 
 const onCalendarMouseDown = (e) => {
+  if (e.target.closest('button, input, select, a') || e.target.closest('.fixed-calendar-header')) {
+    gestureMode = 'ignored'
+    return
+  }
+  isMouseDown = true
   touchStartX = e.clientX
   touchStartY = e.clientY
   gestureMode = null
+  dragDeltaY.value = 0
+  swipeTranslateX.value = 0
+
+  scrollableEl = e.target.closest('.overflow-y-auto')
+  startInScrollableList = !!scrollableEl
+  listScrollTopStart = scrollableEl ? scrollableEl.scrollTop : 0
+
+  window.addEventListener('mousemove', onCalendarMouseMove)
+  window.addEventListener('mouseup', onCalendarMouseUp)
 }
+
 const onCalendarMouseMove = (e) => {
-  if (e.buttons !== 1) return
+  if (!isMouseDown || e.buttons !== 1) return
+  if (gestureMode === 'ignored') return
   const dx = e.clientX - touchStartX
-  if (Math.abs(dx) > 10) {
-    swipeTranslateX.value = dx * 0.6
+  const dy = e.clientY - touchStartY
+
+  if (startInScrollableList && isCalendarCollapsed.value) {
+    const atTop = !scrollableEl || scrollableEl.scrollTop <= 2
+    if (atTop && dy > 15) {
+      startInScrollableList = false
+      gestureMode = 'vertical'
+      isDraggingY.value = true
+    } else {
+      return
+    }
+  }
+
+  if (!gestureMode) {
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      gestureMode = 'horizontal'
+      isSwipingX.value = true
+    } else if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+      gestureMode = 'vertical'
+      isDraggingY.value = true
+    }
+  }
+
+  if (gestureMode === 'horizontal') {
+    swipeTranslateX.value = dx * 0.75
+  } else if (gestureMode === 'vertical') {
+    dragDeltaY.value = dy
+    const DRAG_SPAN = 150
+    dragProgress.value = Math.max(-1, Math.min(1, -dy / DRAG_SPAN))
   }
 }
-const onCalendarMouseUp = (e) => {
-  if (swipeTranslateX.value < -50) nextMonth()
-  else if (swipeTranslateX.value > 50) prevMonth()
-  swipeTranslateX.value = 0
+
+const onCalendarMouseUp = () => {
+  if (!isMouseDown) return
+  isMouseDown = false
+  window.removeEventListener('mousemove', onCalendarMouseMove)
+  window.removeEventListener('mouseup', onCalendarMouseUp)
+  onCalendarTouchEnd()
 }
 
 const toggleCalendarCollapse = (val) => {
@@ -1398,6 +1499,7 @@ const toggleCalendarCollapse = (val) => {
 
 // Day selection and clicking
 const handleDayCellClick = (cell) => {
+  if (Math.abs(dragDeltaY.value) > 10 || Math.abs(swipeTranslateX.value) > 10) return
   if (!cell || !cell.dateStr) return
   activeDayStr.value = cell.dateStr
   toggleCalendarCollapse(true)
@@ -1969,6 +2071,15 @@ const fetchAll = async () => {
 }
 
 onMounted(() => {
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
   fetchAll()
+})
+
+onUnmounted(() => {
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
+  window.removeEventListener('mousemove', onCalendarMouseMove)
+  window.removeEventListener('mouseup', onCalendarMouseUp)
 })
 </script>
