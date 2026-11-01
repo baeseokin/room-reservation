@@ -268,7 +268,7 @@ onMounted(() => {
     <div v-if="showBlockedModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex flex-col justify-end">
        <div class="bg-white rounded-t-[3rem] p-8 space-y-6 animate-slide-up max-h-[90vh] overflow-y-auto">
           <div class="flex justify-between items-start">
-            <h2 class="text-xl font-black">{{ currentRoomForBlocked?.room_name }} - 예약 불가 설정</h2>
+            <h2 class="text-xl font-black">{{ currentRoomForBlocked?.room_name }} - 고정 일정 설정</h2>
             <button @click="showBlockedModal = false" class="p-2 text-slate-400"><PlusIcon class="w-6 h-6 rotate-45" /></button>
           </div>
 

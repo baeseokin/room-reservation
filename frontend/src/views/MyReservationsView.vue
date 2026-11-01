@@ -107,12 +107,14 @@ const selectCalendarDate = (date) => {
 
 const moveCalendarMonth = (offset) => {
   const d = new Date(calendarDate.value)
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   calendarDate.value = d
 }
 
 const moveCalendarYear = (offset) => {
   const d = new Date(calendarDate.value)
+  d.setDate(1)
   d.setFullYear(d.getFullYear() + offset)
   calendarDate.value = d
 }

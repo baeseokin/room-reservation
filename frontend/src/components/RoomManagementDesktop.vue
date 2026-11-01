@@ -288,7 +288,7 @@ onMounted(() => {
               
               <!-- Blocked Times Badges -->
               <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 col-span-full mt-2">
-                <span class="text-[0.75rem] font-black text-rose-500 uppercase tracking-widest w-full mb-1">예약 불가 시간</span>
+                <span class="text-[0.75rem] font-black text-rose-500 uppercase tracking-widest w-full mb-1">고정 일정</span>
                 <div v-for="bt in room.blocked_times" :key="'list-bt-'+bt.id" 
                      class="flex items-center gap-1.5 px-2 py-1 bg-rose-50/50 border border-rose-100 rounded-lg">
                   <span class="text-[0.75rem] font-black text-rose-600">{{ getDayLabel(bt.day_of_week) }}</span>
@@ -301,7 +301,7 @@ onMounted(() => {
           <!-- Actions -->
           <div class="flex items-center gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button @click="openBlockedModal(room)"
-              title="예약 불가 시간 설정"
+              title="고정 일정 설정"
               class="p-3 bg-white border border-slate-200 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all active:scale-95">
               <NoSymbolIcon class="w-4 h-4" />
             </button>
@@ -405,9 +405,9 @@ onMounted(() => {
         <div class="bg-white rounded-[3rem] shadow-2xl max-w-2xl w-full p-10 space-y-8 animate-in fade-in zoom-in duration-300 overflow-y-auto max-h-[90vh] scrollbar-hide">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="text-[0.75rem] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">예약 불가 설정</span>
+              <span class="text-[0.75rem] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">고정 일정 설정</span>
               <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ currentRoomForBlocked?.room_name }}</h2>
-              <p class="text-slate-500 text-sm font-bold">정기적인 유지보수나 고정 업무 시간을 차단합니다.</p>
+              <p class="text-slate-500 text-sm font-bold">정기적인 유지보수나 고정 일정을 설정합니다.</p>
             </div>
             <button @click="showBlockedModal = false" class="p-2 text-slate-400 hover:text-slate-900 transition-colors"><PlusIcon class="w-6 h-6 rotate-45" /></button>
           </div>
@@ -415,7 +415,7 @@ onMounted(() => {
           <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
             <!-- Add Form -->
             <div class="bg-slate-50 rounded-3xl p-8 space-y-6">
-              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">불가 시간 추가</h3>
+              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">고정 일정 추가</h3>
               <div class="space-y-4">
                 <!-- Row 1: Recurring Type -->
                 <div class="space-y-1.5">
@@ -502,9 +502,9 @@ onMounted(() => {
 
             <!-- List -->
             <div class="space-y-4">
-              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">등록된 불가 시간</h3>
+              <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">등록된 고정 일정</h3>
               <div v-if="blockedTimes.length === 0" class="text-center py-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                <p class="text-slate-400 text-xs font-bold">등록된 예약 불가 시간이 없습니다.</p>
+                <p class="text-slate-400 text-xs font-bold">등록된 고정 일정이 없습니다.</p>
               </div>
               <div v-else class="space-y-2">
                 <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-rose-200 transition-all">

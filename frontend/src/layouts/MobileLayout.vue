@@ -17,7 +17,16 @@
           가 +
         </button>
       </div>
-      <button @click="logout" class="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 shrink-0">
+      <button
+        @click="toggleFullscreen"
+        class="w-10 h-10 mr-1.5 flex items-center justify-center rounded-xl transition-all active:scale-95 shrink-0"
+        :class="isFullscreen ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'"
+        :title="isFullscreen ? '전체화면 종료' : '전체화면 전환'"
+      >
+        <ArrowsPointingInIcon v-if="isFullscreen" class="w-5 h-5" />
+        <ArrowsPointingOutIcon v-else class="w-5 h-5" />
+      </button>
+      <button @click="logout" class="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 shrink-0" title="로그아웃">
         <ArrowRightOnRectangleIcon class="w-5 h-5" />
       </button>
     </header>
@@ -40,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useModalStore } from '@/stores/useModalStore'
@@ -50,6 +59,8 @@ import {
   ClockIcon, 
   UserIcon,
   ArrowRightOnRectangleIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
   ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
 
@@ -58,12 +69,75 @@ const router = useRouter()
 const auth = useAuthStore()
 const modal = useModalStore()
 const isFontMenuOpen = ref(false)
+const isFullscreen = ref(false)
+
+const syncFullscreenState = () => {
+  isFullscreen.value = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  )
+}
+
+const toggleFullscreen = async () => {
+  const docEl = document.documentElement
+  const isCurrentlyFullscreen = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  )
+
+  try {
+    if (!isCurrentlyFullscreen) {
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen()
+      } else if (docEl.webkitRequestFullscreen) {
+        await docEl.webkitRequestFullscreen()
+      } else {
+        modal.showAlert(
+          '현재 브라우저(iPhone Safari 등)에서는 전체화면 API가 제한됩니다.\n브라우저 메뉴의 "홈 화면에 추가"를 이용하시면 상단 주소창 없이 전체화면으로 사용하실 수 있습니다.',
+          '전체화면 안내'
+        )
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen()
+      }
+    }
+  } catch (err) {
+    console.warn('Fullscreen toggle failed:', err)
+  } finally {
+    syncFullscreenState()
+  }
+}
+
+onMounted(() => {
+  syncFullscreenState()
+  document.addEventListener('fullscreenchange', syncFullscreenState)
+  document.addEventListener('webkitfullscreenchange', syncFullscreenState)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', syncFullscreenState)
+  document.removeEventListener('webkitfullscreenchange', syncFullscreenState)
+})
 
 const pageTitle = computed(() => {
+  if (route.path.includes('/m/admin/reservations')) return '예약 관리'
+  if (route.path.includes('/m/admin/users')) return '사용자 관리'
+  if (route.path.includes('/m/admin/rooms')) return '공간 관리'
+  if (route.path.includes('/m/admin/departments')) return '부서 관리'
+  if (route.path.includes('/m/admin/policy')) return '예약 정책 설정'
+  if (route.path.includes('/m/admin')) return '관리자 센터'
   if (route.path.includes('/m/reservations')) return '공간 예약'
   if (route.path.includes('/m/my-reservations')) return '나의 예약'
-  if (route.path.includes('/m/profile')) return '프로필'
-  if (route.path.includes('/m/admin')) return '관리자'
+  if (route.path.includes('/m/profile')) return '프로필 설정'
+  if (route.path.includes('/m/change-password')) return '비밀번호 변경'
+  if (route.path.includes('/m/guide')) return '이용 가이드'
   return '홈'
 })
 

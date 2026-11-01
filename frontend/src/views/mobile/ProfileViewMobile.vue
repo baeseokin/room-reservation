@@ -1,10 +1,5 @@
 <template>
   <div class="space-y-8">
-    <div class="space-y-1">
-      <h2 class="text-2xl font-black text-slate-900 tracking-tight">프로필 설정</h2>
-      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">본인의 계정 정보를 관리합니다.</p>
-    </div>
-
     <!-- Profile Header -->
     <div class="flex flex-col items-center gap-4 py-8 bg-white rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50">
       <div class="w-24 h-24 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 text-3xl font-black">

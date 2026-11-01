@@ -130,32 +130,22 @@ onMounted(fetchDepartments)
 </script>
 
 <template>
-  <div class="space-y-6 pb-20">
-    <!-- Header -->
-    <div class="flex justify-between items-center px-2">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">조직 체계 관리</h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">부서 간의 계층 구조를 관리합니다.</p>
-      </div>
-      <div class="flex gap-2">
-        <button @click="fetchDepartments" class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:scale-95 transition-all">
-          <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
-        </button>
-        <button @click="openModal()" class="p-3 bg-slate-900 text-white rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all">
-          <PlusIcon class="w-5 h-5" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Search Input -->
-    <div class="px-2">
-      <div class="relative group">
+  <div class="space-y-5 pb-20">
+    <!-- Search Input + Action Buttons -->
+    <div class="px-2 flex items-center gap-2">
+      <div class="relative group flex-1">
         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <MagnifyingGlassIcon class="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
         </div>
         <input v-model="searchQuery" type="text" placeholder="부서 이름으로 검색..." 
-          class="w-full pl-11 pr-4 py-4 bg-white border border-slate-100 rounded-[2rem] text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm" />
+          class="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-100 rounded-[2rem] text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm" />
       </div>
+      <button @click="fetchDepartments" class="p-3.5 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:scale-95 transition-all shrink-0" title="새로고침">
+        <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
+      </button>
+      <button @click="openModal()" class="p-3.5 bg-slate-900 text-white rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all shrink-0" title="부서 추가">
+        <PlusIcon class="w-5 h-5" />
+      </button>
     </div>
 
     <!-- Tree Structure -->

@@ -219,36 +219,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-20">
-    <!-- Header -->
-    <div class="flex justify-between items-center px-2">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">공간 관리</h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">시설물 등록 및 관리 설정을 관리합니다.</p>
+  <div class="space-y-5 pb-20">
+    <!-- Filter Tabs (Floor) + Action Buttons -->
+    <div class="flex items-center justify-between gap-2 px-2">
+      <div class="flex gap-2 overflow-x-auto py-1 scrollbar-hide flex-1">
+        <button @click="filterFloor = 'all'"
+          :class="filterFloor === 'all' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'"
+          class="px-5 py-2.5 rounded-2xl text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
+          전체
+        </button>
+        <button v-for="f in floorOrder" :key="f"
+          @click="filterFloor = f"
+          :class="filterFloor === f ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'"
+          class="px-5 py-2.5 rounded-2xl text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
+          {{ f }}층
+        </button>
       </div>
-      <div class="flex gap-2">
-        <button @click="fetchRooms" class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:scale-95 transition-all">
+      <div class="flex gap-1.5 shrink-0">
+        <button @click="fetchRooms" class="p-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 active:scale-95 transition-all" title="새로고침">
           <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': isLoading }" />
         </button>
-        <button @click="openModal()" class="p-3 bg-slate-900 text-white rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all">
+        <button @click="openModal()" class="p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all" title="공간 등록">
           <PlusIcon class="w-5 h-5" />
         </button>
       </div>
-    </div>
-
-    <!-- Filter Tabs (Floor) -->
-    <div class="flex gap-2 overflow-x-auto pb-2 px-2 scrollbar-hide">
-      <button @click="filterFloor = 'all'"
-        :class="filterFloor === 'all' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'"
-        class="px-5 py-2.5 rounded-2xl text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
-        전체
-      </button>
-      <button v-for="f in floorOrder" :key="f"
-        @click="filterFloor = f"
-        :class="filterFloor === f ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'"
-        class="px-5 py-2.5 rounded-2xl text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
-        {{ f }}층
-      </button>
     </div>
 
     <!-- Room List -->
@@ -320,7 +314,7 @@ onMounted(() => {
 
           <!-- Blocked Times Section -->
           <div v-if="room.blocked_times?.length > 0" class="space-y-2 px-2 border-t border-slate-100 pt-4">
-            <span class="text-[0.625rem] font-black text-rose-500 uppercase tracking-widest block mb-2">예약 불가 시간</span>
+            <span class="text-[0.625rem] font-black text-rose-500 uppercase tracking-widest block mb-2">고정 일정</span>
             <div class="flex flex-wrap gap-2">
               <div v-for="bt in room.blocked_times" :key="'list-bt-'+bt.id" 
                 class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-xl">
@@ -435,7 +429,7 @@ onMounted(() => {
         <div class="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3.5rem] p-8 sm:p-12 space-y-8 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[90vh] scrollbar-hide">
           <div class="flex justify-between items-center">
             <div class="space-y-1">
-              <span class="text-[0.625rem] font-black text-rose-500 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">예약 불가 시간</span>
+              <span class="text-[0.625rem] font-black text-rose-500 bg-rose-50 px-3 py-1 rounded-full uppercase tracking-widest">고정 일정</span>
               <h2 class="text-2xl font-black text-slate-900 tracking-tight">{{ currentRoomForBlocked?.room_name }}</h2>
             </div>
             <button @click="showBlockedModal = false" class="p-2 bg-slate-50 text-slate-400 rounded-full">

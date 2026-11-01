@@ -1,253 +1,477 @@
 <template>
-  <div class="space-y-6 pb-32">
-    <div class="flex justify-between items-center">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">예약 승인 관리</h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">예약 신청건을 검토합니다.</p>
+  <div class="space-y-4 pb-20">
+    <!-- Main Tab Switcher: 예약 현황 vs 신청 검토 -->
+    <div class="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm grid grid-cols-2 gap-1">
+      <button
+        @click="switchTab('calendar')"
+        class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition-all"
+        :class="activeTab === 'calendar'
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
+          : 'text-slate-500 hover:text-slate-800'"
+      >
+        <CalendarDaysIcon class="w-4 h-4" />
+        <span>예약 현황</span>
+      </button>
+
+      <button
+        @click="switchTab('review')"
+        class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition-all"
+        :class="activeTab === 'review'
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
+          : 'text-slate-500 hover:text-slate-800'"
+      >
+        <ClipboardDocumentCheckIcon class="w-4 h-4" />
+        <span>신청 검토</span>
+        <span
+          v-if="pendingCount > 0"
+          class="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none transition-colors"
+          :class="activeTab === 'review' ? 'bg-white text-rose-600' : 'bg-rose-500 text-white animate-pulse'"
+        >
+          {{ pendingCount }}
+        </span>
+      </button>
+    </div>
+
+    <!-- ==========================================
+         TAB 1: 예약 현황 (Mobile Calendar & List View)
+    =========================================== -->
+    <div v-show="activeTab === 'calendar'" class="animate-in fade-in duration-200">
+      <AdminReservationCalendarMobile ref="calendarRef" @updated="handleCalendarUpdated" />
+    </div>
+
+    <!-- ==========================================
+         TAB 2: 신청 검토 (Pending Reservations Review)
+    =========================================== -->
+    <div v-show="activeTab === 'review'" class="space-y-4 animate-in fade-in duration-200">
+      <!-- Search & Select All Card -->
+      <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+        <!-- Search Input -->
+        <div class="relative">
+          <MagnifyingGlassIcon class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="신청명, 신청자, 공간명 검색..."
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-8 py-2.5 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-indigo-400"
+          />
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-black"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Select All & Pending Count -->
+        <div class="flex items-center justify-between px-1">
+          <label
+            v-if="filteredReservations.length > 0"
+            class="flex items-center gap-2 cursor-pointer select-none"
+          >
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              @change="toggleSelectAll"
+              class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span class="text-xs font-black text-slate-600">전체 선택</span>
+          </label>
+          <span v-else class="text-xs font-bold text-slate-400">검토 대기 목록</span>
+
+          <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>승인 대기 <strong class="text-indigo-600 font-black">{{ pendingCount }}</strong>건</span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="space-y-3">
-       <div class="relative">
-          <input v-model="searchQuery" type="text" placeholder="신청명, 공간명, 신청자 검색..." 
-                 class="w-full bg-white border border-slate-100 rounded-[1.5rem] pl-12 pr-4 py-4 text-xs font-black text-slate-700 focus:ring-0 focus:border-indigo-500 transition-all shadow-sm" />
-          <MagnifyingGlassIcon class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-       </div>
-
-       <!-- Filter Tabs -->
-       <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-         <button v-for="s in ['all', 'pending', 'approved', 'rejected']" :key="s"
-           @click="filterStatus = s"
-           :class="[filterStatus === s ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border-slate-100']"
-           class="px-5 py-2.5 rounded-2xl border text-[0.625rem] font-black uppercase tracking-widest transition-all shrink-0">
-           {{ { all:'전체', pending:'대기', approved:'승인', rejected:'거부' }[s] }}
-         </button>
-       </div>
-    </div>
-
-    <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-
-    <div v-else class="space-y-4">
-      <div v-if="selectableReservations.length > 0" class="flex items-center justify-between px-2 pb-1">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer" />
-          <span class="text-[0.6875rem] font-black text-slate-600 uppercase tracking-widest">전체 선택</span>
-        </label>
-        <span class="text-[0.6875rem] font-black text-slate-400">대기 <strong class="text-indigo-600">{{ selectableReservations.length }}</strong>건</span>
+      <!-- Loading -->
+      <div v-if="loading" class="bg-white rounded-[2rem] p-12 text-center border border-slate-100 space-y-3">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs font-black text-slate-400">승인 대기 목록을 불러오는 중...</p>
       </div>
 
-      <div v-for="res in filteredReservations" :key="res.id" 
-        :id="'res-' + res.id"
-        :class="[highlightedId === res.id ? 'ring-4 ring-indigo-500/40 shadow-indigo-200' : '']"
-        class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4 transition-all">
-        <div class="flex justify-between items-start">
-          <div class="flex flex-col">
-            <div class="flex items-center gap-2 mb-2">
-              <input v-if="res.status === 'pending'" type="checkbox" v-model="selectedIds" :value="res.id" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 shrink-0 cursor-pointer" />
-              <span :class="statusMap[res.status]?.class" class="w-fit px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-tighter border">
-                {{ statusMap[res.status]?.label }}
+      <!-- Empty State -->
+      <div
+        v-else-if="filteredReservations.length === 0"
+        class="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 space-y-2 shadow-sm"
+      >
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-2">
+          <CheckCircleIcon class="w-7 h-7" />
+        </div>
+        <p class="text-slate-700 font-black text-sm">검토할 승인 대기 예약이 없습니다.</p>
+        <p class="text-slate-400 text-xs font-medium">모든 예약 신청이 처리되었습니다.</p>
+      </div>
+
+      <!-- Pending Reservation Cards -->
+      <div v-else class="space-y-3">
+        <div
+          v-for="r in filteredReservations"
+          :key="r.id"
+          :id="'res-' + r.id"
+          class="bg-white rounded-[2rem] p-5 border transition-all shadow-sm space-y-3.5"
+          :class="selectedIds.includes(r.id) ? 'border-indigo-400 bg-indigo-50/20 ring-2 ring-indigo-500/10' : 'border-slate-100'"
+        >
+          <!-- Card Header: Checkbox + Room Badge + Status -->
+          <div class="flex items-start justify-between gap-2">
+            <label class="flex items-center gap-2.5 cursor-pointer min-w-0">
+              <input
+                type="checkbox"
+                :value="r.id"
+                v-model="selectedIds"
+                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 shrink-0"
+              />
+              <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg uppercase tracking-wider truncate">
+                {{ formatFloorLabel(r.floor) }} · {{ r.room_name }}
               </span>
+            </label>
+            <span
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0"
+              :class="r.status === 'cancel_requested' ? 'bg-rose-100 text-rose-700' : 'bg-amber-50 text-amber-600'"
+            >
+              {{ r.status === 'cancel_requested' ? '취소 요청' : '승인 대기' }}
+            </span>
+          </div>
+
+          <!-- Title & Schedule Info -->
+          <div class="space-y-1.5 pl-6">
+            <h3 class="text-base font-black text-slate-900 leading-snug">
+              {{ r.title || '(신청명 없음)' }}
+            </h3>
+            <div class="text-xs font-bold text-slate-600 flex items-center gap-2 flex-wrap">
+              <span>{{ fmtDate(r.reservation_date) }}</span>
+              <span class="text-slate-300">|</span>
+              <span class="text-indigo-600 font-black">{{ fmtTime(r.start_time) }} ~ {{ fmtTime(r.end_time) }}</span>
             </div>
-            <h3 class="text-base font-black text-slate-900 leading-tight pr-4">{{ res.title || '신청 제목 없음' }}</h3>
+            <div class="text-xs font-bold text-slate-500 pt-1">
+              <span>신청자: <strong class="text-slate-800">{{ r.requester_name }}</strong></span>
+              <a
+                v-if="r.requester_phone"
+                :href="`tel:${r.requester_phone}`"
+                class="ml-1 text-indigo-600 underline"
+              >
+                ({{ r.requester_phone }})
+              </a>
+            </div>
+            <p v-if="r.reason" class="text-[11px] font-bold text-slate-400 bg-slate-50 rounded-xl px-3 py-2 mt-1">
+              사유: {{ r.reason }}
+            </p>
+            <p v-if="r.reject_reason && r.status === 'cancel_requested'" class="text-[11px] font-bold text-rose-600 bg-rose-50/70 border border-rose-100 rounded-xl px-3 py-2 mt-1">
+              취소 사유: {{ r.reject_reason }}
+            </p>
           </div>
-          <div class="text-right shrink-0">
-            <div class="text-[0.625rem] font-black text-indigo-600 uppercase tracking-widest">{{ res.room_name }}</div>
-            <div class="text-[0.625rem] font-bold text-slate-300 uppercase">{{ res.floor }}</div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 pt-1">
+            <button
+              @click="approve(r.id)"
+              class="flex-1 text-white py-3 rounded-2xl font-black text-xs shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1"
+              :class="r.status === 'cancel_requested' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'"
+            >
+              <CheckCircleIcon class="w-4 h-4" /> {{ r.status === 'cancel_requested' ? '취소 승인' : '승인' }}
+            </button>
+            <button
+              @click="openRejectModal(r)"
+              class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 py-3 rounded-2xl font-black text-xs active:scale-95 transition-all flex items-center justify-center gap-1"
+            >
+              <XCircleIcon class="w-4 h-4" /> {{ r.status === 'cancel_requested' ? '취소 반려' : '거부' }}
+            </button>
           </div>
-        </div>
-
-        <div class="bg-slate-50 p-4 rounded-2xl space-y-2">
-           <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
-             <UserIcon class="w-3.5 h-3.5 text-slate-300" /> {{ res.requester_name }} ({{ res.requester_phone }})
-           </div>
-           <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
-             <CalendarDaysIcon class="w-3.5 h-3.5 text-slate-300" /> {{ fmtDate(res.reservation_date) }}
-           </div>
-           <div class="flex items-center gap-2 text-xs font-bold text-indigo-600">
-             <ClockIcon class="w-3.5 h-3.5 text-indigo-300" /> {{ res.start_time.slice(0, 5) }} - {{ res.end_time.slice(0, 5) }}
-           </div>
-        </div>
-
-        <div v-if="res.status === 'pending'" class="flex gap-3 pt-2">
-           <button @click="reject(res)" class="flex-1 py-4 bg-rose-50 text-rose-500 font-black text-[0.625rem] uppercase tracking-widest rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-rose-100">
-             <XCircleIcon class="w-4 h-4" />거부
-           </button>
-           <button @click="approve(res)" class="flex-1 py-4 bg-emerald-500 text-white font-black text-[0.625rem] uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
-             <CheckCircleIcon class="w-4 h-4" />승인
-           </button>
         </div>
       </div>
+
+      <!-- Floating Bulk Action Bar -->
+      <transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="translate-y-8 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-8 opacity-0"
+      >
+        <div
+          v-if="selectedIds.length > 0 && activeTab === 'review'"
+          class="fixed bottom-20 left-4 right-4 z-[90] bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-2"
+        >
+          <div class="flex items-center gap-2">
+            <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-black">
+              {{ selectedIds.length }}
+            </span>
+            <span class="text-xs font-black">건 선택됨</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button
+              @click="bulkApprove"
+              class="bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-black active:scale-95"
+            >
+              일괄 승인
+            </button>
+            <button
+              @click="openBulkRejectModal"
+              class="bg-rose-500 text-white px-3 py-2 rounded-xl text-xs font-black active:scale-95"
+            >
+              일괄 거부
+            </button>
+            <button
+              @click="selectedIds = []"
+              class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-black"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </transition>
     </div>
 
-    <!-- Floating Action Bar for Bulk Actions -->
-    <div v-if="selectedIds.length > 0" class="fixed bottom-24 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
-      <div class="bg-slate-900/95 backdrop-blur-md rounded-[2rem] p-4 flex items-center justify-between shadow-2xl border border-slate-700">
-        <div class="text-white text-xs font-black px-2">{{ selectedIds.length }}개 선택됨</div>
-        <div class="flex gap-2">
-          <button @click="bulkReject" class="px-4 py-2 bg-rose-500/20 text-rose-300 text-xs font-black rounded-xl hover:bg-rose-500/30 transition-all uppercase tracking-widest">
-            일괄 거부
-          </button>
-          <button @click="bulkApprove" class="px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-widest">
-            일괄 승인
-          </button>
+    <!-- Reject Reason Bottom Sheet Modal (Individual & Bulk) -->
+    <Teleport to="body">
+      <div
+        v-if="showRejectModal"
+        class="fixed inset-0 z-[2200] bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end"
+        @click.self="showRejectModal = false"
+      >
+        <div class="bg-white rounded-t-[2.5rem] p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
+                <XCircleIcon class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-base font-black text-slate-900">{{ isBulkAction ? '일괄 거부' : '예약 거부' }}</h3>
+                <p v-if="!isBulkAction" class="text-xs text-slate-500 font-bold mt-0.5">
+                  <strong>{{ selectedReservation?.requester_name }}</strong>님의 예약을 거부합니다.
+                </p>
+                <p v-else class="text-xs text-slate-500 font-bold mt-0.5">
+                  선택한 <strong>{{ selectedIds.length }}건</strong>의 예약을 일괄 거부합니다.
+                </p>
+              </div>
+            </div>
+            <button
+              @click="showRejectModal = false"
+              class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-black"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-black text-rose-600 block">거부 사유 입력 (신청자 알림톡 전송)</label>
+            <textarea
+              v-model="rejectReason"
+              rows="3"
+              placeholder="예: 해당 시간에는 교회 예배 및 공식 행사가 예정되어 있습니다."
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs font-bold text-slate-800 placeholder:text-slate-300 outline-none focus:bg-white focus:border-rose-300 resize-none"
+            ></textarea>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              @click="showRejectModal = false"
+              class="flex-1 bg-slate-100 text-slate-500 py-3.5 rounded-2xl font-black text-xs"
+            >
+              취소
+            </button>
+            <button
+              @click="confirmReject"
+              class="flex-[2] bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-rose-100 active:scale-95 transition-all"
+            >
+              거부 확정 및 알림톡 발송
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import { 
-  UserIcon, 
-  CalendarDaysIcon, 
-  ClockIcon,
+import { useModalStore } from '@/stores/useModalStore'
+import AdminReservationCalendarMobile from '@/components/admin/AdminReservationCalendarMobile.vue'
+import {
+  MagnifyingGlassIcon,
   CheckCircleIcon,
   XCircleIcon,
-  MagnifyingGlassIcon 
+  CalendarDaysIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/vue/24/outline'
-import { useModalStore } from '@/stores/useModalStore'
 
 const route = useRoute()
+const router = useRouter()
 const modal = useModalStore()
 
-const allReservations = ref([])
-const loading = ref(false)
-const filterStatus = ref('pending')
+const activeTab = ref(route.query.tab === 'review' ? 'review' : 'calendar')
+const calendarRef = ref(null)
+
+const reservations = ref([])
+const loading = ref(true)
 const searchQuery = ref('')
+
+// Bulk & Reject state
 const selectedIds = ref([])
-const highlightedId = ref(null)
+const isBulkAction = ref(false)
+const showRejectModal = ref(false)
+const selectedReservation = ref(null)
+const rejectReason = ref('')
 
-watch(filterStatus, () => selectedIds.value = [])
+const formatFloorLabel = (f) => {
+  const s = String(f || '')
+  return s.includes('B') || s.includes('F') ? s : `${s}F`
+}
 
-const selectableReservations = computed(() => {
-  return filteredReservations.value.filter(r => r.status === 'pending')
-})
+const fmtDate = (d) => (d ? String(d).slice(0, 10) : '')
+const fmtTime = (t) => (t ? String(t).slice(0, 5) : '')
 
-const isAllSelected = computed(() => {
-  if (selectableReservations.value.length === 0) return false
-  return selectableReservations.value.every(r => selectedIds.value.includes(r.id))
-})
-
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    selectedIds.value = []
-  } else {
-    selectedIds.value = selectableReservations.value.map(r => r.id)
+const switchTab = (tab) => {
+  activeTab.value = tab
+  router.replace({ query: { ...route.query, tab } })
+  if (tab === 'calendar' && calendarRef.value) {
+    calendarRef.value.fetchAll()
+  } else if (tab === 'review') {
+    fetchReservations()
   }
 }
 
-const statusMap = {
-  pending: { label: '대기중', class: 'bg-amber-50 text-amber-600 border-amber-100' },
-  approved: { label: '승인됨', class: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-  rejected: { label: '거부됨', class: 'bg-rose-50 text-rose-600 border-rose-100' },
-  cancelled: { label: '취소됨', class: 'bg-slate-50 text-slate-400 border-slate-100' }
+const handleCalendarUpdated = () => {
+  fetchReservations()
 }
 
-const fmtDate = (d) => {
-  if (!d) return ''
-  const date = new Date(d)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
-  return `${year}-${month}-${day}(${dayOfWeek})`
+const pendingCount = computed(() =>
+  reservations.value.filter((r) => r.status === 'pending' || r.status === 'cancel_requested').length
+)
+
+const filteredReservations = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return reservations.value
+    .filter((r) => {
+      if (r.status !== 'pending' && r.status !== 'cancel_requested') return false
+      if (q) {
+        return (
+          (r.title && r.title.toLowerCase().includes(q)) ||
+          (r.requester_name && r.requester_name.toLowerCase().includes(q)) ||
+          (r.room_name && r.room_name.toLowerCase().includes(q)) ||
+          (r.requester_phone && r.requester_phone.includes(q)) ||
+          (r.reason && r.reason.toLowerCase().includes(q))
+        )
+      }
+      return true
+    })
+    .sort((a, b) => {
+      const dateCmp = fmtDate(a.reservation_date).localeCompare(fmtDate(b.reservation_date))
+      if (dateCmp !== 0) return dateCmp
+      return fmtTime(a.start_time).localeCompare(fmtTime(b.start_time))
+    })
+})
+
+const isAllSelected = computed(() => {
+  const visibleIds = filteredReservations.value.map((r) => r.id)
+  if (visibleIds.length === 0) return false
+  return visibleIds.every((id) => selectedIds.value.includes(id))
+})
+
+const toggleSelectAll = () => {
+  const visibleIds = filteredReservations.value.map((r) => r.id)
+  if (isAllSelected.value) {
+    selectedIds.value = selectedIds.value.filter((id) => !visibleIds.includes(id))
+  } else {
+    const newSet = new Set([...selectedIds.value, ...visibleIds])
+    selectedIds.value = Array.from(newSet)
+  }
 }
+
+watch(searchQuery, () => {
+  selectedIds.value = []
+})
 
 const fetchReservations = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/reservations', { params: { status: 'all' } })
-    allReservations.value = res.data
-  } catch (e) {}
-  finally { loading.value = false }
-}
-
-const filteredReservations = computed(() => {
-  let list = filterStatus.value === 'all' ? allReservations.value : allReservations.value.filter(r => r.status === filterStatus.value)
-  
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase()
-    list = list.filter(r => 
-      r.title?.toLowerCase().includes(q) || 
-      r.room_name?.toLowerCase().includes(q) || 
-      r.requester_name?.toLowerCase().includes(q)
-    )
-  }
-  
-  return list
-})
-
-onMounted(async () => {
-  await fetchReservations()
-  if (route.query.id) {
-    const targetId = Number(route.query.id)
-    highlightedId.value = targetId
-    const target = allReservations.value.find(r => r.id === targetId)
-    if (target) {
-      filterStatus.value = target.status
-    } else {
-      filterStatus.value = 'all'
-    }
-    await nextTick()
-    document.getElementById('res-' + targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-})
-
-const approve = async (res) => {
-  if (!await modal.showConfirm('승인하시겠습니까? 신청자에게 알림톡이 발송됩니다.')) return
-  try {
-    await axios.patch(`/api/reservations/${res.id}/approve`)
-    modal.showAlert('승인되었습니다.')
-    fetchReservations()
-  } catch (e) {
-    modal.showAlert(e.response?.data?.message || '처리 중 오류가 발생했습니다.')
+    const { data } = await axios.get('/api/reservations', { params: { status: 'all' } })
+    reservations.value = data || []
+    selectedIds.value = []
+  } catch (err) {
+    console.error('Failed to fetch reservations:', err)
+  } finally {
+    loading.value = false
   }
 }
 
-const reject = async (res) => {
-  const reason = await modal.showPrompt('거부 사유를 입력하세요 (선택)', '예: 해당 시간에는 교회 행사가 예정되어 있습니다.')
-  if (reason === null) return // User cancelled
-  
+const approve = async (id) => {
+  if (!(await modal.showConfirm('이 예약을 승인하시겠습니까? 신청자에게 카카오톡 알림톡이 발송됩니다.'))) return
   try {
-    await axios.patch(`/api/reservations/${res.id}/reject`, { reject_reason: reason })
-    modal.showAlert('반려 처리되었습니다.')
-    fetchReservations()
-  } catch (e) {
-    modal.showAlert('반려 처리 중 오류가 발생했습니다.')
+    await axios.patch(`/api/reservations/${id}/approve`)
+    modal.showAlert('예약이 승인되었습니다.')
+    await fetchReservations()
+    if (calendarRef.value) calendarRef.value.fetchAll()
+  } catch (err) {
+    modal.showAlert(err.response?.data?.message || '승인 처리 중 오류가 발생했습니다.')
   }
 }
 
 const bulkApprove = async () => {
   if (!selectedIds.value.length) return
-  if (!await modal.showConfirm(`선택한 ${selectedIds.value.length}건을 일괄 승인하시겠습니까?`)) return
+  if (!(await modal.showConfirm(`선택한 ${selectedIds.value.length}건의 예약을 일괄 승인하시겠습니까? 신청자들에게 알림톡이 발송됩니다.`))) return
   try {
-    await axios.patch('/api/reservations/bulk-approve', { ids: selectedIds.value })
+    await axios.patch('/api/reservations/bulk-approve', {
+      ids: selectedIds.value
+    })
     modal.showAlert('일괄 승인되었습니다.')
-    selectedIds.value = []
-    fetchReservations()
-  } catch (e) {
-    modal.showAlert('처리 중 오류가 발생했습니다.')
+    await fetchReservations()
+    if (calendarRef.value) calendarRef.value.fetchAll()
+  } catch (err) {
+    modal.showAlert(err.response?.data?.message || '일괄 승인에 실패했습니다.')
   }
 }
 
-const bulkReject = async () => {
+const openRejectModal = (reservation) => {
+  isBulkAction.value = false
+  selectedReservation.value = reservation
+  rejectReason.value = ''
+  showRejectModal.value = true
+}
+
+const openBulkRejectModal = () => {
   if (!selectedIds.value.length) return
-  const reason = await modal.showPrompt('일괄 거부 사유를 입력하세요 (선택)', '예: 해당 시간에는 교회 행사가 예정되어 있습니다.')
-  if (reason === null) return
-  
+  isBulkAction.value = true
+  selectedReservation.value = null
+  rejectReason.value = ''
+  showRejectModal.value = true
+}
+
+const confirmReject = async () => {
+  if (!rejectReason.value.trim()) {
+    modal.showAlert('거부 사유를 입력해 주세요. (신청자 알림톡 전송)')
+    return
+  }
   try {
-    await axios.patch('/api/reservations/bulk-reject', { ids: selectedIds.value, reject_reason: reason })
-    modal.showAlert('일괄 반려 처리되었습니다.')
-    selectedIds.value = []
-    fetchReservations()
-  } catch (e) {
-    modal.showAlert('처리 중 오류가 발생했습니다.')
+    if (isBulkAction.value) {
+      await axios.patch('/api/reservations/bulk-reject', {
+        ids: selectedIds.value,
+        reject_reason: rejectReason.value
+      })
+      modal.showAlert('선택된 예약이 일괄 거부되었으며 알림톡이 발송되었습니다.')
+    } else {
+      await axios.patch(`/api/reservations/${selectedReservation.value.id}/reject`, {
+        reject_reason: rejectReason.value
+      })
+      modal.showAlert('예약이 거부되었으며 신청자에게 알림톡이 발송되었습니다.')
+    }
+    showRejectModal.value = false
+    await fetchReservations()
+    if (calendarRef.value) calendarRef.value.fetchAll()
+  } catch (err) {
+    modal.showAlert(err.response?.data?.message || '거부 처리 중 오류가 발생했습니다.')
   }
 }
+
+onMounted(async () => {
+  await fetchReservations()
+  if (route.query.id && calendarRef.value) {
+    activeTab.value = 'calendar'
+    calendarRef.value.openReservationById(Number(route.query.id))
+  }
+})
 </script>

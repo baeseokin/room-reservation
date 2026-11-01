@@ -81,20 +81,6 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6 pb-12">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 flex items-center gap-2">
-          <AdjustmentsHorizontalIcon class="w-6 h-6 text-indigo-600" />
-          예약 정책 설정
-        </h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">일반 성도 대상 예약 규칙 관리</p>
-      </div>
-      <button @click="fetchPolicy" class="w-10 h-10 flex items-center justify-center bg-white border border-slate-100 rounded-xl shadow-md text-slate-400 active:scale-95 transition-all">
-        <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
-      </button>
-    </div>
-
     <!-- Main Container -->
     <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 p-6 space-y-6 relative overflow-hidden">
       <!-- Loading Overlay -->
@@ -104,7 +90,12 @@ onMounted(() => {
 
       <!-- Date Constraints Section -->
       <div class="space-y-4">
-        <h3 class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest pl-1">일자 제약 조건</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest pl-1">일자 제약 조건</h3>
+          <button @click="fetchPolicy" class="w-8 h-8 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-xl text-slate-400 active:scale-95 transition-all" title="새로고침">
+            <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+          </button>
+        </div>
         
         <div class="space-y-3">
           <!-- Same Day Control -->

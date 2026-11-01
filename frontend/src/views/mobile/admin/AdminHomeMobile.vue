@@ -1,10 +1,5 @@
 <template>
   <div class="space-y-6">
-    <div class="space-y-1">
-      <h2 class="text-2xl font-black text-slate-900 tracking-tight">관리자 센터</h2>
-      <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">시스템 관리 기능을 이용하세요.</p>
-    </div>
-
     <div class="grid grid-cols-1 gap-4">
       <router-link v-for="item in adminMenu" :key="item.path" :to="item.path"
         class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
@@ -34,7 +29,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const adminMenu = [
-  { path: '/m/admin/reservations', icon: CalendarIcon, label: '예약 승인', desc: '신청 검토 및 승인', color: 'bg-indigo-600' },
+  { path: '/m/admin/reservations', icon: CalendarIcon, label: '예약 관리', desc: '예약 현황 및 신청 검토', color: 'bg-indigo-600' },
 
   { path: '/m/admin/users', icon: UserGroupIcon, label: '사용자 관리', desc: '회원 정보 및 권한 설정', color: 'bg-amber-500' },
   { path: '/m/admin/rooms', icon: HomeModernIcon, label: '공간 관리', desc: '회의실 등록 및 수정', color: 'bg-slate-900' },

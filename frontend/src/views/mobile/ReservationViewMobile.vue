@@ -1,15 +1,7 @@
 <template>
   <div class="space-y-6 pb-12">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">공간 예약</h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">원하시는 방식으로 예약해 보세요.</p>
-      </div>
-    </div>
-
     <!-- Inline Mini Calendar -->
-    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50">
+    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden select-none">
        <div class="flex justify-between items-center mb-6">
           <div class="flex items-center gap-2">
             <CalendarDaysIcon class="w-5 h-5 text-indigo-600" />
@@ -25,9 +17,19 @@
        <div class="grid grid-cols-7 gap-1 mb-2">
           <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-center text-[0.625rem] font-black text-slate-400 uppercase">{{ d }}</span>
        </div>
-       <div class="grid grid-cols-7 gap-1">
+       <div
+          class="grid grid-cols-7 gap-1"
+          :style="calendarGridStyle"
+          @touchstart="onCalendarTouchStart"
+          @touchmove="onCalendarTouchMove"
+          @touchend="onCalendarTouchEnd"
+          @mousedown="onCalendarMouseDown"
+          @mousemove="onCalendarMouseMove"
+          @mouseup="onCalendarMouseUp"
+          @mouseleave="onCalendarMouseLeave"
+       >
           <button v-for="(day, idx) in calendarDays" :key="idx"
-            @click="day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? modal.showAlert(checkDatePolicy(formatDate(day.date))) : selectDate(day.date)"
+            @click="!suppressNextCalendarTap && (day.date && !auth.isAdmin && isDateDisabledByPolicy(formatDate(day.date)) ? modal.showAlert(checkDatePolicy(formatDate(day.date))) : selectDate(day.date))"
             :disabled="!day.current"
             :class="[
               day.current ? 'text-slate-700' : 'text-slate-200',
@@ -42,18 +44,8 @@
        </div>
     </div>
 
-    <!-- Mode Switcher -->
-    <div class="bg-slate-100 p-1.5 rounded-[2rem] flex items-center gap-1">
-      <button v-for="m in ['room', 'time']" :key="m"
-        @click="mode = m"
-        :class="[mode === m ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400']"
-        class="flex-1 py-3.5 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all">
-        {{ m === 'room' ? '공간별 예약' : '시간별 예약' }}
-      </button>
-    </div>
-
-    <!-- Mode: By Room -->
-    <div v-if="mode === 'room'" class="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+    <!-- Room List Section -->
+    <div class="space-y-6">
       <!-- Floor Selector -->
       <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button v-for="f in floorOptions" :key="f"
@@ -88,54 +80,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Mode: By Time -->
-    <div v-else class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-       <div class="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
-          <div class="grid grid-cols-2 gap-4">
-             <div class="space-y-2">
-                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">시작 시간</label>
-                <select v-model="searchForm.start_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
-                   <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
-                </select>
-             </div>
-             <div class="space-y-2">
-                <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">종료 시간</label>
-                <select v-model="searchForm.end_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-2 font-black text-center text-slate-700">
-                   <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
-                </select>
-             </div>
-          </div>
-          <button @click="searchAvailableRooms" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-             예약 가능 장소 찾기
-          </button>
-       </div>
-
-       <div v-if="hasSearched" class="space-y-4">
-          <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">검색 결과 ({{ availableRooms.length }})</h3>
-          <div v-if="availableRooms.length === 0" class="bg-slate-50 border border-dashed border-slate-200 p-10 rounded-[2.5rem] text-center">
-             <p class="text-xs font-bold text-slate-400">해당 시간에 예약 가능한 공간이 없습니다.</p>
-          </div>
-          <div v-for="room in availableRooms" :key="room.id"
-            @click="openReservationForm(room)"
-            class="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center justify-between active:scale-[0.98] transition-all">
-            <div class="flex items-center gap-4">
-               <div class="w-16 h-16 rounded-[1.4rem] bg-indigo-50 overflow-hidden flex shrink-0 items-center justify-center font-black text-indigo-400 shadow-inner">
-                 <img v-if="room.image_url" :src="room.image_url" class="w-full h-full object-cover" />
-                 <span v-else>{{ room.floor }}</span>
-               </div>
-               <div>
-                 <div class="flex items-center gap-1.5 mb-1">
-                   <span class="text-[0.5625rem] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">{{ room.floor }}{{ room.floor.includes('B') ? '' : 'F' }}</span>
-                   <div class="text-sm font-black text-slate-900">{{ room.room_name }}</div>
-                 </div>
-                 <div class="text-[0.625rem] font-bold text-slate-400 uppercase tracking-widest">정원 {{ room.capacity }}명</div>
-               </div>
-            </div>
-            <div class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[0.625rem] font-black uppercase tracking-widest">선택</div>
-          </div>
-       </div>
     </div>
 
     <!-- Combined Reservation Form Bottom Sheet -->
@@ -856,14 +800,171 @@ const selectDate = (date) => {
   hasSearched.value = false
 }
 
-const moveMonth = (offset) => {
+const applyMonthOffset = (offset) => {
   const d = new Date(currentCalDate.value)
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   currentCalDate.value = d
 }
 
+// 터치/드래그 기반 좌우 월 전환 애니메이션 상태
+const monthSlidePhase = ref('idle') // 'idle' | 'dragging' | 'out' | 'prep-in' | 'in'
+const horizontalDragOffset = ref(0)
+const monthSlideOpacity = ref(1)
+const swipeStartX = ref(0)
+const swipeStartY = ref(0)
+const isSwiping = ref(false)
+const gestureAxis = ref(null) // 'x' | 'y' | null
+const suppressNextCalendarTap = ref(false)
+let isMonthAnimating = false
+
+const calendarGridStyle = computed(() => {
+  let transition = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease'
+  if (monthSlidePhase.value === 'dragging' || monthSlidePhase.value === 'prep-in') {
+    transition = 'none'
+  } else if (monthSlidePhase.value === 'out') {
+    transition = 'transform 150ms cubic-bezier(0.4, 0, 1, 1), opacity 140ms ease'
+  }
+  return {
+    transform: `translate3d(${horizontalDragOffset.value.toFixed(1)}px, 0, 0)`,
+    opacity: monthSlideOpacity.value,
+    transition,
+    willChange: monthSlidePhase.value !== 'idle' ? 'transform, opacity' : 'auto'
+  }
+})
+
+const moveMonth = (offset) => {
+  if (isMonthAnimating) return
+  isMonthAnimating = true
+
+  monthSlidePhase.value = 'out'
+  horizontalDragOffset.value = -offset * 220
+  monthSlideOpacity.value = 0
+
+  setTimeout(() => {
+    applyMonthOffset(offset)
+    monthSlidePhase.value = 'prep-in'
+    horizontalDragOffset.value = offset * 200
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        monthSlidePhase.value = 'in'
+        horizontalDragOffset.value = 0
+        monthSlideOpacity.value = 1
+
+        setTimeout(() => {
+          monthSlidePhase.value = 'idle'
+          isMonthAnimating = false
+        }, 320)
+      })
+    })
+  }, 150)
+}
+
+const startCalendarGesture = (x, y) => {
+  if (isMonthAnimating) return
+  swipeStartX.value = x
+  swipeStartY.value = y
+  isSwiping.value = true
+  gestureAxis.value = null
+  horizontalDragOffset.value = 0
+  monthSlideOpacity.value = 1
+}
+
+const moveCalendarGesture = (x, y, rawEvent) => {
+  if (!isSwiping.value || isMonthAnimating) return
+  const dx = x - swipeStartX.value
+  const dy = y - swipeStartY.value
+
+  if (!gestureAxis.value) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+    gestureAxis.value = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+  }
+
+  if (gestureAxis.value === 'x') {
+    if (rawEvent?.cancelable) rawEvent.preventDefault()
+    monthSlidePhase.value = 'dragging'
+    horizontalDragOffset.value = dx * 0.85
+    monthSlideOpacity.value = Math.max(0.4, 1 - Math.abs(dx) / 380)
+  }
+}
+
+const endCalendarGesture = (x) => {
+  if (!isSwiping.value) return
+  const dx = x - swipeStartX.value
+  const axis = gestureAxis.value
+
+  isSwiping.value = false
+  gestureAxis.value = null
+
+  if (axis === 'x') {
+    if (Math.abs(dx) > 10) {
+      suppressNextCalendarTap.value = true
+      setTimeout(() => {
+        suppressNextCalendarTap.value = false
+      }, 60)
+    }
+
+    if (dx < -45) {
+      moveMonth(1)
+    } else if (dx > 45) {
+      moveMonth(-1)
+    } else {
+      monthSlidePhase.value = 'in'
+      horizontalDragOffset.value = 0
+      monthSlideOpacity.value = 1
+      setTimeout(() => {
+        if (!isMonthAnimating) monthSlidePhase.value = 'idle'
+      }, 320)
+    }
+  }
+}
+
+const onCalendarTouchStart = (e) => {
+  const t = e.touches?.[0]
+  if (!t) return
+  startCalendarGesture(t.clientX, t.clientY)
+}
+
+const onCalendarTouchMove = (e) => {
+  const t = e.touches?.[0]
+  if (!t) return
+  moveCalendarGesture(t.clientX, t.clientY, e)
+}
+
+const onCalendarTouchEnd = (e) => {
+  const t = e.changedTouches?.[0]
+  if (!t) {
+    isSwiping.value = false
+    horizontalDragOffset.value = 0
+    monthSlideOpacity.value = 1
+    return
+  }
+  endCalendarGesture(t.clientX)
+}
+
+const onCalendarMouseDown = (e) => {
+  if (e.button !== 0) return
+  startCalendarGesture(e.clientX, e.clientY)
+}
+
+const onCalendarMouseMove = (e) => {
+  if (!isSwiping.value) return
+  moveCalendarGesture(e.clientX, e.clientY, e)
+}
+
+const onCalendarMouseUp = (e) => {
+  endCalendarGesture(e.clientX)
+}
+
+const onCalendarMouseLeave = (e) => {
+  if (!isSwiping.value) return
+  endCalendarGesture(e.clientX)
+}
+
 const moveRecurringMonth = (offset) => {
   const d = new Date(recurringEndCalDate.value)
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   recurringEndCalDate.value = d
 }
@@ -912,7 +1013,7 @@ const currentRoomSchedule = computed(() => {
     items.push({
       id: `bt-${bt.id}`,
       type: 'blocked',
-      title: bt.reason || '관리자 설정 예약 불가',
+      title: bt.reason || '관리자 설정 고정 일정',
       requester_name: null,
       start_time: bt.start_time.slice(0, 5),
       end_time: bt.end_time.slice(0, 5)
@@ -960,7 +1061,7 @@ const timeConflictError = computed(() => {
     return (s1 < e2 && e1 > s2)
   })
   if (blockedConflict) {
-    return `해당 시간에 예약 불가 일정이 있습니다. (${blockedConflict.reason || '관리자 설정 예약 불가'})`
+    return `해당 시간에 고정 일정이 있습니다. (${blockedConflict.reason || '관리자 설정 고정 일정'})`
   }
 
   // 4. Existing reservation overlap
@@ -994,14 +1095,8 @@ const openReservationForm = (room) => {
   roomReservations.value = reservations.value.filter(r => r.room_id === room.id && r.status !== 'rejected' && r.status !== 'cancelled')
   currentRoomBlockedTimes.value = getBlockedForRoomAndDate(room, selectedDate.value)
 
-  if (mode.value === 'time') {
-    form.value.start_time = searchForm.value.start_time
-    form.value.end_time = searchForm.value.end_time
-  } else {
-    form.value.start_time = '09:00'
-    form.value.end_time = '10:00'
-  }
-  
+  form.value.start_time = '09:00'
+  form.value.end_time = '10:00'
   form.value.title = ''
   form.value.reason = ''
   form.value.is_recurring = false

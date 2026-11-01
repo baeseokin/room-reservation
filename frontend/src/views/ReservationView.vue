@@ -208,12 +208,14 @@ const selectWeekDateCell = (date) => {
 
 const moveCalendarMonth = (offset) => {
   const d = new Date(calendarDate.value)
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   calendarDate.value = d
 }
 
 const moveCalendarYear = (offset) => {
   const d = new Date(calendarDate.value)
+  d.setDate(1)
   d.setFullYear(d.getFullYear() + offset)
   calendarDate.value = d
 }
@@ -449,7 +451,7 @@ const getAllBlockedInstances = computed(() => {
           end_time: bt.end_time,
           room_name: room.room_name,
           floor: room.floor,
-          title: bt.reason || '관리자 설정',
+          title: bt.reason || '고정 일정',
           requester_name: '관리자',
           status: 'blocked'
         })
@@ -696,7 +698,7 @@ const currentRoomSchedule = computed(() => {
     items.push({
       id: `bt-${bt.id}`,
       type: 'blocked',
-      title: bt.reason || '관리자 설정 예약 불가',
+      title: bt.reason || '관리자 설정 고정 일정',
       requester_name: null,
       start_time: bt.start_time.slice(0, 5),
       end_time: bt.end_time.slice(0, 5)
@@ -747,7 +749,7 @@ const timeConflictError = computed(() => {
       return (s1 < e2 && e1 > s2)
     })
     if (blockedConflict) {
-      return `해당 시간에 예약 불가 일정이 있습니다. (${blockedConflict.reason || '관리자 설정 예약 불가'})`
+      return `해당 시간에 고정 일정이 있습니다. (${blockedConflict.reason || '관리자 설정 고정 일정'})`
     }
 
     // 4. Existing reservation overlap
@@ -846,12 +848,14 @@ const selectRecurringDate = (date) => {
 
 const moveRecurringCalendarMonth = (offset) => {
   const d = new Date(recurringCalendarDate.value)
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   recurringCalendarDate.value = d
 }
 
 const moveRecurringCalendarYear = (offset) => {
   const d = new Date(recurringCalendarDate.value)
+  d.setDate(1)
   d.setFullYear(d.getFullYear() + offset)
   recurringCalendarDate.value = d
 }
@@ -957,8 +961,8 @@ const submitInquiry = async () => {
 const changeDate = (days) => {
   const d = new Date(selectedDate.value + 'T00:00:00')
   if (calendarSubMode.value === 'month') {
-    d.setMonth(d.getMonth() + (days > 0 ? 1 : -1))
     d.setDate(1)
+    d.setMonth(d.getMonth() + (days > 0 ? 1 : -1))
   } else if (calendarSubMode.value === 'week') {
     d.setDate(d.getDate() + (days > 0 ? 7 : -7))
   } else {
@@ -1471,7 +1475,7 @@ onMounted(async () => {
                           <!-- Blocked Times -->
                           <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
                                class="text-[0.625rem] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-dashed border-rose-300 truncate">
-                            [예약불가] {{ bt.start_time.slice(0,5) }}~{{ bt.end_time.slice(0,5) }}
+                            {{ bt.start_time.slice(0,5) }}~{{ bt.end_time.slice(0,5) }} {{ bt.reason || '' }}
                           </div>
 
                           <!-- Reservations -->
@@ -1560,7 +1564,7 @@ onMounted(async () => {
                           <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
                                :style="getBlockedStyle(bt)"
                                class="absolute top-2 bottom-2 bg-rose-100/90 border border-rose-300 z-10 flex items-center justify-center overflow-hidden stripe-bg rounded-xl">
-                            <span class="text-xs font-black text-rose-900 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg] opacity-90">{{ bt.reason || '예약 불가' }}</span>
+                            <span class="text-xs font-black text-rose-900 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg] opacity-90">{{ bt.reason || '고정 일정' }}</span>
                           </div>
                         </div>
 
@@ -1636,7 +1640,7 @@ onMounted(async () => {
                     {{ res.floor }}{{ String(res.floor).includes('B') ? '' : 'F' }} · {{ res.room_name }}
                   </span>
                   <span v-if="res.is_blocked" class="bg-rose-600 text-white px-2 py-0.5 rounded-md text-[0.6875rem] font-black uppercase">
-                    Blocked
+                    고정 일정
                   </span>
                   <span v-else :class="[
                           res.status === 'approved' ? 'bg-indigo-600 text-white' : 

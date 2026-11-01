@@ -170,26 +170,19 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6 pb-20">
-    <!-- Header -->
-    <div class="flex flex-col gap-4">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">사용자 관리</h2>
-        <p class="text-slate-400 text-[0.6875rem] font-black uppercase tracking-widest">등록된 회원 정보를 관리합니다.</p>
+    <!-- Search & Action Bar -->
+    <div class="flex gap-2">
+      <div class="relative flex-1">
+        <MagnifyingGlassIcon class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input v-model="searchQuery" type="text" placeholder="이름, ID, 부서 검색..."
+          class="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 outline-none shadow-sm transition-all" />
       </div>
-
-      <div class="flex gap-2">
-        <div class="relative flex-1">
-          <MagnifyingGlassIcon class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input v-model="searchQuery" type="text" placeholder="이름, ID, 부서 검색..."
-            class="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 outline-none shadow-sm transition-all" />
-        </div>
-        <button @click="openCreate" class="p-4 bg-indigo-600 text-white rounded-2xl active:scale-95 transition-all shadow-sm shadow-indigo-200">
-          <UserPlusIcon class="w-5 h-5" />
-        </button>
-        <button @click="fetchUsers" class="p-4 bg-white border border-slate-200 text-slate-500 rounded-2xl active:scale-95 transition-all shadow-sm">
-          <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
-        </button>
-      </div>
+      <button @click="openCreate" class="p-4 bg-indigo-600 text-white rounded-2xl active:scale-95 transition-all shadow-sm shadow-indigo-200">
+        <UserPlusIcon class="w-5 h-5" />
+      </button>
+      <button @click="fetchUsers" class="p-4 bg-white border border-slate-200 text-slate-500 rounded-2xl active:scale-95 transition-all shadow-sm">
+        <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
+      </button>
     </div>
 
     <!-- User List -->
