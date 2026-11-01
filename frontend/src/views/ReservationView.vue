@@ -93,8 +93,16 @@ const fetchPolicy = async () => {
   }
 }
 
+const isPastDate = (dateStrOrObj) => {
+  const target = typeof dateStrOrObj === 'string' ? dateStrOrObj : formatDate(dateStrOrObj)
+  return target < formatDate(new Date())
+}
+
 const checkDatePolicy = (dateStr) => {
   console.log("[DEBUG Frontend checkDatePolicy] isAdmin:", authStore.isAdmin, "user:", authStore.user);
+  if (isPastDate(dateStr)) {
+    return '과거 날짜는 예약할 수 없습니다.'
+  }
   if (authStore.isAdmin) return null
 
   const todayStr = formatDate(new Date())
@@ -116,6 +124,7 @@ const checkDatePolicy = (dateStr) => {
 }
 
 const isDateDisabledByPolicy = (dateStr) => {
+  if (isPastDate(dateStr)) return true
   if (authStore.isAdmin) return false
   return checkDatePolicy(dateStr) !== null
 }
@@ -187,23 +196,23 @@ const selectCalendarDate = (date) => {
 
 const selectCalendarDateMonthView = (date) => {
   const dateStr = formatDate(date)
+  if (isPastDate(dateStr)) return
   const policyMsg = checkDatePolicy(dateStr)
   if (policyMsg) {
     modal.showAlert(policyMsg)
-  } else {
-    selectedDate.value = dateStr
-    calendarSubMode.value = 'day'
+    return
   }
+  openBooking(null, '09:00', dateStr)
 }
 
-const selectWeekDateCell = (date) => {
+const selectWeekDateCell = (room, date) => {
+  if (isPastDate(date)) return
   const policyMsg = checkDatePolicy(date)
   if (policyMsg) {
     modal.showAlert(policyMsg)
-  } else {
-    selectedDate.value = date
-    calendarSubMode.value = 'day'
+    return
   }
+  openBooking(room, '09:00', date)
 }
 
 const moveCalendarMonth = (offset) => {
@@ -774,13 +783,15 @@ const timeConflictError = computed(() => {
 
 const openBooking = (room, time = '09:00', date = null) => {
   const targetDate = date || selectedDate.value
+  if (isPastDate(targetDate)) return
   const policyMsg = checkDatePolicy(targetDate)
   if (policyMsg) {
     return modal.showAlert(policyMsg)
   }
 
   if (date) selectedDate.value = date
-  selectedRoom.value = room || rooms.value[0] || null
+  selectedRoom.value = room || null
+  const dObj = new Date(targetDate + 'T00:00:00')
   form.value = {
     title: '',
     start_time: time,
@@ -791,15 +802,18 @@ const openBooking = (room, time = '09:00', date = null) => {
     recurring_end_date: '',
     recurring_days: [],
     recurring_month_option: 'date',
-    recurring_month_date: new Date().getDate(),
-    recurring_month_nth_week: Math.ceil(new Date().getDate() / 7),
-    recurring_month_nth_day: new Date().getDay(),
+    recurring_month_date: dObj.getDate(),
+    recurring_month_nth_week: Math.ceil(dObj.getDate() / 7),
+    recurring_month_nth_day: dObj.getDay(),
     requester_name: authStore.user?.userName || '',
     requester_phone: authStore.user?.phone || ''
   }
 
-  const endDate = new Date()
+  const endDate = new Date(dObj)
+  endDate.setDate(1)
   endDate.setMonth(endDate.getMonth() + 1)
+  const lastDay = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate()
+  endDate.setDate(Math.min(dObj.getDate(), lastDay))
   form.value.recurring_end_date = formatDate(endDate)
   bookingStep.value = 'form'
   isAgreed.value = false
@@ -884,6 +898,10 @@ const recurringCalendarDays = computed(() => {
 })
 
 const submitBooking = async () => {
+  if (!selectedRoom.value) {
+    return modal.showAlert('예약할 공간을 선택해 주세요.')
+  }
+
   // Validate reservation policy rules (skipped for admins)
   console.log("[DEBUG Frontend submitBooking] isAdmin:", authStore.isAdmin, "user:", authStore.user);
   if (!authStore.isAdmin) {
@@ -975,6 +993,12 @@ const getReservationsForDate = (date) => {
   return reservations.value
     .filter(r => r.reservation_date === date && (r.status === 'approved' || r.status === 'pending'))
     .sort((a, b) => a.start_time.localeCompare(b.start_time))
+}
+
+const getCalendarItemsForDate = (date) => {
+  const resList = getReservationsForDate(date)
+  const blockedList = getBlockedInstancesForDate(date)
+  return [...resList, ...blockedList].sort((a, b) => a.start_time.localeCompare(b.start_time))
 }
 
 const getReservationsForRoomAndDate = (roomId, date) => {
@@ -1345,6 +1369,10 @@ onMounted(async () => {
               <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-300 rounded-md shadow-sm shrink-0"></span>
               <span class="whitespace-nowrap">종료됨</span>
             </div>
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
+              <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-rose-100 border border-dashed border-rose-400 rounded-md shadow-sm shrink-0"></span>
+              <span class="whitespace-nowrap">고정 일정</span>
+            </div>
           </div>
 
           <button @click="fetchData" class="p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors shrink-0" title="새로고침">
@@ -1381,7 +1409,7 @@ onMounted(async () => {
                    :class="[
                      d.current ? 'bg-white' : 'bg-slate-50/60', 
                      selectedDate === formatDate(d.date) ? 'ring-2 ring-inset ring-indigo-500 z-10' : '',
-                     (!authStore.isAdmin && isDateDisabledByPolicy(formatDate(d.date))) ? 'opacity-40 bg-slate-100/70 cursor-not-allowed' : 'cursor-pointer hover:bg-indigo-50/30'
+                     isDateDisabledByPolicy(formatDate(d.date)) ? 'opacity-40 bg-slate-100/70 cursor-not-allowed' : 'cursor-pointer hover:bg-indigo-50/30'
                    ]"
                    class="min-h-[130px] p-2.5 transition-colors group">
                 <div class="flex justify-between items-start mb-1.5">
@@ -1398,18 +1426,19 @@ onMounted(async () => {
                   </div>
                 </div>
                 <div class="space-y-1">
-                  <div v-for="res in getReservationsForDate(formatDate(d.date)).slice(0, 4)" :key="res.id"
-                       @click.stop="openDetail(res)"
+                  <div v-for="res in getCalendarItemsForDate(formatDate(d.date)).slice(0, 3)" :key="res.id"
+                       @click.stop="!res.is_blocked && openDetail(res)"
                        :class="[
-                         isEnded(res) ? 'bg-slate-200 text-slate-700 shadow-sm border border-slate-300' : 
-                         res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
+                         res.is_blocked ? 'bg-rose-100 text-rose-800 border border-dashed border-rose-300 shadow-xs cursor-default' :
+                         isEnded(res) ? 'bg-slate-200 text-slate-700 shadow-sm border border-slate-300 cursor-pointer hover:opacity-85' : 
+                         res.status === 'pending' ? 'bg-amber-500 text-white shadow-md cursor-pointer hover:opacity-85' : 'bg-indigo-600 text-white shadow-md cursor-pointer hover:opacity-85'
                        ]"
-                       class="text-[0.6875rem] font-bold px-1.5 py-0.5 rounded-lg truncate cursor-pointer hover:opacity-85 transition-all">
-                    <span v-if="res.status === 'pending'" class="text-[0.5625rem] bg-white/30 px-1 py-0.2 rounded mr-1">대기</span>
-                    {{ res.start_time.slice(0,5) }} [{{ res.room_name?.split(' ')[0] }}] {{ res.title || '예약' }}
+                       class="text-[0.6875rem] font-bold px-1.5 py-0.5 rounded-lg truncate transition-all">
+                    <span v-if="!res.is_blocked && res.status === 'pending'" class="text-[0.5625rem] bg-white/30 px-1 py-0.2 rounded mr-1">대기</span>
+                    {{ res.start_time.slice(0,5) }} [{{ res.room_name?.split(' ')[0] }}] {{ res.title || (res.is_blocked ? '고정 일정' : '예약') }}
                   </div>
-                  <div v-if="getReservationsForDate(formatDate(d.date)).length > 4" class="text-[0.625rem] font-black text-slate-400 pl-1 mt-0.5">
-                    + {{ getReservationsForDate(formatDate(d.date)).length - 4 }}개
+                  <div v-if="getCalendarItemsForDate(formatDate(d.date)).length > 3" class="text-[0.625rem] font-black text-slate-400 pl-1 mt-0.5">
+                    + {{ getCalendarItemsForDate(formatDate(d.date)).length - 3 }}개
                   </div>
                 </div>
               </div>
@@ -1469,11 +1498,12 @@ onMounted(async () => {
                       <!-- Cells Grid -->
                       <div class="flex-1 flex">
                         <div v-for="date in weekDates" :key="'cell-' + room.id + '-' + date" 
-                             @click="selectWeekDateCell(date)"
-                             :class="[(!authStore.isAdmin && isDateDisabledByPolicy(date)) ? 'bg-slate-100/50 opacity-50 cursor-not-allowed' : 'hover:bg-slate-50/60 cursor-pointer']"
+                             @click="selectWeekDateCell(room, date)"
+                             :class="[isDateDisabledByPolicy(date) ? 'bg-slate-100/50 opacity-50 cursor-not-allowed' : 'hover:bg-slate-50/60 cursor-pointer']"
                              class="flex-1 min-w-[140px] border-r border-slate-200 p-2 space-y-1 overflow-hidden transition-colors">
                           <!-- Blocked Times -->
                           <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
+                               @click.stop
                                class="text-[0.625rem] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-dashed border-rose-300 truncate">
                             {{ bt.start_time.slice(0,5) }}~{{ bt.end_time.slice(0,5) }} {{ bt.reason || '' }}
                           </div>
@@ -1831,8 +1861,8 @@ onMounted(async () => {
               <div>
                 <h2 class="text-xl font-black text-slate-900 tracking-tighter">공간 예약 신청</h2>
                 <div class="flex items-center gap-2">
-                  <span class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">{{ selectedRoom?.floor }}{{ String(selectedRoom?.floor).includes('B') ? '' : 'F' }}</span>
-                  <p class="text-[0.75rem] font-black text-slate-900 uppercase tracking-tighter">{{ selectedRoom?.room_name }} | {{ selectedDate }}</p>
+                  <span v-if="selectedRoom" class="text-[0.75rem] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">{{ selectedRoom?.floor }}{{ String(selectedRoom?.floor).includes('B') ? '' : 'F' }}</span>
+                  <p class="text-[0.75rem] font-black text-slate-900 uppercase tracking-tighter">{{ selectedRoom ? selectedRoom.room_name : '공간 미선택' }} | {{ selectedDate }}</p>
                 </div>
               </div>
             </div>
@@ -1842,15 +1872,24 @@ onMounted(async () => {
           <div ref="bookingModalContentRef" class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
             <template v-if="bookingStep === 'form'">
               <!-- Room Selection -->
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
-                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
-                  <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                  예약 공간
-                </label>
+              <div class="bg-white p-4 rounded-3xl border shadow-sm group focus-within:border-indigo-500 transition-all"
+                   :class="[!selectedRoom ? 'border-indigo-300 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'border-slate-200/60']">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black uppercase tracking-widest"
+                         :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-400']">
+                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
+                    예약 공간
+                  </label>
+                  <span v-if="!selectedRoom" class="text-[0.6875rem] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full animate-pulse">
+                    필수 선택
+                  </span>
+                </div>
                 <select v-model="selectedRoom" 
-                        class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer">
-                  <option v-for="r in rooms" :key="r.id" :value="r">
-                    [{{ r.floor }}{{ r.floor.includes('B') ? '' : 'F' }}] {{ r.room_name }}
+                        :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-900']"
+                        class="w-full bg-transparent border-none p-0 font-black text-sm focus:ring-0 cursor-pointer outline-none">
+                  <option :value="null" disabled>예약할 공간을 선택해 주세요</option>
+                  <option v-for="r in rooms" :key="r.id" :value="r" class="text-slate-900">
+                    [{{ r.floor }}{{ String(r.floor).includes('B') ? '' : 'F' }}] {{ r.room_name }}
                   </option>
                 </select>
               </div>
@@ -1875,7 +1914,10 @@ onMounted(async () => {
                   <span class="text-[0.6875rem] font-bold text-slate-400">{{ selectedDate }}</span>
                 </div>
 
-                <div v-if="currentRoomSchedule.length === 0" class="py-3 px-4 text-center bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
+                <div v-if="!selectedRoom" class="py-3 px-4 text-center bg-indigo-50/50 rounded-2xl border border-dashed border-indigo-200">
+                  <p class="text-xs font-bold text-indigo-600">먼저 예약할 공간을 선택해 주세요.</p>
+                </div>
+                <div v-else-if="currentRoomSchedule.length === 0" class="py-3 px-4 text-center bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
                   <p class="text-xs font-bold text-slate-400">당일 예약 내역이 없습니다. (원하는 시간에 예약 가능)</p>
                 </div>
                 <div v-else class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">

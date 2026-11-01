@@ -385,6 +385,51 @@
               />
             </div>
 
+            <!-- 당일 예약 현황 (Simple Badges) -->
+            <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-1.5 text-[0.6875rem] font-black text-slate-500 uppercase tracking-wider">
+                  <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  당일 예약 현황
+                </label>
+                <span class="text-[0.625rem] font-bold text-slate-400">
+                  {{ bookingForm.reservation_date }}
+                </span>
+              </div>
+
+              <div v-if="!selectedBookingRoom" class="py-2.5 px-3 text-center bg-indigo-50/50 rounded-xl border border-dashed border-indigo-200">
+                <p class="text-xs font-bold text-indigo-600">먼저 예약할 공간을 선택해 주세요.</p>
+              </div>
+              <div v-else-if="currentBookingRoomSchedule.length === 0" class="py-2.5 px-3 text-center bg-white rounded-xl border border-dashed border-slate-200">
+                <p class="text-xs font-bold text-slate-400">당일 예약 내역이 없습니다. (원하는 시간에 예약 가능)</p>
+              </div>
+              <div v-else class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                <div
+                  v-for="item in currentBookingRoomSchedule"
+                  :key="item.id"
+                  class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
+                  :class="item.type === 'blocked' ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'"
+                >
+                  <!-- Time Badge -->
+                  <span
+                    class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
+                    :class="item.type === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-slate-800 text-white'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-rose-500' : 'bg-emerald-400'"></span>
+                    {{ item.start_time }} - {{ item.end_time }}
+                  </span>
+                  <!-- Title Badge -->
+                  <span
+                    class="px-2 py-0.5 font-bold text-[0.6875rem] truncate max-w-[150px] flex items-center gap-1"
+                    :class="item.type === 'blocked' ? 'text-rose-800' : 'text-slate-800'"
+                  >
+                    <span>{{ item.title }}</span>
+                    <span v-if="item.requester_name" class="text-[0.5625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <!-- 3. Time Range -->
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
@@ -951,7 +996,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassIcon,
-  XMarkIcon
+  XMarkIcon,
+  ClockIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -1458,6 +1504,45 @@ const bookingForm = ref({
 const selectedBookingRoom = computed(() => {
   if (!bookingForm.value.room_id) return null
   return rooms.value.find((r) => Number(r.id) === Number(bookingForm.value.room_id)) || null
+})
+
+const currentBookingRoomSchedule = computed(() => {
+  if (!selectedBookingRoom.value || !bookingForm.value.reservation_date) return []
+  const items = []
+  const dateStr = bookingForm.value.reservation_date
+
+  // 1. Blocked times
+  const blockedList = getBlockedForRoomAndDate(selectedBookingRoom.value, dateStr)
+  for (const bt of blockedList) {
+    items.push({
+      id: `bt-${bt.id}`,
+      type: 'blocked',
+      is_blocked: true,
+      title: bt.reason || '관리자 설정 고정 일정',
+      requester_name: null,
+      start_time: fmtTime(bt.start_time),
+      end_time: fmtTime(bt.end_time)
+    })
+  }
+
+  // 2. Existing active reservations
+  for (const r of allActiveReservations.value) {
+    if (r.status === 'cancelled' || r.status === 'rejected') continue
+    if (Number(r.room_id) === Number(selectedBookingRoom.value.id) && fmtDate(r.reservation_date) === dateStr) {
+      items.push({
+        id: `res-${r.id}`,
+        type: 'reservation',
+        is_blocked: false,
+        title: r.title || '공간 사용',
+        requester_name: r.requester_name,
+        start_time: fmtTime(r.start_time),
+        end_time: fmtTime(r.end_time),
+        status: r.status
+      })
+    }
+  }
+
+  return items.sort((a, b) => a.start_time.localeCompare(b.start_time))
 })
 
 const openBookingForActiveDay = () => {

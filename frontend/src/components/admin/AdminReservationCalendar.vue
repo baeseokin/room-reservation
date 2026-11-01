@@ -9,7 +9,7 @@ import {
   ChevronDownIcon, MapPinIcon, UsersIcon,
   ArrowPathIcon, CheckCircleIcon, XCircleIcon,
   PencilSquareIcon, ShieldExclamationIcon, ChatBubbleBottomCenterTextIcon,
-  ExclamationCircleIcon, SparklesIcon, InformationCircleIcon
+  ExclamationCircleIcon, SparklesIcon, InformationCircleIcon, PlusIcon
 } from '@heroicons/vue/24/outline'
 import { getHoliday } from '@/utils/holidays'
 import { useModalStore } from '@/stores/useModalStore'
@@ -996,7 +996,10 @@ const timeConflictError = computed(() => {
 })
 
 const openBooking = (room, time = '09:00', date = null, endDateParam = null) => {
-  const targetDate = date || selectedDate.value
+  let targetDate = date || selectedDate.value
+  if (!date && isPastDate(targetDate)) {
+    targetDate = formatDate(new Date())
+  }
   if (isPastDate(targetDate)) return
   bookingDate.value = targetDate
   bookingEndDate.value = endDateParam && endDateParam >= targetDate ? endDateParam : targetDate
@@ -1725,11 +1728,18 @@ defineExpose({ fetchData, openReservationById })
               </button>
             </div>
           </div>
-          <!-- Search -->
-          <div class="relative w-full md:w-72">
-            <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" v-model="searchQuery" placeholder="신청명, 공간명, 신청자 검색..." 
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20" />
+          <!-- Search & Booking Button -->
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="relative flex-1 md:w-72">
+              <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="text" v-model="searchQuery" placeholder="신청명, 공간명, 신청자 검색..." 
+                     class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20" />
+            </div>
+            <button @click="openBooking(null)" 
+                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1.5 shrink-0">
+              <PlusIcon class="w-3.5 h-3.5" />
+              <span>예약 신청</span>
+            </button>
           </div>
         </div>
 
