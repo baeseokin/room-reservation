@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 flex flex-col font-sans pb-24">
     <!-- Top Bar -->
-    <header class="bg-white border-b border-slate-50 px-6 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl bg-white/90">
+    <header class="h-16 px-5 bg-white border-b border-slate-100 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl bg-white/90 shrink-0">
       <div class="flex items-center gap-4">
         <router-link to="/m/home" class="flex items-center active:scale-95 transition-all">
           <img src="../assets/logo_wonchon.png" alt="Logo" class="w-7 h-7 object-cover object-left opacity-90" />

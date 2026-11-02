@@ -122,16 +122,16 @@
                 <div v-else class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
                   <div v-for="item in currentRoomSchedule" :key="item.id"
                        class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
-                       :class="item.type === 'blocked' ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'">
+                       :class="item.type === 'blocked' ? 'border-teal-200 bg-teal-50/70' : 'border-slate-200 bg-white'">
                     <!-- Time Badge -->
                     <span class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
-                          :class="item.type === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-slate-800 text-white'">
-                      <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-rose-500' : 'bg-emerald-400'"></span>
+                          :class="item.type === 'blocked' ? 'bg-teal-100 text-teal-800' : 'bg-slate-800 text-white'">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-teal-500' : 'bg-emerald-400'"></span>
                       {{ item.start_time }} - {{ item.end_time }}
                     </span>
                     <!-- Title Badge -->
                     <span class="px-2 py-0.5 font-bold text-xs truncate max-w-[180px] flex items-center gap-1"
-                          :class="item.type === 'blocked' ? 'text-rose-800' : 'text-slate-800'">
+                          :class="item.type === 'blocked' ? 'text-teal-900' : 'text-slate-800'">
                       <span>{{ item.title }}</span>
                       <span v-if="item.requester_name" class="text-[0.625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
                     </span>

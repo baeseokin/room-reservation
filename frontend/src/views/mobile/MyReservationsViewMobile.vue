@@ -8,7 +8,7 @@
     @mousedown="onCalendarMouseDown"
   >
     <!-- 1. Fixed Top Header Section (상단 완전 고정: 월 네비게이터 + 요일 헤더) -->
-    <div class="fixed-calendar-header sticky top-[3.75rem] z-30 bg-slate-50 pt-1 pb-1 space-y-2 select-none touch-none">
+    <div class="fixed-calendar-header sticky top-16 z-30 bg-slate-50 pt-1 pb-1 space-y-2 select-none touch-none">
       <!-- 1-1. Top Month Navigator Header -->
       <div class="px-5">
         <div class="flex items-center justify-between">
@@ -234,9 +234,9 @@
               <div class="shrink-0">
                 <span
                   class="px-2.5 py-1 rounded-full text-[11px] font-black"
-                  :class="statusBadgeClass(item.status)"
+                  :class="item.is_blocked ? 'bg-teal-100 text-teal-800' : statusBadgeClass(item.status)"
                 >
-                  {{ statusLabel(item.status) }}
+                  {{ item.is_blocked ? '고정 일정' : statusLabel(item.status) }}
                 </span>
               </div>
             </div>
@@ -403,20 +403,20 @@
                   v-for="item in currentBookingRoomSchedule"
                   :key="item.id"
                   class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
-                  :class="item.type === 'blocked' ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'"
+                  :class="item.type === 'blocked' ? 'border-teal-200 bg-teal-50/70' : 'border-slate-200 bg-white'"
                 >
                   <!-- Time Badge -->
                   <span
                     class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
-                    :class="item.type === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-slate-800 text-white'"
+                    :class="item.type === 'blocked' ? 'bg-teal-100 text-teal-800' : 'bg-slate-800 text-white'"
                   >
-                    <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-rose-500' : 'bg-emerald-400'"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-teal-500' : 'bg-emerald-400'"></span>
                     {{ item.start_time }} - {{ item.end_time }}
                   </span>
                   <!-- Title Badge -->
                   <span
                     class="px-2 py-0.5 font-bold text-[0.6875rem] truncate max-w-[150px] flex items-center gap-1"
-                    :class="item.type === 'blocked' ? 'text-rose-800' : 'text-slate-800'"
+                    :class="item.type === 'blocked' ? 'text-teal-900' : 'text-slate-800'"
                   >
                     <span>{{ item.title }}</span>
                     <span v-if="item.requester_name" class="text-[0.5625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
@@ -725,19 +725,19 @@
                       :key="item.id"
                       class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
                       :class="item.type === 'blocked'
-                        ? 'border-rose-200 bg-rose-50/60'
+                        ? 'border-teal-200 bg-teal-50/70'
                         : (item.is_self ? 'border-indigo-300 bg-indigo-50/70' : 'border-slate-200 bg-white')"
                     >
                       <!-- Time Badge -->
                       <span
                         class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
                         :class="item.type === 'blocked'
-                          ? 'bg-rose-100 text-rose-700'
+                          ? 'bg-teal-100 text-teal-800'
                           : (item.is_self ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-white')"
                       >
                         <span
                           class="w-1.5 h-1.5 rounded-full"
-                          :class="item.type === 'blocked' ? 'bg-rose-500' : (item.is_self ? 'bg-white' : 'bg-emerald-400')"
+                          :class="item.type === 'blocked' ? 'bg-teal-500' : (item.is_self ? 'bg-white' : 'bg-emerald-400')"
                         ></span>
                         {{ item.start_time }} - {{ item.end_time }}
                       </span>
@@ -745,7 +745,7 @@
                       <span
                         class="px-2 py-0.5 font-bold text-[0.6875rem] truncate max-w-[150px] flex items-center gap-1"
                         :class="item.type === 'blocked'
-                          ? 'text-rose-800'
+                          ? 'text-teal-900'
                           : (item.is_self ? 'text-indigo-900 font-black' : 'text-slate-800')"
                       >
                         <span>{{ item.title }}</span>
@@ -1163,14 +1163,14 @@ const formatLogAction = (type) => {
 }
 
 const getExpandedBarClass = (item) => {
-  if (item.is_blocked) return 'bg-slate-200 text-slate-700'
+  if (item.is_blocked) return 'bg-teal-600 text-white font-bold'
   if (item.status === 'cancel_requested') return 'bg-rose-100 text-rose-800'
   if (item.status === 'pending') return 'bg-amber-100 text-amber-800'
   return 'bg-indigo-600 text-white'
 }
 
 const getItemBarColor = (item) => {
-  if (item.is_blocked) return 'bg-slate-500'
+  if (item.is_blocked) return 'bg-teal-600'
   if (item.status === 'cancel_requested') return 'bg-rose-500'
   if (item.status === 'pending') return 'bg-amber-400'
   return 'bg-indigo-600'
@@ -1180,7 +1180,7 @@ const getCellDotColors = (cell) => {
   if (!cell.items || cell.items.length === 0) return []
   const dots = []
   for (const item of cell.items.slice(0, 3)) {
-    if (item.is_blocked) dots.push('bg-slate-500')
+    if (item.is_blocked) dots.push('bg-teal-500')
     else if (item.status === 'cancel_requested') dots.push('bg-rose-500')
     else if (item.status === 'pending') dots.push('bg-amber-400')
     else dots.push('bg-indigo-600')

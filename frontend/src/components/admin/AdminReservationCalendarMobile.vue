@@ -221,7 +221,7 @@
               <!-- Status Pill -->
               <span
                 class="px-2.5 py-1 rounded-full text-[10px] font-black shrink-0"
-                :class="item.is_blocked ? 'bg-slate-200 text-slate-700' : statusBadgeClass(item.status)"
+                :class="item.is_blocked ? 'bg-teal-100 text-teal-800' : statusBadgeClass(item.status)"
               >
                 {{ item.is_blocked ? '고정 일정' : statusLabel(item.status) }}
               </span>
@@ -418,7 +418,7 @@
                     :key="item.id"
                     class="px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 border"
                     :class="item.is_blocked
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                      ? 'bg-teal-50 text-teal-800 border-teal-200'
                       : 'bg-white text-slate-700 border-slate-200'"
                   >
                     <span v-if="bookingDatesInRange.length > 1" class="text-indigo-600 font-black">
@@ -1290,14 +1290,14 @@ const statusBadgeClass = (s) => ({
 }[s] || 'bg-slate-100 text-slate-600')
 
 const getExpandedBarClass = (item) => {
-  if (item.is_blocked) return 'bg-slate-200 text-slate-700'
+  if (item.is_blocked) return 'bg-teal-600 text-white font-bold'
   if (item.status === 'cancel_requested') return 'bg-rose-100 text-rose-800'
   if (item.status === 'pending') return 'bg-amber-100 text-amber-800'
   return 'bg-indigo-600 text-white'
 }
 
 const getItemBarColor = (item) => {
-  if (item.is_blocked) return 'bg-slate-500'
+  if (item.is_blocked) return 'bg-teal-600'
   if (item.status === 'cancel_requested') return 'bg-rose-500'
   if (item.status === 'pending') return 'bg-amber-400'
   return 'bg-indigo-600'
@@ -1308,7 +1308,7 @@ const getCellDotColors = (cell) => {
   if (!cell.items || cell.items.length === 0) return []
   const dots = []
   for (const item of cell.items.slice(0, 3)) {
-    if (item.is_blocked) dots.push('bg-slate-500')
+    if (item.is_blocked) dots.push('bg-teal-500')
     else if (item.status === 'pending') dots.push('bg-amber-400')
     else dots.push('bg-indigo-600')
   }

@@ -210,7 +210,7 @@ onMounted(() => {
              <!-- Blocked Times mini badges -->
              <div v-if="room.blocked_times?.length > 0" class="flex flex-wrap gap-1 mt-2">
                <div v-for="bt in room.blocked_times" :key="'mob-bt-'+bt.id" 
-                    class="px-1.5 py-0.5 bg-rose-50 text-[0.75rem] font-black text-rose-600 rounded">
+                    class="px-1.5 py-0.5 bg-teal-50 text-[0.75rem] font-black text-teal-700 rounded">
                  {{ getDayLabel(bt.day_of_week) }} {{ bt.start_time.slice(0,5) }}
                </div>
              </div>
@@ -278,7 +278,7 @@ onMounted(() => {
               <div class="flex gap-1.5 p-1 bg-white rounded-2xl shadow-sm">
                 <button v-for="t in [['weekly','주간'], ['monthly_date','월간(일)'], ['monthly_nth','월간(요일)']]" :key="t[0]"
                         @click="blockedForm.recurring_type = t[0]"
-                        :class="[blockedForm.recurring_type === t[0] ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400']"
+                        :class="[blockedForm.recurring_type === t[0] ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400']"
                         class="flex-1 py-2.5 rounded-xl text-[0.75rem] font-black uppercase tracking-widest transition-all">
                   {{ t[1] }}
                 </button>
@@ -343,7 +343,7 @@ onMounted(() => {
                 <label class="text-[0.75rem] font-black text-slate-400 uppercase tracking-widest ml-1">차단 사유</label>
                 <div class="flex gap-2">
                   <input v-model="blockedForm.reason" type="text" placeholder="사유 (예: 점검)" class="flex-1 bg-white border-none rounded-xl py-3 px-4 text-xs font-bold shadow-sm" />
-                  <button @click="addBlockedTime" class="bg-rose-500 text-white px-5 py-3 rounded-xl font-bold text-xs shadow-lg shadow-rose-100">추가</button>
+                  <button @click="addBlockedTime" class="bg-teal-600 text-white px-5 py-3 rounded-xl font-bold text-xs shadow-lg shadow-teal-100">추가</button>
                 </div>
               </div>
             </div>
@@ -351,7 +351,7 @@ onMounted(() => {
             <div class="space-y-2">
               <div v-for="bt in blockedTimes" :key="bt.id" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div class="flex items-center gap-3">
-                  <span class="bg-rose-100 text-rose-600 text-[0.75rem] font-black px-2 py-1 rounded-lg">
+                  <span class="bg-teal-100 text-teal-700 text-[0.75rem] font-black px-2 py-1 rounded-lg">
                     <template v-if="bt.recurring_type === 'monthly_date'">매월 {{ bt.day_of_month }}일</template>
                     <template v-else-if="bt.recurring_type === 'monthly_nth'">매월 {{ bt.nth_week }}주 {{ getDayLabel(bt.day_of_week) }}</template>
                     <template v-else>{{ getDayLabel(bt.day_of_week) }}</template>

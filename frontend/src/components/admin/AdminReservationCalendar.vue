@@ -496,9 +496,9 @@ const openDetail = (res) => {
   editForm.value = {
     room_id: res.room_id,
     title: res.title || '',
-    reservation_date: formatDate(res.reservation_date),
-    start_time: res.start_time.slice(0, 5),
-    end_time: res.end_time.slice(0, 5),
+    reservation_date: res.reservation_date ? formatDate(res.reservation_date) : '',
+    start_time: res.start_time?.slice(0, 5) || '',
+    end_time: res.end_time?.slice(0, 5) || '',
     reason: res.reason || '',
     admin_reason: ''
   }
@@ -786,6 +786,13 @@ const getMinute = (time) => {
   return time.split(':')[1] || '00'
 }
 
+const addOneHour = (timeStr) => {
+  if (!timeStr) return ''
+  const [h, m] = timeStr.split(':').map(Number)
+  const nextH = Math.min(23, h + 1)
+  return `${String(nextH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 const updateTime = (target, type, val, current) => {
   if (!current) current = '09:00'
   let [h, m] = current.split(':').map(v => isNaN(parseInt(v)) ? 0 : parseInt(v))
@@ -801,8 +808,12 @@ const updateTime = (target, type, val, current) => {
   if (ampm === '오후') newH += 12
   
   const timeStr = `${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-  if (target === 'start') form.value.start_time = timeStr
-  else form.value.end_time = timeStr
+  if (target === 'start') {
+    form.value.start_time = timeStr
+    form.value.end_time = addOneHour(timeStr)
+  } else {
+    form.value.end_time = timeStr
+  }
 }
 
 const form = ref({
@@ -842,13 +853,6 @@ watch(() => form.value.requester_phone, (val) => {
     form.value.requester_phone = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
   }
 })
-
-const addOneHour = (timeStr) => {
-  if (!timeStr) return ''
-  const [h, m] = timeStr.split(':').map(Number)
-  const nextH = Math.min(23, h + 1)
-  return `${String(nextH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
 
 watch(() => form.value.start_time, (newStart) => {
   if (newStart) {
@@ -1423,19 +1427,19 @@ defineExpose({ fetchData, openReservationById })
       <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
         <div class="flex items-center gap-2 sm:gap-3 text-xs font-bold text-slate-500 whitespace-nowrap shrink-0">
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-indigo-600 rounded-md shadow-sm shrink-0"></span>
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-indigo-600 rounded-full shadow-xs shrink-0"></span>
             <span class="whitespace-nowrap">승인완료</span>
           </div>
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-500 rounded-md shadow-sm shrink-0"></span>
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-400 rounded-full shadow-xs shrink-0"></span>
             <span class="whitespace-nowrap">승인대기</span>
           </div>
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-300 rounded-md shadow-sm shrink-0"></span>
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-400 rounded-full shadow-xs shrink-0"></span>
             <span class="whitespace-nowrap">종료됨</span>
           </div>
           <div v-if="includeBlocked" class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-rose-100 border border-dashed border-rose-400 rounded-md shadow-sm shrink-0"></span>
+            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-teal-100 border border-dashed border-teal-400 rounded-full shadow-xs shrink-0"></span>
             <span class="whitespace-nowrap">고정 일정</span>
           </div>
         </div>
@@ -1503,9 +1507,9 @@ defineExpose({ fetchData, openReservationById })
               <div class="space-y-1">
                 <div v-for="res in getCalendarItemsForDate(formatDate(d.date)).slice(0, 4)" :key="res.id"
                      @mousedown.stop
-                     @click="!res.is_blocked && ($event.stopPropagation(), openDetail(res))"
+                     @click="$event.stopPropagation(), openDetail(res)"
                      :class="[
-                       res.is_blocked ? 'bg-rose-100 text-rose-800 border border-dashed border-rose-300 shadow-xs' :
+                       res.is_blocked ? 'bg-teal-100 text-teal-900 border border-dashed border-teal-300 shadow-xs' :
                        isEnded(res) ? 'bg-slate-200 text-slate-700 shadow-sm border border-slate-300 cursor-pointer hover:opacity-85' : 
                        res.status === 'pending' ? 'bg-amber-500 text-white shadow-md cursor-pointer hover:opacity-85' : 'bg-indigo-600 text-white shadow-md cursor-pointer hover:opacity-85'
                      ]"
@@ -1590,8 +1594,22 @@ defineExpose({ fetchData, openReservationById })
                         <!-- Blocked Times -->
                         <template v-if="includeBlocked">
                           <div v-for="bt in getBlockedForRoomAndDate(room, date)" :key="'bt-' + bt.id"
-                               class="text-[0.625rem] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-dashed border-rose-300 truncate">
-                            {{ bt.start_time.slice(0,5) }}~{{ bt.end_time.slice(0,5) }} {{ bt.reason || '' }}
+                               @click.stop="openDetail({
+                                 id: `blocked-${room.id}-${bt.id}-${date}`,
+                                 is_blocked: true,
+                                 room_id: room.id,
+                                 room_name: room.room_name,
+                                 floor: room.floor,
+                                 reservation_date: date,
+                                 start_time: bt.start_time,
+                                 end_time: bt.end_time,
+                                 title: bt.reason || '고정 일정',
+                                 reason: bt.reason || '관리자 설정 고정 일정',
+                                 requester_name: '관리자',
+                                 status: 'blocked'
+                               })"
+                               class="text-[0.625rem] font-black px-1.5 py-0.5 rounded bg-teal-100 text-teal-900 border border-dashed border-teal-300 truncate cursor-pointer hover:opacity-85 transition-opacity">
+                            {{ bt.start_time?.slice(0,5) }}~{{ bt.end_time?.slice(0,5) }} {{ bt.reason || '' }}
                           </div>
                         </template>
 
@@ -1677,9 +1695,23 @@ defineExpose({ fetchData, openReservationById })
                       <!-- Blocked Areas -->
                       <div v-if="includeBlocked" class="absolute inset-0 pointer-events-none">
                         <div v-for="bt in getBlockedForRoomAndDate(room, selectedDate)" :key="'day-bt-' + bt.id"
+                             @click.stop="openDetail({
+                               id: `blocked-${room.id}-${bt.id}-${selectedDate}`,
+                               is_blocked: true,
+                               room_id: room.id,
+                               room_name: room.room_name,
+                               floor: room.floor,
+                               reservation_date: selectedDate,
+                               start_time: bt.start_time,
+                               end_time: bt.end_time,
+                               title: bt.reason || '고정 일정',
+                               reason: bt.reason || '관리자 설정 고정 일정',
+                               requester_name: '관리자',
+                               status: 'blocked'
+                             })"
                              :style="getBlockedStyle(bt)"
-                             class="absolute top-2 bottom-2 bg-rose-100/90 border border-rose-300 z-10 flex items-center justify-center overflow-hidden rounded-xl stripe-bg">
-                          <span class="text-[0.625rem] font-black text-rose-800 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">
+                             class="absolute top-2 bottom-2 bg-teal-100/90 border border-teal-300 z-10 flex items-center justify-center overflow-hidden rounded-xl stripe-bg pointer-events-auto cursor-pointer hover:opacity-85 transition-opacity">
+                          <span class="text-[0.625rem] font-black text-teal-900 uppercase tracking-tighter whitespace-nowrap rotate-[-10deg]">
                             {{ bt.reason || '고정 일정' }}
                           </span>
                         </div>
@@ -1749,18 +1781,14 @@ defineExpose({ fetchData, openReservationById })
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="res in filteredItems" :key="'list-res-' + res.id" @click="!res.is_blocked && openDetail(res)"
-               :class="[
-                 res.is_blocked ? (isEnded(res) ? 'bg-rose-50/40 border-rose-200/70 opacity-60 cursor-default' : 'bg-rose-50/70 border-rose-200 cursor-default') :
-                 isEnded(res) ? 'bg-slate-50 border-slate-200 opacity-60 cursor-pointer' : 'bg-white border-slate-200 hover:border-indigo-500 hover:shadow-md cursor-pointer'
-               ]"
-               class="border rounded-2xl p-5 transition-all group flex flex-col justify-between">
+          <div v-for="res in filteredItems" :key="'list-res-' + res.id" @click="openDetail(res)"
+               class="bg-white border border-slate-200 rounded-2xl p-5 transition-all group flex flex-col justify-between hover:border-indigo-500 hover:shadow-md cursor-pointer">
             <div>
               <div class="flex justify-between items-start mb-2">
-                <span :class="res.is_blocked ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-600'" class="px-2.5 py-1 rounded-lg text-xs font-black">
+                <span :class="res.is_blocked ? 'bg-teal-100 text-teal-800' : 'bg-indigo-50 text-indigo-600'" class="px-2.5 py-1 rounded-lg text-xs font-black">
                   {{ res.floor }}{{ String(res.floor).includes('B') ? '' : 'F' }} · {{ res.room_name }}
                 </span>
-                <span v-if="res.is_blocked" class="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[0.6875rem] font-black">
+                <span v-if="res.is_blocked" class="bg-teal-600 text-white px-2 py-0.5 rounded-md text-[0.6875rem] font-black">
                   고정 일정
                 </span>
                 <span v-else :class="[
@@ -1824,108 +1852,162 @@ defineExpose({ fetchData, openReservationById })
 
     <!-- Modal: Detail / Edit / Cancel with Kakao AlimTalk -->
     <Teleport to="body">
-      <div v-if="showDetailModal" class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showDetailModal = false"></div>
-        <div class="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl border border-white overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div v-if="showDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[4000]">
+        <div class="bg-[#F8FAFC] w-full max-w-lg rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] border border-white overflow-hidden animate-in transform-gpu flex flex-col max-h-[90vh]">
           
-          <!-- Modal Top Header -->
-          <div class="bg-slate-900 px-8 py-7 text-white relative">
-            <button @click="showDetailModal = false" class="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
-              <XMarkIcon class="w-6 h-6 text-slate-400 hover:text-white" />
+          <!-- Header Area (Fixed) -->
+          <div class="bg-white px-8 pt-8 pb-4 relative shrink-0">
+            <button @click="showDetailModal = false" class="absolute top-6 right-6 p-2 bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
+              <XMarkIcon class="w-4 h-4" />
             </button>
-            
-            <div class="flex items-center gap-2.5 mb-2">
-              <span class="bg-indigo-600 px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider">
-                {{ detailReservation?.floor }}{{ String(detailReservation?.floor).includes('B') ? '' : 'F' }}
-              </span>
-              <span class="text-indigo-300 text-sm font-black">{{ detailReservation?.room_name }}</span>
-              <span :class="[
-                      detailReservation?.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                      detailReservation?.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
-                      'bg-slate-700 text-slate-300 border-slate-600'
-                    ]" 
-                    class="px-2.5 py-0.5 rounded-full text-xs font-black border ml-auto mr-8">
-                {{ detailReservation?.status === 'approved' ? '승인완료' : detailReservation?.status === 'pending' ? '승인대기' : detailReservation?.status === 'cancelled' ? '취소됨' : detailReservation?.status }}
-              </span>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
+                   :class="detailReservation?.is_blocked ? 'bg-teal-600 shadow-teal-100' : 'bg-indigo-600 shadow-indigo-100'">
+                <CalendarIcon class="w-4 h-4 text-white" />
+              </div>
+              <div class="min-w-0 flex-1 pr-6">
+                <h2 class="text-xl font-black text-slate-900 tracking-tighter truncate">
+                  {{ isEditing ? '예약 정보 수정' : '공간 예약 상세' }}
+                </h2>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span v-if="detailReservation?.floor" 
+                        class="text-[0.75rem] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest"
+                        :class="detailReservation?.is_blocked ? 'text-teal-600 bg-teal-50' : 'text-indigo-600 bg-indigo-50'">
+                    {{ detailReservation?.floor }}{{ String(detailReservation?.floor || '').includes('B') ? '' : 'F' }}
+                  </span>
+                  <p class="text-[0.75rem] font-black text-slate-900 uppercase tracking-tighter">
+                    {{ isEditing ? (currentEditRoom?.room_name || detailReservation?.room_name) : detailReservation?.room_name }} | {{ isEditing ? (editForm.reservation_date || detailReservation?.reservation_date) : detailReservation?.reservation_date }}
+                  </p>
+                  <span v-if="detailReservation?.is_blocked" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-teal-50 text-teal-700 border border-teal-200">
+                    고정 일정
+                  </span>
+                  <span v-else-if="isEnded(detailReservation)" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-slate-100 text-slate-500 border border-slate-200">
+                    종료됨
+                  </span>
+                  <span v-else-if="detailReservation?.status === 'approved'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    승인완료
+                  </span>
+                  <span v-else-if="detailReservation?.status === 'pending'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                    승인대기
+                  </span>
+                  <span v-else-if="detailReservation?.status === 'cancelled'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                    취소됨
+                  </span>
+                  <span v-else class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-slate-100 text-slate-700 border border-slate-200">
+                    {{ detailReservation?.status }}
+                  </span>
+                </div>
+              </div>
             </div>
-
-            <div v-if="isEditing">
-              <input type="text" v-model="editForm.title" 
-                     placeholder="신청명을 입력하세요"
-                     class="w-full bg-white/10 border-b border-white/20 focus:border-indigo-400 focus:outline-none text-xl font-black text-white p-2 rounded-xl mt-1 placeholder:text-white/40" />
-            </div>
-            <h2 v-else class="text-xl font-black tracking-tight text-white mt-1">
-              {{ detailReservation?.title || '(제목 없음)' }}
-            </h2>
           </div>
 
-          <!-- Modal Body -->
-          <div class="px-8 py-6 space-y-6 overflow-y-auto max-h-[75vh]">
+          <!-- Content Area (Scrollable) -->
+          <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
+            
             <!-- Normal View Mode -->
             <template v-if="!isEditing">
-              <!-- Date & Time Info Box -->
-              <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100 grid grid-cols-2 gap-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xs">
-                    <CalendarIcon class="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <span class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest block">예약 날짜</span>
-                    <span class="text-sm font-black text-slate-900">{{ detailReservation?.reservation_date }}</span>
-                  </div>
+              <!-- Room Info Card -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">
+                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
+                    예약 공간
+                  </label>
                 </div>
+                <p class="font-black text-sm text-slate-900">
+                  [{{ detailReservation?.floor }}{{ String(detailReservation?.floor || '').includes('B') ? '' : 'F' }}] {{ detailReservation?.room_name }}
+                </p>
+              </div>
 
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xs">
-                    <ClockIcon class="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <span class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest block">예약 시간</span>
-                    <span class="text-sm font-black text-slate-900">{{ detailReservation?.start_time?.slice(0,5) }} ~ {{ detailReservation?.end_time?.slice(0,5) }}</span>
-                  </div>
+              <!-- Date Info Card -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <CalendarIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  예약 일자
+                </label>
+                <p class="font-black text-sm text-slate-900">
+                  {{ detailReservation?.reservation_date }} ({{ detailReservation?.reservation_date ? ['일','월','화','수','목','금','토'][new Date(String(detailReservation.reservation_date).replace(/-/g, '/')).getDay()] : '' }})
+                </p>
+              </div>
+
+              <!-- Time Info Grid -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm text-center">
+                  <label class="text-[0.75rem] font-black mb-1 block uppercase tracking-widest text-center text-slate-400">
+                    시작 시간
+                  </label>
+                  <span class="text-base font-black text-slate-900 font-mono tracking-tight">
+                    {{ detailReservation?.start_time?.slice(0, 5) }}
+                  </span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm text-center">
+                  <label class="text-[0.75rem] font-black mb-1 block uppercase tracking-widest text-center text-slate-400">
+                    종료 시간
+                  </label>
+                  <span class="text-base font-black text-slate-900 font-mono tracking-tight">
+                    {{ detailReservation?.end_time?.slice(0, 5) }}
+                  </span>
                 </div>
               </div>
 
-              <!-- Requester Info -->
-              <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
-                <div class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest">신청자 정보</div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <span class="text-xs text-slate-400 block font-bold">성명</span>
-                    <span class="text-sm font-black text-slate-900">{{ detailReservation?.requester_name }}</span>
-                  </div>
-                  <div>
-                    <span class="text-xs text-slate-400 block font-bold">연락처</span>
-                    <span class="text-sm font-black text-slate-900">{{ detailReservation?.requester_phone || '미기재' }}</span>
-                  </div>
+              <!-- Title Card -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <SparklesIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  신청명
+                </label>
+                <p class="font-black text-sm text-slate-900">
+                  {{ detailReservation?.title || (detailReservation?.is_blocked ? '고정 일정' : '(제목 없음)') }}
+                </p>
+              </div>
+
+              <!-- Requester Info Grid -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                  <label class="block text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                    {{ detailReservation?.is_blocked ? '구분' : '신청자 성함' }}
+                  </label>
+                  <p class="font-black text-sm text-slate-900">
+                    {{ detailReservation?.is_blocked ? '관리자 설정 (고정 일정)' : (detailReservation?.requester_name || '-') }}
+                  </p>
+                </div>
+                <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                  <label class="block text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">연락처</label>
+                  <p class="font-black text-sm text-slate-900">
+                    {{ detailReservation?.requester_phone || '-' }}
+                  </p>
                 </div>
               </div>
 
               <!-- Reason / Purpose -->
-              <div class="space-y-1.5">
-                <span class="text-[0.6875rem] font-black text-slate-400 uppercase tracking-widest">사용 목적 / 상세 내용</span>
-                <div class="text-xs font-bold text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap leading-relaxed">
-                  {{ detailReservation?.reason || '상세 사유가 없습니다.' }}
-                </div>
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                <label class="block text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  {{ detailReservation?.is_blocked ? '상세 내용' : '사용 목적 / 상세 내용' }}
+                </label>
+                <p class="font-bold text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {{ detailReservation?.reason || (detailReservation?.is_blocked ? '고정 일정으로 등록되어 있습니다.' : '상세 사유가 없습니다.') }}
+                </p>
               </div>
 
-              <!-- 변경이력 (처리 시간, 사유 시간 오름차순 표시) -->
-              <div v-if="getSortedChangeLogs(detailReservation).length > 0" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
-                <span class="text-xs font-black text-slate-700 flex items-center gap-1.5">
-                  <ClockIcon class="w-4 h-4 text-indigo-600" />
-                  변경이력
-                </span>
+              <!-- 변경이력 -->
+              <div v-if="getSortedChangeLogs(detailReservation).length > 0" class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-3">
+                <div class="flex items-center justify-between">
+                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-500 uppercase tracking-wider">
+                    <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                    변경 이력
+                  </label>
+                  <span class="text-[0.625rem] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {{ getSortedChangeLogs(detailReservation).length }}건
+                  </span>
+                </div>
                 <div class="space-y-2">
-                  <div 
-                    v-for="(log, idx) in getSortedChangeLogs(detailReservation)" 
-                    :key="log.id || idx"
-                    class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs space-y-1"
-                  >
+                  <div v-for="(log, idx) in getSortedChangeLogs(detailReservation)" :key="log.id || idx"
+                       class="bg-slate-50/80 p-3 rounded-2xl border border-slate-100 space-y-1">
                     <div class="flex items-center justify-between text-[0.6875rem]">
                       <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[0.625rem] font-black border" :class="getActionBadgeClass(log.action_type)">
                         {{ getActionLabel(log.action_type) }}
                       </span>
-                      <span class="font-bold text-slate-500">{{ formatDateTime(log.created_at) }}</span>
+                      <span class="font-bold text-slate-400">{{ formatDateTime(log.created_at) }}</span>
                     </div>
                     <p class="text-xs font-bold text-slate-800 whitespace-pre-wrap leading-relaxed">
                       {{ log.reason }}
@@ -1937,236 +2019,264 @@ defineExpose({ fetchData, openReservationById })
 
             <!-- Edit Mode -->
             <template v-else>
-              <div class="space-y-4">
-                <div v-if="detailReservation.is_recurring" class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-500 uppercase tracking-wider block">반복 예약 변경 범위</label>
-                  <div class="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      @click="modifyScope = 'single'"
-                      class="py-2.5 rounded-xl text-xs font-black border transition-all"
-                      :class="modifyScope === 'single' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200'"
-                    >
-                      이 일정만 변경
-                    </button>
-                    <button
-                      type="button"
-                      @click="modifyScope = 'all'"
-                      class="py-2.5 rounded-xl text-xs font-black border transition-all"
-                      :class="modifyScope === 'all' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200'"
-                    >
-                      유효한 전체 일정 변경
-                    </button>
-                  </div>
+              <!-- Recurring Scope Selector (if recurring) -->
+              <div v-if="detailReservation.is_recurring" class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-2">
+                <label class="text-[0.75rem] font-black text-slate-500 uppercase tracking-wider block">반복 예약 변경 범위</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    @click="modifyScope = 'single'"
+                    class="py-2.5 rounded-2xl text-xs font-black border transition-all"
+                    :class="modifyScope === 'single' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                  >
+                    이 일정만 변경
+                  </button>
+                  <button
+                    type="button"
+                    @click="modifyScope = 'all'"
+                    class="py-2.5 rounded-2xl text-xs font-black border transition-all"
+                    :class="modifyScope === 'all' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                  >
+                    유효한 전체 일정 변경
+                  </button>
+                </div>
+              </div>
+
+              <!-- Room Selector -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  예약 공간
+                </label>
+                <select v-model="editForm.room_id" class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer outline-none">
+                  <option v-for="rm in rooms" :key="rm.id" :value="rm.id">
+                    [{{ rm.floor }}{{ String(rm.floor).includes('B') ? '' : 'F' }}] {{ rm.room_name }} (정원 {{ rm.capacity }}명)
+                  </option>
+                </select>
+              </div>
+
+              <!-- Date Selection -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <CalendarIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  예약 일자
+                </label>
+                <input type="date" v-model="editForm.reservation_date" :disabled="detailReservation.is_recurring && modifyScope === 'all'"
+                       class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer disabled:opacity-50" />
+              </div>
+
+              <!-- 해당일 & 해당 공간 기존 예약 및 중복 현황 박스 (당일 예약 현황) -->
+              <div class="bg-white p-4 rounded-3xl border shadow-sm space-y-2.5 transition-all"
+                   :class="hasConflict ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/60'">
+                <div class="flex items-center justify-between">
+                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-500 uppercase tracking-wider">
+                    <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                    해당 공간 예약 현황
+                  </label>
+                  <span class="text-[0.6875rem] font-bold text-slate-400">
+                    {{ editForm.reservation_date }} · {{ currentEditRoom?.room_name }}
+                  </span>
                 </div>
 
-                <!-- Room Selector -->
+                <!-- Status pill -->
                 <div>
-                  <label class="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">공간 선택</label>
-                  <select v-model="editForm.room_id" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm font-black text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20">
-                    <option v-for="rm in rooms" :key="rm.id" :value="rm.id">
-                      [{{ rm.floor }}{{ String(rm.floor).includes('B') ? '' : 'F' }}] {{ rm.room_name }} (정원 {{ rm.capacity }}명)
-                    </option>
-                  </select>
+                  <span v-if="isLoadingRoomReservations" class="text-[0.6875rem] font-bold text-slate-400 flex items-center gap-1">
+                    <ArrowPathIcon class="w-3.5 h-3.5 animate-spin" /> 조회 중...
+                  </span>
+                  <span v-else-if="hasConflict" class="px-2.5 py-1 bg-rose-500 text-white rounded-lg text-[0.6875rem] font-black flex items-center gap-1 shadow-sm">
+                    <ExclamationCircleIcon class="w-3.5 h-3.5" /> 시간 중복 발생!
+                  </span>
+                  <span v-else-if="existingRoomReservations.length > 0 || existingBlockedTimes.length > 0" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[0.6875rem] font-black flex items-center gap-1">
+                    <CheckCircleIcon class="w-3.5 h-3.5" /> 예약 가능 (중복 없음)
+                  </span>
+                  <span v-else class="text-xs font-bold text-slate-400 block text-center py-2 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    당일 예약 내역이 없습니다. (전 시간 가능)
+                  </span>
                 </div>
 
-                <!-- Date & Times -->
-                <div class="grid grid-cols-3 gap-3">
-                  <div>
-                    <label class="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">예약일</label>
-                    <input type="date" v-model="editForm.reservation_date" :disabled="detailReservation.is_recurring && modifyScope === 'all'" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-black text-slate-800 outline-none disabled:opacity-50" />
+                <!-- Conflict Alert Banner -->
+                <div v-if="hasConflict" class="p-3 bg-rose-100/90 border border-rose-300 rounded-2xl text-xs font-bold text-rose-800 flex items-start gap-2">
+                  <ExclamationCircleIcon class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div class="leading-relaxed">
+                    선택하신 시간(<strong class="font-black text-rose-950">{{ editForm.start_time }} ~ {{ editForm.end_time }}</strong>)에 이미 기존 일정과 <strong>시간이 중복</strong>됩니다.
                   </div>
-                  <div>
-                    <label class="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">시작 시간</label>
-                    <select v-model="editForm.start_time" @change="handleStartTimeChange" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-black text-slate-800 outline-none">
+                </div>
+
+                <!-- Reservation / Blocked Times List -->
+                <div v-if="existingRoomReservations.length > 0 || existingBlockedTimes.length > 0" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                  <!-- Blocked Times list -->
+                  <div v-for="bt in existingBlockedTimes" :key="'bt-' + bt.id"
+                       :class="isBlockedConflict(bt) ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20' : 'bg-slate-50/80 border-slate-200'"
+                       class="p-2.5 rounded-2xl border flex items-center justify-between gap-2 text-xs transition-all">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-teal-100 text-teal-800 border border-teal-200 shrink-0">
+                        고정 일정
+                      </span>
+                      <span class="font-black text-slate-800 shrink-0 font-mono">
+                        {{ bt.start_time.slice(0, 5) }} ~ {{ bt.end_time.slice(0, 5) }}
+                      </span>
+                      <span class="text-slate-500 font-medium truncate">
+                        {{ bt.reason || '고정 일정' }}
+                      </span>
+                    </div>
+                    <span v-if="isBlockedConflict(bt)" class="px-2 py-0.5 bg-rose-600 text-white rounded-md text-[0.625rem] font-black shrink-0">
+                      시간 중복
+                    </span>
+                  </div>
+
+                  <!-- Reservations list with status badge -->
+                  <div v-for="r in existingRoomReservations" :key="'ex-' + r.id"
+                       :class="isReservationConflict(r) ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20' : 'bg-white border-slate-200'"
+                       class="p-2.5 rounded-2xl border flex items-center justify-between gap-2 text-xs transition-all">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span v-if="r.status === 'approved'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
+                        승인완료
+                      </span>
+                      <span v-else-if="r.status === 'pending'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
+                        승인대기
+                      </span>
+                      <span v-else-if="r.status === 'rejected'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-slate-100 text-slate-400 border border-slate-200 line-through shrink-0">
+                        반려됨
+                      </span>
+                      <span v-else class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-slate-100 text-slate-400 border border-slate-200 shrink-0">
+                        {{ r.status }}
+                      </span>
+
+                      <span class="font-black shrink-0 font-mono" :class="isReservationConflict(r) ? 'text-rose-900' : 'text-slate-800'">
+                        {{ r.start_time.slice(0, 5) }} ~ {{ r.end_time.slice(0, 5) }}
+                      </span>
+
+                      <span class="font-bold truncate" :class="isReservationConflict(r) ? 'text-rose-700' : 'text-slate-600'">
+                        {{ r.title }}
+                      </span>
+                      <span class="text-slate-400 text-[0.6875rem] font-medium shrink-0">
+                        ({{ r.requester_name }})
+                      </span>
+                    </div>
+
+                    <div v-if="isReservationConflict(r)" class="shrink-0 flex items-center gap-1.5">
+                      <span class="px-2 py-0.5 bg-rose-600 text-white rounded-md text-[0.625rem] font-black flex items-center gap-0.5 shadow-xs">
+                        ⚠️ 시간 중복
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Time Selection Row -->
+              <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Start Time -->
+                  <div class="bg-white p-3 rounded-2xl border shadow-sm transition-all"
+                       :class="[hasConflict ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/60 focus-within:border-indigo-500']">
+                    <label class="text-[0.75rem] font-black mb-1.5 block uppercase tracking-widest text-center"
+                           :class="[hasConflict ? 'text-rose-400' : 'text-slate-400']">
+                      시작 시간
+                    </label>
+                    <select v-model="editForm.start_time" @change="handleStartTimeChange" 
+                            class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 font-black text-xs text-slate-800 text-center focus:ring-0 cursor-pointer">
                       <option v-for="t in timeOptions" :key="'start-' + t" :value="t">{{ t }}</option>
                     </select>
                   </div>
-                  <div>
-                    <label class="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">종료 시간</label>
-                    <select v-model="editForm.end_time" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-black text-slate-800 outline-none">
+                  <!-- End Time -->
+                  <div class="bg-white p-3 rounded-2xl border shadow-sm transition-all"
+                       :class="[hasConflict ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/60 focus-within:border-indigo-500']">
+                    <label class="text-[0.75rem] font-black mb-1.5 block uppercase tracking-widest text-center"
+                           :class="[hasConflict ? 'text-rose-400' : 'text-slate-400']">
+                      종료 시간
+                    </label>
+                    <select v-model="editForm.end_time" 
+                            class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 font-black text-xs text-slate-800 text-center focus:ring-0 cursor-pointer">
                       <option v-for="t in timeOptions" :key="'end-' + t" :value="t">{{ t }}</option>
                     </select>
                   </div>
                 </div>
+              </div>
 
-                <!-- 해당일 & 해당 공간 기존 예약 및 중복 현황 박스 -->
-                <div class="rounded-2xl border p-4 space-y-3 transition-colors"
-                     :class="hasConflict ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200 bg-slate-50/80'">
-                  
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                        <ClockIcon class="w-4 h-4 text-indigo-600" />
-                        해당 공간 예약 현황
-                      </span>
-                      <span class="text-[0.6875rem] font-bold text-slate-400">
-                        {{ editForm.reservation_date }} · {{ currentEditRoom?.room_name }}
-                      </span>
-                    </div>
+              <!-- Title Input -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
+                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
+                  <SparklesIcon class="w-3.5 h-3.5 text-indigo-500" />
+                  신청명
+                </label>
+                <input type="text" v-model="editForm.title" placeholder="신청명을 입력하세요" 
+                       class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 placeholder:text-slate-300 focus:ring-0" />
+              </div>
 
-                    <!-- Status summary pill -->
-                    <div>
-                      <span v-if="isLoadingRoomReservations" class="text-[0.6875rem] font-bold text-slate-400 flex items-center gap-1">
-                        <ArrowPathIcon class="w-3.5 h-3.5 animate-spin" /> 조회 중...
-                      </span>
-                      <span v-else-if="hasConflict" class="px-2.5 py-1 bg-rose-500 text-white rounded-lg text-[0.6875rem] font-black flex items-center gap-1 shadow-sm">
-                        <ExclamationCircleIcon class="w-3.5 h-3.5" /> 시간 중복 발생!
-                      </span>
-                      <span v-else-if="existingRoomReservations.length > 0 || existingBlockedTimes.length > 0" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[0.6875rem] font-black flex items-center gap-1">
-                        <CheckCircleIcon class="w-3.5 h-3.5" /> 예약 가능 (중복 없음)
-                      </span>
-                      <span v-else class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-[0.6875rem] font-bold">
-                        예약 없음 (전 시간 가능)
-                      </span>
-                    </div>
-                  </div>
+              <!-- Reason TextArea -->
+              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
+                <label class="block text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">사용 목적 / 상세 내용</label>
+                <textarea v-model="editForm.reason" rows="2" class="w-full bg-transparent border-none p-0 font-bold text-xs text-slate-700 placeholder:text-slate-200 focus:ring-0 h-16 resize-none" placeholder="사용 목적 입력..."></textarea>
+              </div>
 
-                  <!-- Conflict Alert Banner -->
-                  <div v-if="hasConflict" class="p-3 bg-rose-100/90 border border-rose-300 rounded-xl text-xs font-bold text-rose-800 flex items-start gap-2 animate-pulse">
-                    <ExclamationCircleIcon class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <div class="leading-relaxed">
-                      선택하신 시간(<strong class="font-black text-rose-950">{{ editForm.start_time }} ~ {{ editForm.end_time }}</strong>)에 이미 기존 일정과 <strong>시간이 중복</strong>됩니다. 시간을 조정해 주세요.
-                    </div>
-                  </div>
-
-                  <!-- Reservation / Blocked Times List -->
-                  <div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                    <!-- If no bookings on that day -->
-                    <div v-if="existingRoomReservations.length === 0 && existingBlockedTimes.length === 0 && !isLoadingRoomReservations" 
-                         class="text-center py-3 text-xs font-bold text-slate-400 bg-white/70 rounded-xl border border-dashed border-slate-200">
-                      해당 일자에 등록된 다른 예약 일정이 없습니다.
-                    </div>
-
-                    <!-- Blocked Times list -->
-                    <div v-for="bt in existingBlockedTimes" :key="'bt-' + bt.id"
-                         :class="isBlockedConflict(bt) ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20' : 'bg-white border-slate-200/80'"
-                         class="p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all">
-                      <div class="flex items-center gap-2 min-w-0">
-                        <span class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-rose-100 text-rose-700 border border-rose-200 shrink-0">
-                          고정 일정
-                        </span>
-                        <span class="font-black text-slate-800 shrink-0">
-                          {{ bt.start_time.slice(0, 5) }} ~ {{ bt.end_time.slice(0, 5) }}
-                        </span>
-                        <span class="text-slate-500 font-medium truncate">
-                          {{ bt.reason || '고정 일정' }}
-                        </span>
-                      </div>
-                      <span v-if="isBlockedConflict(bt)" class="px-2 py-0.5 bg-rose-600 text-white rounded-md text-[0.625rem] font-black shrink-0">
-                        시간 중복
-                      </span>
-                    </div>
-
-                    <!-- Reservations list with status badge -->
-                    <div v-for="r in existingRoomReservations" :key="'ex-' + r.id"
-                         :class="isReservationConflict(r) ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20' : 'bg-white border-slate-200/80'"
-                         class="p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all">
-                      <div class="flex items-center gap-2 min-w-0">
-                        <!-- Status Badge -->
-                        <span v-if="r.status === 'approved'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
-                          승인완료
-                        </span>
-                        <span v-else-if="r.status === 'pending'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
-                          승인대기
-                        </span>
-                        <span v-else-if="r.status === 'rejected'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-slate-100 text-slate-400 border border-slate-200 line-through shrink-0">
-                          반려됨
-                        </span>
-                        <span v-else class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-slate-100 text-slate-400 border border-slate-200 shrink-0">
-                          {{ r.status }}
-                        </span>
-
-                        <!-- Time -->
-                        <span class="font-black shrink-0" :class="isReservationConflict(r) ? 'text-rose-900' : 'text-slate-800'">
-                          {{ r.start_time.slice(0, 5) }} ~ {{ r.end_time.slice(0, 5) }}
-                        </span>
-
-                        <!-- Title & Requester -->
-                        <span class="font-bold truncate" :class="isReservationConflict(r) ? 'text-rose-700' : 'text-slate-600'">
-                          {{ r.title }}
-                        </span>
-                        <span class="text-slate-400 text-[0.6875rem] font-medium shrink-0">
-                          ({{ r.requester_name }})
-                        </span>
-                      </div>
-
-                      <!-- Overlap Badge if conflict -->
-                      <div class="shrink-0 flex items-center gap-1.5">
-                        <span v-if="isReservationConflict(r)" class="px-2 py-0.5 bg-rose-600 text-white rounded-md text-[0.625rem] font-black flex items-center gap-0.5 shadow-xs">
-                          ⚠️ 시간 중복
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              <!-- Required Admin Modification Reason -->
+              <div class="bg-indigo-50/60 border border-indigo-200 rounded-3xl p-4 space-y-2">
+                <div class="flex items-center gap-2 text-xs font-black text-indigo-700">
+                  <ChatBubbleBottomCenterTextIcon class="w-4 h-4" />
+                  <span>변경 사유 (필수 기재)</span>
+                  <span class="text-[0.6875rem] font-medium text-slate-400">카카오 알림톡으로 발송됩니다.</span>
                 </div>
-
-                <!-- Purpose / Reason -->
-                <div>
-                  <label class="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">사용 목적</label>
-                  <textarea v-model="editForm.reason" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none resize-none"></textarea>
-                </div>
-
-                <!-- Required Admin Modification Reason -->
-                <div class="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 space-y-2">
-                  <div class="flex items-center gap-2 text-xs font-black text-indigo-700">
-                    <ChatBubbleBottomCenterTextIcon class="w-4 h-4" />
-                    <span>변경 사유 (필수 기재)</span>
-                    <span class="text-[0.6875rem] font-medium text-slate-400">카카오 알림톡으로 발송됩니다.</span>
-                  </div>
-                  <textarea v-model="editForm.admin_reason" rows="2" 
-                            placeholder="예: 교회 행사 일정 조율로 인해 3층 세미나실로 공간 변경 안내 드립니다." 
-                            class="w-full bg-white border border-indigo-200 rounded-xl p-3 text-xs font-bold text-slate-800 placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
-                </div>
+                <textarea v-model="editForm.admin_reason" rows="2" 
+                          placeholder="예: 교회 행사 일정 조율로 인해 3층 세미나실로 공간 변경 안내 드립니다." 
+                          class="w-full bg-white border border-indigo-200 rounded-2xl p-3 text-xs font-bold text-slate-800 placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
               </div>
             </template>
+
           </div>
 
-          <!-- Modal Footer Actions -->
-          <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+          <!-- Footer Area (Fixed) -->
+          <div class="px-8 py-6 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0">
             <!-- Normal Mode Buttons -->
             <template v-if="!isEditing">
-              <div class="flex items-center gap-2">
+              <template v-if="detailReservation?.is_blocked">
+                <button @click="showDetailModal = false" 
+                        class="w-full py-3 px-6 bg-slate-100 border border-slate-200/60 rounded-2xl text-[0.6875rem] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest flex items-center justify-center">
+                  닫기
+                </button>
+              </template>
+              <template v-else>
                 <!-- If Pending, show Approve Button -->
                 <button v-if="detailReservation?.status === 'pending'" 
                         @click="approveFromDetail" 
-                        class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1.5">
+                        class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-emerald-100 flex items-center gap-1.5 uppercase tracking-widest">
                   <CheckCircleIcon class="w-4 h-4" /> 승인하기
-                </button>
-
-                <!-- Modify Button (If not cancelled) -->
-                <button v-if="detailReservation?.status !== 'cancelled' && detailReservation?.status !== 'rejected'" 
-                        @click="startEdit" 
-                        class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black transition-all flex items-center gap-1.5">
-                  <PencilSquareIcon class="w-4 h-4" /> 예약 변경
                 </button>
 
                 <!-- Cancel Button (If not cancelled) -->
                 <button v-if="detailReservation?.status !== 'cancelled' && detailReservation?.status !== 'rejected'" 
                         @click="openCancelModal" 
-                        class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black transition-all flex items-center gap-1.5">
+                        class="px-5 py-3 bg-rose-50 border border-rose-200/60 rounded-2xl text-[0.6875rem] font-black text-rose-600 hover:bg-rose-100 hover:text-rose-700 hover:border-rose-300 transition-all uppercase tracking-widest flex items-center gap-1.5">
                   <XCircleIcon class="w-4 h-4" /> 예약 취소
                 </button>
-              </div>
 
-              <button @click="showDetailModal = false" class="px-5 py-2.5 text-xs font-black text-slate-400 hover:text-slate-700 transition-colors">
-                닫기
-              </button>
+                <!-- Modify Button (If not cancelled) -->
+                <button v-if="detailReservation?.status !== 'cancelled' && detailReservation?.status !== 'rejected'" 
+                        @click="startEdit" 
+                        class="flex-1 py-3 px-6 bg-indigo-600 text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2">
+                  <PencilSquareIcon class="w-4 h-4" /> 예약 변경
+                </button>
+
+                <!-- Close Button -->
+                <button @click="showDetailModal = false" 
+                        class="px-6 py-3 bg-slate-100 border border-slate-200/60 rounded-2xl text-[0.6875rem] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest">
+                  닫기
+                </button>
+              </template>
             </template>
 
             <!-- Edit Mode Buttons -->
             <template v-else>
-              <div class="flex items-center gap-2 w-full justify-end">
-                <button @click="isEditing = false" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-black transition-all">
-                  취소
-                </button>
-                <button @click="updateReservation" 
-                        :disabled="isUpdating"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1.5">
-                  <ArrowPathIcon v-if="isUpdating" class="w-4 h-4 animate-spin" />
-                  <span>변경 저장</span>
-                </button>
-              </div>
+              <button @click="isEditing = false" 
+                      class="px-6 py-3 bg-slate-100 border border-slate-200/60 rounded-2xl text-[0.6875rem] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest">
+                취소
+              </button>
+              <button @click="updateReservation" 
+                      :disabled="isUpdating || hasConflict"
+                      :class="[isUpdating || hasConflict ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700']"
+                      class="flex-1 py-3 px-6 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2">
+                <ArrowPathIcon v-if="isUpdating" class="w-4 h-4 animate-spin" />
+                <span>{{ isUpdating ? '저장 중...' : '변경 저장' }}</span>
+              </button>
             </template>
           </div>
         </div>
@@ -2355,15 +2465,15 @@ defineExpose({ fetchData, openReservationById })
                 <div v-else class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
                   <div v-for="item in currentRoomSchedule" :key="item.id"
                        class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
-                       :class="item.type === 'blocked' ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'">
+                       :class="item.type === 'blocked' ? 'border-teal-200 bg-teal-50/70' : 'border-slate-200 bg-white'">
                     <span class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
-                          :class="item.type === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-slate-800 text-white'">
-                      <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-rose-500' : 'bg-emerald-400'"></span>
+                          :class="item.type === 'blocked' ? 'bg-teal-100 text-teal-800' : 'bg-slate-800 text-white'">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="item.type === 'blocked' ? 'bg-teal-500' : 'bg-emerald-400'"></span>
                       <span v-if="item.shortDate" class="opacity-80 mr-0.5">[{{ item.shortDate }}]</span>
                       {{ item.start_time }} - {{ item.end_time }}
                     </span>
                     <span class="px-2 py-0.5 font-bold text-xs truncate max-w-[200px] flex items-center gap-1"
-                          :class="item.type === 'blocked' ? 'text-rose-800' : 'text-slate-800'">
+                          :class="item.type === 'blocked' ? 'text-teal-900' : 'text-slate-800'">
                       <span>{{ item.title }}</span>
                       <span v-if="item.requester_name" class="text-[0.625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
                     </span>
