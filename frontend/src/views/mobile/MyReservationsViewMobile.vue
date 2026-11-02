@@ -346,7 +346,7 @@
           <div class="p-6 overflow-y-auto space-y-4">
             <!-- 1. Room Selection -->
             <div class="space-y-1.5">
-              <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest block">예약 공간 선택 *</label>
+              <label class="text-xs font-black text-slate-700">예약 공간 선택 *</label>
               <select
                 v-model="bookingForm.room_id"
                 class="w-full border rounded-2xl px-4 py-3 text-xs font-bold outline-none transition-all"
@@ -506,7 +506,41 @@
         <div class="bg-white rounded-t-[2.5rem] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
           <!-- Top Header -->
           <div class="px-6 pt-5 pb-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2">
+            <!-- 1. Edit Mode Header -->
+            <div v-if="isEditing">
+              <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                <template v-if="selectedEditRoom">
+                  <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
+                    {{ formatFloorLabel(selectedEditRoom.floor) }}
+                  </span>
+                  <span class="text-xs font-black text-indigo-600">{{ roomLabel(selectedEditRoom) }}</span>
+                </template>
+                <span v-else class="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-md">
+                  공간 미선택
+                </span>
+                <span class="text-slate-300 text-xs">|</span>
+                <span class="text-xs font-black text-slate-600">
+                  {{ editForm.reservation_date }}
+                </span>
+              </div>
+              <h3 class="text-base font-black text-slate-900">예약 변경 신청</h3>
+            </div>
+
+            <!-- 2. Cancel Confirm Mode Header -->
+            <div v-else-if="showCancelConfirm">
+              <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span class="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
+                  {{ formatFloorLabel(selectedRes.floor) }}
+                </span>
+                <span class="text-xs font-black text-rose-600">{{ selectedRes.room_name }}</span>
+                <span class="text-slate-300 text-xs">|</span>
+                <span class="text-xs font-black text-slate-600">{{ fmtDate(selectedRes.reservation_date) }}</span>
+              </div>
+              <h3 class="text-base font-black text-slate-900">예약 취소 신청</h3>
+            </div>
+
+            <!-- 3. Detail View Mode Header -->
+            <div v-else class="flex items-center gap-2">
               <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-xs font-black rounded-lg">
                 {{ formatFloorLabel(selectedRes.floor) }} · {{ selectedRes.room_name }}
               </span>
@@ -517,6 +551,7 @@
                 {{ statusLabel(selectedRes.status) }}
               </span>
             </div>
+
             <button
               @click="closeModal"
               class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-black active:scale-90"
@@ -621,7 +656,7 @@
                       type="button"
                       @click="modifyScope = 'single'"
                       class="py-2.5 px-3 rounded-xl text-xs font-black transition-all border"
-                      :class="modifyScope === 'single' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                      :class="modifyScope === 'single' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200'"
                     >
                       이 일정만 변경
                     </button>
@@ -629,19 +664,19 @@
                       type="button"
                       @click="modifyScope = 'all'"
                       class="py-2.5 px-3 rounded-xl text-xs font-black transition-all border"
-                      :class="modifyScope === 'all' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                      :class="modifyScope === 'all' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200'"
                     >
                       남은 전체 반복 일정
                     </button>
                   </div>
                 </div>
 
-                <!-- Room Selection -->
+                <!-- 1. Room Selection -->
                 <div class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-700">공간</label>
+                  <label class="text-xs font-black text-slate-700">예약 공간 선택 *</label>
                   <select
                     v-model="editForm.room_id"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   >
                     <optgroup
                       v-for="grp in roomsByFloor"
@@ -649,40 +684,94 @@
                       :label="formatFloorLabel(grp.floor)"
                     >
                       <option v-for="r in grp.rooms" :key="r.id" :value="r.id">
-                        [{{ formatFloorLabel(r.floor) }}] {{ roomLabel(r) }}
+                        {{ roomLabel(r) }} ({{ formatFloorLabel(r.floor) }})
                       </option>
                     </optgroup>
                   </select>
                 </div>
 
-                <!-- Date -->
+                <!-- 2. Date -->
                 <div class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-700">일자</label>
+                  <label class="text-xs font-black text-slate-700">예약 일자 *</label>
                   <input
                     type="date"
                     v-model="editForm.reservation_date"
                     :disabled="selectedRes.is_recurring && modifyScope === 'all'"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none disabled:opacity-50"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 disabled:opacity-50 transition-all"
                   />
                 </div>
 
-                <!-- Time -->
+                <!-- 당일 예약 현황 (Simple Badges) -->
+                <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-1.5 text-[0.6875rem] font-black text-slate-500 uppercase tracking-wider">
+                      <ClockIcon class="w-3.5 h-3.5 text-indigo-500" />
+                      당일 예약 현황
+                    </label>
+                    <span class="text-[0.625rem] font-bold text-slate-400">
+                      {{ editForm.reservation_date }}
+                    </span>
+                  </div>
+
+                  <div v-if="!selectedEditRoom" class="py-2.5 px-3 text-center bg-indigo-50/50 rounded-xl border border-dashed border-indigo-200">
+                    <p class="text-xs font-bold text-indigo-600">먼저 예약할 공간을 선택해 주세요.</p>
+                  </div>
+                  <div v-else-if="currentEditRoomSchedule.length === 0" class="py-2.5 px-3 text-center bg-white rounded-xl border border-dashed border-slate-200">
+                    <p class="text-xs font-bold text-slate-400">당일 예약 내역이 없습니다. (원하는 시간에 예약 가능)</p>
+                  </div>
+                  <div v-else class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                    <div
+                      v-for="item in currentEditRoomSchedule"
+                      :key="item.id"
+                      class="inline-flex items-center rounded-xl border overflow-hidden shadow-xs text-xs transition-all"
+                      :class="item.type === 'blocked'
+                        ? 'border-rose-200 bg-rose-50/60'
+                        : (item.is_self ? 'border-indigo-300 bg-indigo-50/70' : 'border-slate-200 bg-white')"
+                    >
+                      <!-- Time Badge -->
+                      <span
+                        class="px-2 py-0.5 font-black text-[0.6875rem] font-mono tracking-tight shrink-0 flex items-center gap-1"
+                        :class="item.type === 'blocked'
+                          ? 'bg-rose-100 text-rose-700'
+                          : (item.is_self ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-white')"
+                      >
+                        <span
+                          class="w-1.5 h-1.5 rounded-full"
+                          :class="item.type === 'blocked' ? 'bg-rose-500' : (item.is_self ? 'bg-white' : 'bg-emerald-400')"
+                        ></span>
+                        {{ item.start_time }} - {{ item.end_time }}
+                      </span>
+                      <!-- Title Badge -->
+                      <span
+                        class="px-2 py-0.5 font-bold text-[0.6875rem] truncate max-w-[150px] flex items-center gap-1"
+                        :class="item.type === 'blocked'
+                          ? 'text-rose-800'
+                          : (item.is_self ? 'text-indigo-900 font-black' : 'text-slate-800')"
+                      >
+                        <span>{{ item.title }}</span>
+                        <span v-if="item.requester_name && !item.is_self" class="text-[0.5625rem] font-normal text-slate-400">({{ item.requester_name }})</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. Time Range -->
                 <div class="grid grid-cols-2 gap-3">
                   <div class="space-y-1.5">
-                    <label class="text-xs font-black text-slate-700">시작 시간</label>
+                    <label class="text-xs font-black text-slate-700">시작 시간 *</label>
                     <select
                       v-model="editForm.start_time"
                       @change="handleEditStartTimeChange"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-xs font-black text-slate-800 outline-none"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                     >
                       <option v-for="t in timeOptions" :key="t" :value="t">{{ t }}</option>
                     </select>
                   </div>
                   <div class="space-y-1.5">
-                    <label class="text-xs font-black text-slate-700">종료 시간</label>
+                    <label class="text-xs font-black text-slate-700">종료 시간 *</label>
                     <select
                       v-model="editForm.end_time"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-xs font-black text-slate-800 outline-none"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                     >
                       <option v-for="t in timeOptions" :key="t" :value="t">{{ t }}</option>
                     </select>
@@ -692,32 +781,35 @@
                 <!-- Time Conflict Warning -->
                 <div
                   v-if="editTimeConflictError"
-                  class="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-600"
+                  class="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-600 flex items-center gap-2"
                 >
-                  ⚠️ {{ editTimeConflictError }}
+                  <span>⚠️</span>
+                  <span>{{ editTimeConflictError }}</span>
                 </div>
 
-                <!-- Title -->
+                <!-- 4. Title -->
                 <div class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-700">신청명</label>
+                  <label class="text-xs font-black text-slate-700">신청명 (일정 제목) *</label>
                   <input
                     type="text"
                     v-model="editForm.title"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none"
+                    placeholder="예: 청년부 소그룹 모임"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   />
                 </div>
 
-                <!-- Reason -->
+                <!-- 5. Reason -->
                 <div class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-700">신청 내용</label>
+                  <label class="text-xs font-black text-slate-700">사용 목적 및 내용</label>
                   <textarea
                     v-model="editForm.reason"
                     rows="2"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none resize-none"
+                    placeholder="사용 목적을 입력해 주세요."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-indigo-500 transition-all"
                   ></textarea>
                 </div>
 
-                <!-- Modify Reason for Admin Approval -->
+                <!-- 6. Modify Reason for Admin Approval -->
                 <div class="space-y-1.5">
                   <label class="text-xs font-black text-indigo-600">
                     변경 사유 * (관리자 승인 검토 시 안내됩니다)
@@ -726,7 +818,7 @@
                     v-model="editForm.modify_reason"
                     rows="2"
                     placeholder="예: 회의 참석 인원 증가로 시간 연장 요청합니다."
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-indigo-400"
+                    class="w-full bg-slate-50 border border-indigo-200 rounded-2xl p-3.5 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-indigo-500 transition-all"
                   ></textarea>
                 </div>
               </div>
@@ -773,7 +865,7 @@
                     v-model="cancelReason"
                     rows="3"
                     placeholder="취소 사유를 입력해 주세요."
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-rose-400"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-rose-400 transition-all"
                   ></textarea>
                 </div>
               </div>
@@ -784,7 +876,7 @@
           <div class="p-4 border-t border-slate-100 bg-white flex gap-2 shrink-0">
             <template v-if="!isEditing && !showCancelConfirm">
               <!-- If Cancel Requested -->
-              <div v-if="selectedRes.status === 'cancel_requested'" class="flex-1 text-center py-3 text-xs font-bold text-rose-500">
+              <div v-if="selectedRes.status === 'cancel_requested'" class="flex-1 text-center py-4 text-xs font-bold text-rose-500">
                 취소 승인 대기 중입니다.
               </div>
 
@@ -792,13 +884,13 @@
               <template v-else-if="selectedRes.status !== 'cancelled' && selectedRes.status !== 'rejected'">
                 <button
                   @click="startEdit"
-                  class="flex-1 py-3.5 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-sm active:scale-95 transition-all"
+                  class="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 transition-all"
                 >
                   예약 변경
                 </button>
                 <button
                   @click="showCancelConfirm = true"
-                  class="flex-1 py-3.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-black active:scale-95 transition-all"
+                  class="flex-1 py-4 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-black active:scale-95 transition-all"
                 >
                   예약 취소
                 </button>
@@ -809,14 +901,14 @@
             <template v-else-if="isEditing">
               <button
                 @click="isEditing = false"
-                class="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-500 text-xs font-black"
+                class="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 text-xs font-black active:scale-95 transition-all"
               >
                 뒤로
               </button>
               <button
                 @click="submitModify"
                 :disabled="submitting || !!editTimeConflictError"
-                class="flex-[2] py-3.5 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 disabled:opacity-50"
+                class="flex-[2] py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
               >
                 {{ submitting ? '신청 중...' : '변경 신청 (관리자 승인 대기)' }}
               </button>
@@ -826,14 +918,14 @@
             <template v-else-if="showCancelConfirm">
               <button
                 @click="showCancelConfirm = false"
-                class="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-500 text-xs font-black"
+                class="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 text-xs font-black active:scale-95 transition-all"
               >
                 뒤로
               </button>
               <button
                 @click="submitCancel"
                 :disabled="submitting"
-                class="flex-[2] py-3.5 rounded-2xl bg-rose-600 text-white text-xs font-black shadow-lg shadow-rose-100 disabled:opacity-50"
+                class="flex-[2] py-4 rounded-2xl bg-rose-600 text-white text-xs font-black shadow-lg shadow-rose-100 active:scale-95 disabled:opacity-50 transition-all"
               >
                 {{ submitting ? '처리 중...' : (selectedRes.status === 'approved' ? '취소 신청 (관리자 승인 대기)' : '취소 확정') }}
               </button>
@@ -1755,6 +1847,52 @@ const editForm = ref({
   end_time: '',
   reason: '',
   modify_reason: ''
+})
+
+const selectedEditRoom = computed(() => {
+  if (!editForm.value.room_id) return null
+  return rooms.value.find((r) => Number(r.id) === Number(editForm.value.room_id)) || null
+})
+
+const currentEditRoomSchedule = computed(() => {
+  if (!selectedEditRoom.value || !editForm.value.reservation_date) return []
+  const items = []
+  const dateStr = editForm.value.reservation_date
+
+  // 1. Blocked times
+  const blockedList = getBlockedForRoomAndDate(selectedEditRoom.value, dateStr)
+  for (const bt of blockedList) {
+    items.push({
+      id: `bt-${bt.id}`,
+      type: 'blocked',
+      is_blocked: true,
+      title: bt.reason || '관리자 설정 고정 일정',
+      requester_name: null,
+      start_time: fmtTime(bt.start_time),
+      end_time: fmtTime(bt.end_time)
+    })
+  }
+
+  // 2. Existing active reservations
+  for (const r of allActiveReservations.value) {
+    if (r.status === 'cancelled' || r.status === 'rejected') continue
+    if (Number(r.room_id) === Number(selectedEditRoom.value.id) && fmtDate(r.reservation_date) === dateStr) {
+      const isSelf = selectedRes.value && Number(r.id) === Number(selectedRes.value.id)
+      items.push({
+        id: `res-${r.id}`,
+        type: isSelf ? 'self' : 'reservation',
+        is_self: isSelf,
+        is_blocked: false,
+        title: isSelf ? `${r.title || '공간 사용'} (현재 건)` : (r.title || '공간 사용'),
+        requester_name: r.requester_name,
+        start_time: fmtTime(r.start_time),
+        end_time: fmtTime(r.end_time),
+        status: r.status
+      })
+    }
+  }
+
+  return items.sort((a, b) => a.start_time.localeCompare(b.start_time))
 })
 
 const openDetail = async (item) => {
