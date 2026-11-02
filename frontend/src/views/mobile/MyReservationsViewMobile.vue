@@ -130,22 +130,8 @@
                 </span>
               </div>
 
-              <!-- Collapsed Mode: Dots below Date -->
+              <!-- Event bars + overflow count -->
               <div
-                v-if="effectiveCollapseProgress > 0.6"
-                class="flex items-center justify-center gap-1 pt-1 h-3 pointer-events-none"
-              >
-                <span
-                  v-for="(dotColor, dIdx) in getCellDotColors(cell)"
-                  :key="dIdx"
-                  class="w-1.5 h-1.5 rounded-full"
-                  :class="dotColor"
-                ></span>
-              </div>
-
-              <!-- Expanded Mode: Up to 2 event bars + overflow count -->
-              <div
-                v-else
                 class="space-y-0.5 pt-1 min-h-[2.5rem] pointer-events-none"
               >
                 <div
@@ -170,13 +156,14 @@
         </div>
       </div>
 
-      <!-- Grab Handle Bar (터치 드래그 바 - 위/아래 드래그 및 탭 지원) -->
+      <!-- Grab Handle Bar (터치 드래그 바 - 위/아래 드래그 및 탭 지원 - 2줄 막대기 바) -->
       <div
         @click="toggleCalendarCollapse()"
-        class="py-2.5 cursor-pointer flex flex-col items-center group touch-none select-none border-t border-slate-100 bg-white hover:bg-slate-50 transition-colors"
+        class="py-2.5 cursor-pointer flex flex-col items-center justify-center gap-1 group touch-none select-none border-t border-slate-100 bg-white hover:bg-slate-50 transition-colors"
         :title="isCalendarCollapsed ? '아래로 당기거나 터치하여 전체 캘린더 펼치기' : '위로 밀거나 터치하여 캘린더 접기'"
       >
-        <div class="w-10 h-1.5 bg-slate-300 group-hover:bg-slate-400 rounded-full transition-colors"></div>
+        <div class="w-10 h-1 bg-slate-300 group-hover:bg-slate-400 rounded-full transition-colors"></div>
+        <div class="w-10 h-1 bg-slate-300 group-hover:bg-slate-400 rounded-full transition-colors"></div>
       </div>
 
       <!-- 3. Bottom Schedule List Panel (터치 드래그에 맞춰 자연스럽게 슬라이드) -->
@@ -1275,11 +1262,20 @@ const effectiveCollapseProgress = computed(() => {
   return isCalendarCollapsed.value ? 1 : 0
 })
 
+const totalHeightDeltaPx = computed(() => {
+  const rem = typeof window !== 'undefined'
+    ? (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16)
+    : 16
+  const expandedH = totalCalendarWeeks.value * 5.25
+  const collapsedH = 0
+  return Math.max(1, (expandedH - collapsedH) * rem)
+})
+
 const calendarContainerStyle = computed(() => {
   const p = effectiveCollapseProgress.value
   const expandedH = totalCalendarWeeks.value * 5.25
-  const collapsedH = 3.25
-  const h = expandedH - p * (expandedH - collapsedH)
+  const collapsedH = 0
+  const h = Math.max(0, expandedH - p * (expandedH - collapsedH))
   return {
     height: `${h}rem`,
     transition: isDraggingY.value ? 'none' : 'height 260ms cubic-bezier(0.2, 0.8, 0.2, 1)'
@@ -1287,25 +1283,17 @@ const calendarContainerStyle = computed(() => {
 })
 
 const cellHeightStyle = computed(() => {
-  const p = effectiveCollapseProgress.value
-  const h = 5.25 - p * (5.25 - 3.25)
   return {
-    height: `${h}rem`,
-    minHeight: `${h}rem`,
-    transition: isDraggingY.value ? 'none' : 'height 260ms cubic-bezier(0.2, 0.8, 0.2, 1)'
+    height: '5.25rem',
+    minHeight: '5.25rem'
   }
 })
 
 const calendarGridTransformStyle = computed(() => {
-  const p = effectiveCollapseProgress.value
-  const wIdx = activeWeekIndex.value
-  const curRowH = 5.25 - p * (5.25 - 3.25)
-  const targetShiftRem = -wIdx * curRowH
-  const curShift = p * targetShiftRem
   const x = swipeTranslateX.value
   return {
-    transform: `translate3d(${x}px, ${curShift}rem, 0)`,
-    transition: isSwipingX.value || isDraggingY.value ? 'none' : 'transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1)'
+    transform: `translate3d(${x}px, 0, 0)`,
+    transition: isSwipingX.value ? 'none' : 'transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1)'
   }
 })
 
@@ -1393,8 +1381,8 @@ const onCalendarTouchMove = (e) => {
     swipeTranslateX.value = dx * 0.75
   } else if (gestureMode === 'vertical') {
     dragDeltaY.value = dy
-    const DRAG_SPAN = 150
-    dragProgress.value = Math.max(-1, Math.min(1, -dy / DRAG_SPAN))
+    const spanPx = totalHeightDeltaPx.value
+    dragProgress.value = Math.max(-1, Math.min(1, -dy / spanPx))
   }
 }
 
@@ -1480,8 +1468,8 @@ const onCalendarMouseMove = (e) => {
     swipeTranslateX.value = dx * 0.75
   } else if (gestureMode === 'vertical') {
     dragDeltaY.value = dy
-    const DRAG_SPAN = 150
-    dragProgress.value = Math.max(-1, Math.min(1, -dy / DRAG_SPAN))
+    const spanPx = totalHeightDeltaPx.value
+    dragProgress.value = Math.max(-1, Math.min(1, -dy / spanPx))
   }
 }
 
