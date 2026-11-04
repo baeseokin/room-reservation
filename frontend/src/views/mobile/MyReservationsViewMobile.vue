@@ -82,6 +82,7 @@
       <div
         class="overflow-hidden"
         :style="calendarContainerStyle"
+        @transitionend.self="updateScheduleListHeight"
       >
         <div
           class="grid grid-cols-7"
@@ -200,7 +201,7 @@
             </div>
           </div>
 
-          <div v-else class="space-y-2.5 max-h-[22rem] overflow-y-auto overscroll-contain pr-0.5 touch-pan-y" style="-webkit-overflow-scrolling: touch;">
+          <div v-else ref="scheduleListRef" class="space-y-2.5 overflow-y-auto overscroll-contain pr-0.5 touch-pan-y" :style="{ maxHeight: scheduleListMaxHeight, WebkitOverflowScrolling: 'touch' }">
             <div
               v-for="item in selectedDayItems"
               :key="item.id"
@@ -1456,7 +1457,7 @@ const calendarContainerStyle = computed(() => {
   const h = Math.max(0, expandedH - p * (expandedH - collapsedH))
   return {
     height: `${h}rem`,
-    transition: isDraggingY.value ? 'none' : 'height 260ms cubic-bezier(0.2, 0.8, 0.2, 1)'
+    transition: isDraggingY.value ? 'none' : 'height 420ms cubic-bezier(0.22, 1, 0.36, 1)'
   }
 })
 
@@ -1477,12 +1478,34 @@ const calendarGridTransformStyle = computed(() => {
 
 const visibleCells = computed(() => calendarCells.value)
 
+// Let the day list use the viewport space above the floating controls.
+const scheduleListRef = ref(null)
+const scheduleListMaxHeight = ref('none')
+let scheduleResizeObserver = null
+const updateScheduleListHeight = () => {
+  const list = scheduleListRef.value
+  if (!list) return
+  const viewport = window.visualViewport
+  const viewportBottom = viewport ? viewport.height + viewport.offsetTop : window.innerHeight
+  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  // Reserve the bottom controls (bottom-20 + button height), panel padding and a gap.
+  const bottomSpace = 10 * rootFontSize
+  scheduleListMaxHeight.value = `${Math.max(0, viewportBottom - list.getBoundingClientRect().top - bottomSpace)}px`
+}
+watch(scheduleListRef, (list) => {
+  scheduleResizeObserver?.disconnect()
+  if (!list) return
+  scheduleResizeObserver = new ResizeObserver(updateScheduleListHeight)
+  scheduleResizeObserver.observe(list.closest('.rounded-b-3xl'))
+  updateScheduleListHeight()
+}, { flush: 'post' })
+
 const schedulePanelStyle = computed(() => {
   const p = effectiveCollapseProgress.value
   return {
     opacity: Math.max(0, Math.min(1, (p - 0.1) / 0.9)),
     transform: `translate3d(0, ${(1 - p) * 16}px, 0)`,
-    transition: isDraggingY.value ? 'none' : 'opacity 220ms ease, transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1)'
+    transition: isDraggingY.value ? 'none' : 'opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
   }
 })
 
@@ -1491,8 +1514,6 @@ let touchStartX = 0
 let touchStartY = 0
 let gestureMode = null
 let startInScrollableList = false
-let listScrollTopStart = 0
-let scrollableEl = null
 let isMouseDown = false
 const swipeTranslateX = ref(0)
 const isSwipingX = ref(false)
@@ -1509,14 +1530,7 @@ const onCalendarTouchStart = (e) => {
   dragDeltaY.value = 0
   swipeTranslateX.value = 0
 
-  scrollableEl = e.target.closest('.overflow-y-auto')
-  if (scrollableEl) {
-    startInScrollableList = true
-    listScrollTopStart = scrollableEl.scrollTop
-  } else {
-    startInScrollableList = false
-    listScrollTopStart = 0
-  }
+  startInScrollableList = !!e.target.closest('.overflow-y-auto')
 }
 
 const onCalendarTouchMove = (e) => {
@@ -1528,17 +1542,9 @@ const onCalendarTouchMove = (e) => {
   const dx = t.clientX - touchStartX
   const dy = t.clientY - touchStartY
 
-  // If touch started inside scrollable list:
-  if (startInScrollableList && isCalendarCollapsed.value) {
-    const atTop = !scrollableEl || scrollableEl.scrollTop <= 2
-    if (atTop && dy > 15) {
-      startInScrollableList = false
-      gestureMode = 'vertical'
-      isDraggingY.value = true
-    } else {
-      return
-    }
-  }
+  // Keep list gestures native, including momentum and gestures at the top edge.
+  // Calendar expansion is controlled by the grab handle and calendar area.
+  if (startInScrollableList) return
 
   // Prevent browser window from scrolling vertically when touching outside scrollable list
   if (e.cancelable) {
@@ -1579,7 +1585,7 @@ const onCalendarTouchEnd = () => {
     swipeTranslateX.value = 0
     isSwipingX.value = false
   } else if (gestureMode === 'vertical') {
-    const threshold = 35
+    const threshold = Math.max(64, Math.min(120, totalHeightDeltaPx.value * 0.22))
     if (isCalendarCollapsed.value) {
       if (dragDeltaY.value > threshold || effectiveCollapseProgress.value < 0.6) {
         toggleCalendarCollapse(false)
@@ -1607,9 +1613,7 @@ const onCalendarMouseDown = (e) => {
   dragDeltaY.value = 0
   swipeTranslateX.value = 0
 
-  scrollableEl = e.target.closest('.overflow-y-auto')
-  startInScrollableList = !!scrollableEl
-  listScrollTopStart = scrollableEl ? scrollableEl.scrollTop : 0
+  startInScrollableList = !!e.target.closest('.overflow-y-auto')
 
   window.addEventListener('mousemove', onCalendarMouseMove)
   window.addEventListener('mouseup', onCalendarMouseUp)
@@ -1621,16 +1625,7 @@ const onCalendarMouseMove = (e) => {
   const dx = e.clientX - touchStartX
   const dy = e.clientY - touchStartY
 
-  if (startInScrollableList && isCalendarCollapsed.value) {
-    const atTop = !scrollableEl || scrollableEl.scrollTop <= 2
-    if (atTop && dy > 15) {
-      startInScrollableList = false
-      gestureMode = 'vertical'
-      isDraggingY.value = true
-    } else {
-      return
-    }
-  }
+  if (startInScrollableList) return
 
   if (!gestureMode) {
     if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
@@ -2337,6 +2332,8 @@ watch(() => displayMode === 'list' && Boolean(showBookingModal.value || showModa
 let previousPageOverflow = null
 onMounted(() => {
   if (displayMode === 'calendar') {
+    window.addEventListener('resize', updateScheduleListHeight)
+    window.visualViewport?.addEventListener('resize', updateScheduleListHeight)
     previousPageOverflow = [document.documentElement.style.overflow, document.body.style.overflow]
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
@@ -2345,6 +2342,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  scheduleResizeObserver?.disconnect()
+  window.removeEventListener('resize', updateScheduleListHeight)
+  window.visualViewport?.removeEventListener('resize', updateScheduleListHeight)
   if (previousPageOverflow) {
     document.documentElement.style.overflow = previousPageOverflow[0]
     document.body.style.overflow = previousPageOverflow[1]
