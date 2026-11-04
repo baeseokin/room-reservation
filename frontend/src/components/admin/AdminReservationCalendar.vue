@@ -1,6 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import axios from 'axios'
+import ReservationTimeSelect from './ReservationTimeSelect.vue'
+import ReservationRoomCard from './ReservationRoomCard.vue'
+import { addOneHour } from '@/utils/reservationTime'
 import { 
   ChevronLeftIcon, ChevronRightIcon, 
   ChevronDoubleLeftIcon, ChevronDoubleRightIcon,
@@ -9,7 +12,7 @@ import {
   ChevronDownIcon, MapPinIcon, UsersIcon,
   ArrowPathIcon, CheckCircleIcon, XCircleIcon,
   PencilSquareIcon, ShieldExclamationIcon, ChatBubbleBottomCenterTextIcon,
-  ExclamationCircleIcon, SparklesIcon, InformationCircleIcon, PlusIcon
+  ExclamationCircleIcon, SparklesIcon, PlusIcon
 } from '@heroicons/vue/24/outline'
 import { getHoliday } from '@/utils/holidays'
 import { useModalStore } from '@/stores/useModalStore'
@@ -83,7 +86,24 @@ const expandedFloors = ref([])
 const isLoading = ref(false)
 
 // Modals
+const dayReservationsDate = ref('')
+const dayReservations = computed(() => dayReservationsDate.value ? getCalendarItemsForDate(dayReservationsDate.value).slice(4) : [])
 const showDetailModal = ref(false)
+let restorePageScroll = null
+watch(() => Boolean(dayReservationsDate.value || showDetailModal.value), (isOpen) => {
+  if (isOpen) {
+    const elements = [document.documentElement, document.body]
+    const previousOverflow = elements.map(element => element.style.overflow)
+    elements.forEach(element => { element.style.overflow = 'hidden' })
+    restorePageScroll = () => {
+      elements.forEach((element, index) => { element.style.overflow = previousOverflow[index] })
+    }
+  } else {
+    restorePageScroll?.()
+    restorePageScroll = null
+  }
+})
+onUnmounted(() => restorePageScroll?.())
 const detailReservation = ref(null)
 const isEditing = ref(false)
 const showCancelConfirmModal = ref(false)
@@ -264,17 +284,6 @@ const dayTimeSlots = computed(() => {
   const slots = []
   for (let h = 9; h <= 23; h++) {
     slots.push(`${h.toString().padStart(2, '0')}:00`)
-  }
-  slots.push('24:00')
-  return slots
-})
-
-const timeOptions = computed(() => {
-  const slots = []
-  for (let h = 7; h <= 23; h++) {
-    const hh = String(h).padStart(2, '0')
-    slots.push(`${hh}:00`)
-    slots.push(`${hh}:30`)
   }
   slots.push('24:00')
   return slots
@@ -503,17 +512,6 @@ const openDetail = (res) => {
     admin_reason: ''
   }
   showDetailModal.value = true
-}
-
-// Start Time Change Handler: automatically set end_time to +1 hour
-const handleStartTimeChange = () => {
-  if (!editForm.value.start_time) return
-  const [hStr, mStr] = editForm.value.start_time.split(':')
-  const h = parseInt(hStr, 10)
-  const m = parseInt(mStr, 10)
-  const nextH = Math.min(24, h + 1)
-  const nextM = nextH === 24 ? 0 : m
-  editForm.value.end_time = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`
 }
 
 // Room reservations for the edited date & room
@@ -746,76 +744,6 @@ const showBookingModal = ref(false)
 const selectedRoom = ref(null)
 const bookingDate = ref(formatDate(new Date()))
 const bookingEndDate = ref(formatDate(new Date()))
-const bookingStep = ref('form')
-const bookingModalContentRef = ref(null)
-const isAgreed = ref(false)
-const ruleAgreements = ref([false, false, false, false, false])
-
-const isAllAgreed = computed({
-  get: () => ruleAgreements.value.every(v => v),
-  set: (val) => {
-    ruleAgreements.value = ruleAgreements.value.map(() => val)
-  }
-})
-
-const spaceRules = [
-  { title: '냉난방 및 전등 소등', desc: '사용 후에는 반드시 냉난방기와 전등을 모두 꺼주세요.' },
-  { title: '음식물 반입 금지', desc: '쾌적한 환경을 위해 공간 내 음식물 반입은 원칙적으로 금지됩니다.' },
-  { title: '비품 원위치 및 정리', desc: '사용하신 비품과 기자재는 퇴실 전 원래 자리에 정돈해 주세요.' },
-  { title: '기물 파손 책임', desc: '시설 및 비품 파손에 주의해 주시고, 파손 발생 시 즉시 사무실로 알려주세요.' },
-  { title: '목적 외 사용 금지 (개인 레슨 / 외부 행사 금지)', desc: '본 시설은 교회 공식 사역용 공간입니다. 사적 이익을 위한 개인 레슨이나 사전 승인되지 않은 외부 단체·개인의 행사 및 연습 목적으로는 일절 사용할 수 없습니다.' }
-]
-
-const ampmOptions = ['오전', '오후']
-const hourOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-const minuteOptions = ['00', '30']
-
-const getAmPm = (time) => {
-  if (!time) return '오전'
-  const [h] = time.split(':').map(Number)
-  return h >= 12 ? '오후' : '오전'
-}
-const getHour12 = (time) => {
-  if (!time) return 9
-  let [h] = time.split(':').map(Number)
-  h = h % 12
-  return h === 0 ? 12 : h
-}
-const getMinute = (time) => {
-  if (!time) return '00'
-  return time.split(':')[1] || '00'
-}
-
-const addOneHour = (timeStr) => {
-  if (!timeStr) return ''
-  const [h, m] = timeStr.split(':').map(Number)
-  const nextH = Math.min(23, h + 1)
-  return `${String(nextH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
-
-const updateTime = (target, type, val, current) => {
-  if (!current) current = '09:00'
-  let [h, m] = current.split(':').map(v => isNaN(parseInt(v)) ? 0 : parseInt(v))
-  let ampm = h >= 12 ? '오후' : '오전'
-  let h12 = h % 12
-  if (h12 === 0) h12 = 12
-  
-  if (type === 'ampm') ampm = val
-  if (type === 'hour') h12 = Number(val)
-  if (type === 'minute') m = Number(val)
-  
-  let newH = h12 % 12
-  if (ampm === '오후') newH += 12
-  
-  const timeStr = `${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-  if (target === 'start') {
-    form.value.start_time = timeStr
-    form.value.end_time = addOneHour(timeStr)
-  } else {
-    form.value.end_time = timeStr
-  }
-}
-
 const form = ref({
   title: '',
   start_time: '09:00',
@@ -1033,9 +961,6 @@ const openBooking = (room, time = '09:00', date = null, endDateParam = null) => 
   const lastDay = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate()
   endDate.setDate(Math.min(dObj.getDate(), lastDay))
   form.value.recurring_end_date = formatDate(endDate)
-  bookingStep.value = 'form'
-  isAgreed.value = false
-  ruleAgreements.value = [false, false, false, false, false]
   showBookingModal.value = true
 }
 
@@ -1140,22 +1065,6 @@ const submitBooking = async () => {
     if (form.value.recurring_type === 'weekly' && form.value.recurring_days.length === 0) {
       return modal.showAlert('반복할 요일을 하나 이상 선택해 주세요.')
     }
-  }
-
-  if (bookingStep.value === 'form') {
-    bookingStep.value = 'agreement'
-    nextTick(() => {
-      if (bookingModalContentRef.value) {
-        bookingModalContentRef.value.scrollTop = 0
-      }
-      const el = document.getElementById('admin-agreement-title')
-      if (el) el.focus({ preventScroll: true })
-    })
-    return
-  }
-
-  if (!isAllAgreed.value || !isAgreed.value) {
-    return modal.showAlert('모든 공간사용 수칙에 동의하셔야 신청이 가능합니다.')
   }
 
   try {
@@ -1517,9 +1426,14 @@ defineExpose({ fetchData, openReservationById })
                   <span v-if="!res.is_blocked && res.status === 'pending'" class="text-[0.5625rem] bg-white/30 px-1 py-0.2 rounded mr-1">대기</span>
                   {{ res.start_time.slice(0,5) }} [{{ res.room_name?.split(' ')[0] }}] {{ res.title || (res.is_blocked ? '고정 일정' : '예약') }}
                 </div>
-                <div v-if="getCalendarItemsForDate(formatDate(d.date)).length > 4" class="text-[0.625rem] font-black text-slate-400 pl-1 mt-0.5">
+                <button v-if="getCalendarItemsForDate(formatDate(d.date)).length > 4"
+                        type="button"
+                        @mousedown.stop
+                        @click.stop="dayReservationsDate = formatDate(d.date)"
+                        :aria-label="`${formatDate(d.date)} 더보기 예약 목록 보기`"
+                        class="block h-[15px] leading-[15px] text-sm font-black text-indigo-600 pl-1 pr-2 py-0 mt-0.5 rounded-lg hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 transition-colors">
                   + {{ getCalendarItemsForDate(formatDate(d.date)).length - 4 }}개
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -1822,6 +1736,43 @@ defineExpose({ fetchData, openReservationById })
       </div>
     </main>
 
+    <!-- Month View: All Reservations for a Day -->
+    <Teleport to="body">
+      <div v-if="dayReservationsDate"
+           class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[3900]"
+           @click.self="dayReservationsDate = ''"
+           @keydown.esc.stop="dayReservationsDate = ''">
+        <section role="dialog" aria-modal="true" aria-labelledby="day-reservations-title"
+                 class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+          <header class="flex items-center justify-between gap-4 p-6 border-b border-slate-100">
+            <div>
+              <h2 id="day-reservations-title" class="text-lg font-black text-slate-900">{{ dayReservationsDate }} 더보기 예약 목록</h2>
+              <p class="text-sm font-bold text-slate-500 mt-1">총 {{ dayReservations.length }}건 · 예약을 선택하면 상세 정보를 확인할 수 있습니다.</p>
+            </div>
+            <button type="button" aria-label="예약 목록 닫기" @click="dayReservationsDate = ''"
+                    class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-900 shrink-0">
+              <XMarkIcon class="w-6 h-6" />
+            </button>
+          </header>
+          <div class="min-h-0 overflow-y-auto overscroll-contain custom-scrollbar p-4 space-y-2">
+            <button v-for="res in dayReservations" :key="res.id" type="button" @click="openDetail(res)"
+                    class="w-full text-left border border-slate-200 rounded-2xl p-4 hover:border-indigo-500 hover:bg-indigo-50/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 transition-colors">
+              <div class="flex items-center justify-between gap-3 text-sm font-black">
+                <span class="text-indigo-600">{{ res.start_time?.slice(0, 5) }} ~ {{ res.end_time?.slice(0, 5) }}</span>
+                <span class="text-xs px-2 py-1 rounded-lg"
+                      :class="res.is_blocked ? 'bg-teal-100 text-teal-800' : res.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'">
+                  {{ res.is_blocked ? '고정 일정' : res.status === 'pending' ? '대기' : '승인' }}
+                </span>
+              </div>
+              <p class="text-sm font-black text-slate-900 mt-2 break-words">{{ res.title || (res.is_blocked ? '고정 일정' : '(신청명 없음)') }}</p>
+              <p class="text-sm font-bold text-slate-500 mt-1">{{ res.floor }}{{ String(res.floor).includes('B') ? '' : 'F' }} · {{ res.room_name }}</p>
+              <p v-if="!res.is_blocked" class="text-xs text-slate-500 mt-1">신청자: {{ res.requester_name }}</p>
+            </button>
+          </div>
+        </section>
+      </div>
+    </Teleport>
+
     <!-- Quick Date Calendar Popover -->
     <Teleport to="body">
       <div v-if="showCalendar" class="fixed inset-0 z-[1000]" @click="showCalendar = false"></div>
@@ -1907,17 +1858,7 @@ defineExpose({ fetchData, openReservationById })
             <!-- Normal View Mode -->
             <template v-if="!isEditing">
               <!-- Room Info Card -->
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">
-                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    예약 공간
-                  </label>
-                </div>
-                <p class="font-black text-sm text-slate-900">
-                  [{{ detailReservation?.floor }}{{ String(detailReservation?.floor || '').includes('B') ? '' : 'F' }}] {{ detailReservation?.room_name }}
-                </p>
-              </div>
+              <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(detailReservation?.room_id)) || detailReservation" />
 
               <!-- Date Info Card -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
@@ -2043,17 +1984,13 @@ defineExpose({ fetchData, openReservationById })
               </div>
 
               <!-- Room Selector -->
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
-                <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">
-                  <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                  예약 공간
-                </label>
-                <select v-model="editForm.room_id" class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer outline-none">
+              <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(editForm.room_id))">
+                <select aria-label="변경할 공간" v-model="editForm.room_id" class="w-full bg-transparent border-none p-0 font-black text-sm text-slate-900 focus:ring-0 cursor-pointer outline-none">
                   <option v-for="rm in rooms" :key="rm.id" :value="rm.id">
                     [{{ rm.floor }}{{ String(rm.floor).includes('B') ? '' : 'F' }}] {{ rm.room_name }} (정원 {{ rm.capacity }}명)
                   </option>
                 </select>
-              </div>
+              </ReservationRoomCard>
 
               <!-- Date Selection -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
@@ -2173,10 +2110,7 @@ defineExpose({ fetchData, openReservationById })
                            :class="[hasConflict ? 'text-rose-400' : 'text-slate-400']">
                       시작 시간
                     </label>
-                    <select v-model="editForm.start_time" @change="handleStartTimeChange" 
-                            class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 font-black text-xs text-slate-800 text-center focus:ring-0 cursor-pointer">
-                      <option v-for="t in timeOptions" :key="'start-' + t" :value="t">{{ t }}</option>
-                    </select>
+                    <ReservationTimeSelect v-model="editForm.start_time" label="시작 시간" @change="editForm.end_time = addOneHour($event)" />
                   </div>
                   <!-- End Time -->
                   <div class="bg-white p-3 rounded-2xl border shadow-sm transition-all"
@@ -2185,10 +2119,7 @@ defineExpose({ fetchData, openReservationById })
                            :class="[hasConflict ? 'text-rose-400' : 'text-slate-400']">
                       종료 시간
                     </label>
-                    <select v-model="editForm.end_time" 
-                            class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 font-black text-xs text-slate-800 text-center focus:ring-0 cursor-pointer">
-                      <option v-for="t in timeOptions" :key="'end-' + t" :value="t">{{ t }}</option>
-                    </select>
+                    <ReservationTimeSelect v-model="editForm.end_time" label="종료 시간" end-of-day />
                   </div>
                 </div>
               </div>
@@ -2392,22 +2323,10 @@ defineExpose({ fetchData, openReservationById })
           </div>
 
           <!-- Content Area (Scrollable) -->
-          <div ref="bookingModalContentRef" class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
-            <template v-if="bookingStep === 'form'">
+          <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
               <!-- Room Selection -->
-              <div class="bg-white p-4 rounded-3xl border shadow-sm group transition-all"
-                   :class="[!selectedRoom ? 'border-indigo-400 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200/60 focus-within:border-indigo-500']">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black uppercase tracking-widest"
-                         :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-400']">
-                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    예약 공간
-                  </label>
-                  <span v-if="!selectedRoom" class="text-[0.6875rem] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full animate-pulse">
-                    필수 선택
-                  </span>
-                </div>
-                <select v-model="selectedRoom" 
+              <ReservationRoomCard :room="selectedRoom">
+                <select aria-label="예약할 공간" v-model="selectedRoom"
                         :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-900']"
                         class="w-full bg-transparent border-none p-0 font-black text-sm focus:ring-0 cursor-pointer outline-none">
                   <option :value="null" disabled>예약할 공간을 선택해 주세요</option>
@@ -2415,7 +2334,7 @@ defineExpose({ fetchData, openReservationById })
                     [{{ r.floor }}{{ String(r.floor).includes('B') ? '' : 'F' }}] {{ r.room_name }}
                   </option>
                 </select>
-              </div>
+              </ReservationRoomCard>
 
               <!-- Date Range Selection (Start Date ~ End Date) -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm space-y-2.5 transition-all">
@@ -2489,20 +2408,7 @@ defineExpose({ fetchData, openReservationById })
                        :class="[timeConflictError ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/60 focus-within:border-indigo-500']">
                     <label class="text-[0.75rem] font-black mb-1.5 block uppercase tracking-widest text-center"
                            :class="[timeConflictError ? 'text-rose-400' : 'text-slate-400']">시작 시간</label>
-                    <div class="flex items-center gap-1">
-                      <select :value="getAmPm(form.start_time)" @change="e => updateTime('start', 'ampm', e.target.value, form.start_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
-                      </select>
-                      <select :value="getHour12(form.start_time)" @change="e => updateTime('start', 'hour', e.target.value, form.start_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-                      </select>
-                      <select :value="getMinute(form.start_time)" @change="e => updateTime('start', 'minute', e.target.value, form.start_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-                      </select>
-                    </div>
+                    <ReservationTimeSelect v-model="form.start_time" label="시작 시간" @change="form.end_time = addOneHour($event)" />
                   </div>
 
                   <!-- End Time -->
@@ -2510,20 +2416,7 @@ defineExpose({ fetchData, openReservationById })
                        :class="[timeConflictError ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/60 focus-within:border-indigo-500']">
                     <label class="text-[0.75rem] font-black mb-1.5 block uppercase tracking-widest text-center"
                            :class="[timeConflictError ? 'text-rose-400' : 'text-slate-400']">종료 시간</label>
-                    <div class="flex items-center gap-1">
-                      <select :value="getAmPm(form.end_time)" @change="e => updateTime('end', 'ampm', e.target.value, form.end_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="opt in ampmOptions" :key="opt" :value="opt">{{ opt }}</option>
-                      </select>
-                      <select :value="getHour12(form.end_time)" @change="e => updateTime('end', 'hour', e.target.value, form.end_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-                      </select>
-                      <select :value="getMinute(form.end_time)" @change="e => updateTime('end', 'minute', e.target.value, form.end_time)" 
-                              class="flex-1 min-w-0 bg-slate-50 border-none rounded-lg py-1.5 px-1 font-black text-[0.75rem] text-slate-700 focus:ring-1 focus:ring-indigo-500/20 appearance-none text-center cursor-pointer outline-none">
-                        <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-                      </select>
-                    </div>
+                    <ReservationTimeSelect v-model="form.end_time" label="종료 시간" end-of-day />
                   </div>
                 </div>
 
@@ -2644,77 +2537,20 @@ defineExpose({ fetchData, openReservationById })
                 <label class="block text-[0.75rem] font-black text-slate-400 mb-1 uppercase tracking-widest">예약 사유</label>
                 <textarea v-model="form.reason" class="w-full bg-transparent border-none p-0 font-bold text-xs text-slate-700 placeholder:text-slate-200 focus:ring-0 h-16 resize-none outline-none" placeholder="사용 목적 입력..."></textarea>
               </div>
-            </template>
 
-            <template v-else-if="bookingStep === 'agreement'">
-              <div class="animate-in fade-in zoom-in duration-300 space-y-6 py-4">
-                <div class="bg-indigo-50 p-6 rounded-[2rem] border border-indigo-100">
-                  <h3 id="admin-agreement-title" tabindex="-1" class="text-base font-black text-indigo-900 mb-4 flex items-center gap-2 outline-none">
-                    <InformationCircleIcon class="w-5 h-5" />
-                    공간 사용 수칙 동의
-                  </h3>
-                  <ul class="space-y-4">
-                    <li v-for="(rule, idx) in spaceRules" :key="idx" class="flex flex-col gap-2" :class="{ 'border-t border-indigo-100/50 pt-4': idx > 0 }">
-                      <div class="flex gap-3">
-                        <span class="shrink-0 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[0.625rem] font-black text-indigo-600 shadow-sm">0{{ idx + 1 }}</span>
-                        <div>
-                          <p class="text-sm font-black text-slate-800">{{ rule.title }}</p>
-                          <p class="text-sm font-bold text-slate-600 mt-1 leading-snug">{{ rule.desc }}</p>
-                        </div>
-                      </div>
-                      <label class="flex items-center gap-2 self-end cursor-pointer group">
-                        <span class="text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">동의:</span>
-                        <div class="w-5 h-5 rounded border flex items-center justify-center transition-all"
-                             :class="[ruleAgreements[idx] ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white group-hover:border-indigo-300']">
-                          <svg v-if="ruleAgreements[idx]" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <span class="text-xs font-bold text-slate-600">예</span>
-                        <input type="checkbox" v-model="ruleAgreements[idx]" class="hidden" />
-                      </label>
-                    </li>
-                  </ul>
-                </div>
-
-                <div class="space-y-3 mt-6">
-                  <label class="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-[1.5rem] cursor-pointer hover:border-indigo-500 transition-all group"
-                         :class="{ 'border-indigo-500 bg-indigo-50/30': isAllAgreed }">
-                    <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
-                      <input type="checkbox" v-model="isAllAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer" />
-                      <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span class="text-sm font-black text-slate-700">전체동의</span>
-                  </label>
-
-                  <label class="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-[1.5rem] cursor-pointer hover:border-indigo-500 transition-all group"
-                         :class="{ 'border-indigo-500 bg-indigo-50/30': isAgreed }">
-                    <div class="relative flex items-center justify-center w-6 h-6 shrink-0">
-                      <input type="checkbox" v-model="isAgreed" class="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer" />
-                      <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span class="text-sm font-black text-slate-700">위 수칙을 확인했으며 이에 동의 합니다.</span>
-                  </label>
-                </div>
-              </div>
-            </template>
           </div>
 
           <!-- Footer Actions (Fixed) -->
           <div class="px-8 py-6 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0">
-            <button type="button" @click="bookingStep === 'agreement' ? bookingStep = 'form' : showBookingModal = false" 
+            <button type="button" @click="showBookingModal = false"
                     class="px-6 py-3 bg-slate-100 border border-slate-200/60 rounded-2xl text-[0.6875rem] font-black text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-widest">
-              {{ bookingStep === 'agreement' ? '이전으로' : '취소' }}
+              취소
             </button>
             <button type="button" @click="submitBooking" 
-                    :disabled="bookingStep === 'form' && !!timeConflictError"
-                    :class="[bookingStep === 'form' && !!timeConflictError ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700']"
+                    :disabled="!!timeConflictError"
+                    :class="[!!timeConflictError ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700']"
                     class="flex-1 py-3 px-6 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2">
-              {{ bookingStep === 'agreement' ? '🗓 최종 신청하기' : '🗓 예약 신청하기' }}
+              🗓 예약 신청하기
             </button>
           </div>
         </div>

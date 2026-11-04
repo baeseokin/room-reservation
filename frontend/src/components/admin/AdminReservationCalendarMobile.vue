@@ -315,7 +315,7 @@
                 </span>
               </div>
               <h3 class="text-lg font-black text-slate-900 tracking-tight">
-                {{ bookingStep === 1 ? '공간 예약 신청' : '공간 사용 규칙 동의' }}
+                공간 예약 신청
               </h3>
             </div>
             <button
@@ -327,12 +327,10 @@
           </div>
 
           <!-- STEP 1: 예약 정보 입력 -->
-          <template v-if="bookingStep === 1">
             <div class="p-6 overflow-y-auto space-y-4 flex-1">
               <!-- 공간 선택 -->
-              <div class="space-y-1.5">
-                <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest block">예약 공간 선택</label>
-                <select
+              <ReservationRoomCard :room="selectedRoom">
+                <select aria-label="예약할 공간"
                   :value="selectedRoom?.id || ''"
                   @change="onBookingRoomChange"
                   class="w-full border rounded-2xl px-4 py-3 text-xs font-bold outline-none transition-all"
@@ -347,10 +345,7 @@
                     </option>
                   </optgroup>
                 </select>
-                <p v-if="!selectedRoom" class="text-[11px] font-bold text-amber-600 flex items-center gap-1">
-                  <span>⚠️</span> 예약을 진행할 공간을 먼저 선택해 주세요.
-                </p>
-              </div>
+              </ReservationRoomCard>
 
               <!-- 예약 일자 (시작일 ~ 종료일 연속 기간) -->
               <div class="space-y-1.5">
@@ -435,22 +430,11 @@
               <div class="grid grid-cols-2 gap-2">
                 <div class="space-y-1">
                   <label class="text-[11px] font-black text-slate-500 block">시작 시간</label>
-                  <select
-                    v-model="bookingForm.start_time"
-                    @change="onBookingStartTimeChange"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 outline-none"
-                  >
-                    <option v-for="t in timeOptions" :key="'bs-' + t" :value="t">{{ t }}</option>
-                  </select>
+                  <ReservationTimeSelect v-model="bookingForm.start_time" label="시작 시간" @change="bookingForm.end_time = addOneHour($event)" />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[11px] font-black text-slate-500 block">종료 시간</label>
-                  <select
-                    v-model="bookingForm.end_time"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 outline-none"
-                  >
-                    <option v-for="t in timeOptions" :key="'be-' + t" :value="t">{{ t }}</option>
-                  </select>
+                  <ReservationTimeSelect v-model="bookingForm.end_time" label="종료 시간" end-of-day />
                 </div>
               </div>
 
@@ -616,43 +600,14 @@
                 취소
               </button>
               <button
-                @click="goToBookingStep2"
-                :disabled="!!timeConflictError"
+                @click="validateAndSubmitBooking"
+                :disabled="!!timeConflictError || submittingBooking"
                 class="flex-[2] py-3.5 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 disabled:opacity-50 active:scale-95 transition-all"
               >
-                다음 (규칙 확인)
+                {{ submittingBooking ? '처리 중...' : '예약 신청하기' }}
               </button>
-            </div>
-          </template>
-
-          <!-- STEP 2: 공간 사용 규칙 동의 -->
-          <template v-else>
-            <div class="p-6 overflow-y-auto space-y-4 flex-1">
-              <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2.5 text-xs font-bold text-slate-600 leading-relaxed">
-                <p class="text-slate-900 font-black text-sm">📌 공간 사용 필수 수칙</p>
-                <p>1. 다음 사용자를 위해 종료 시간을 반드시 엄수해 주세요.</p>
-                <p>2. 사용 후 냉난방기, 조명, 음향장비 전원을 꼭 꺼주세요.</p>
-                <p>3. 반입한 음식물 및 쓰레기는 직접 수거해 주세요.</p>
-                <p>4. 책상과 의자는 원래 위치로 정리 정돈해 주세요.</p>
-              </div>
             </div>
 
-            <div class="p-4 border-t border-slate-100 bg-white flex gap-2 shrink-0">
-              <button
-                @click="bookingStep = 1"
-                class="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-500 text-xs font-black"
-              >
-                이전으로
-              </button>
-              <button
-                @click="submitBooking"
-                :disabled="submittingBooking"
-                class="flex-[2] py-3.5 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 disabled:opacity-50 active:scale-95 transition-all"
-              >
-                {{ submittingBooking ? '처리 중...' : '동의 및 예약 신청 완료' }}
-              </button>
-            </div>
-          </template>
         </div>
       </div>
     </Teleport>
@@ -758,6 +713,7 @@
           <div class="p-6 overflow-y-auto space-y-4 flex-1">
             <!-- A. 상세 조회 모드 -->
             <template v-if="!isEditing && !showCancelConfirm">
+              <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(selectedRes.room_id)) || selectedRes" />
               <div class="bg-slate-50 rounded-2xl p-4 space-y-2.5 text-xs">
                 <div class="flex justify-between">
                   <span class="font-bold text-slate-400">장소</span>
@@ -845,9 +801,8 @@
                   />
                 </div>
 
-                <div class="space-y-1">
-                  <label class="text-[11px] font-black text-slate-500 block">변경할 공간</label>
-                  <select
+                <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(editForm.room_id))">
+                  <select aria-label="변경할 공간"
                     v-model="editForm.room_id"
                     class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-800"
                   >
@@ -857,7 +812,7 @@
                       </option>
                     </optgroup>
                   </select>
-                </div>
+                </ReservationRoomCard>
 
                 <div class="space-y-1">
                   <div class="flex items-center justify-between">
@@ -877,22 +832,11 @@
                 <div class="grid grid-cols-2 gap-2">
                   <div class="space-y-1">
                     <label class="text-[11px] font-black text-slate-500 block">시작 시간</label>
-                    <select
-                      v-model="editForm.start_time"
-                      @change="onEditStartTimeChange"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800"
-                    >
-                      <option v-for="t in timeOptions" :key="'es-' + t" :value="t">{{ t }}</option>
-                    </select>
+                    <ReservationTimeSelect v-model="editForm.start_time" label="시작 시간" @change="editForm.end_time = addOneHour($event)" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-black text-slate-500 block">종료 시간</label>
-                    <select
-                      v-model="editForm.end_time"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800"
-                    >
-                      <option v-for="t in timeOptions" :key="'ee-' + t" :value="t">{{ t }}</option>
-                    </select>
+                    <ReservationTimeSelect v-model="editForm.end_time" label="종료 시간" end-of-day />
                   </div>
                 </div>
 
@@ -1208,6 +1152,9 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import axios from 'axios'
+import ReservationTimeSelect from './ReservationTimeSelect.vue'
+import ReservationRoomCard from './ReservationRoomCard.vue'
+import { addOneHour } from '@/utils/reservationTime'
 import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/stores/useModalStore'
 import { getHoliday } from '@/utils/holidays'
@@ -1768,7 +1715,6 @@ const handleCellItemTap = (item) => {
 // 공간 예약 신청 모달 (showBookingModal)
 // ==========================================
 const showBookingModal = ref(false)
-const bookingStep = ref(1)
 const submittingBooking = ref(false)
 const selectedRoom = ref(null)
 const bookingDate = ref('')
@@ -1848,32 +1794,6 @@ const recurringEndCalendarDays = computed(() => {
   return days
 })
 
-const timeOptions = computed(() => {
-  const opts = []
-  for (let h = 6; h <= 23; h++) {
-    const hh = String(h).padStart(2, '0')
-    opts.push(`${hh}:00`)
-    if (h < 23) opts.push(`${hh}:30`)
-  }
-  return opts
-})
-
-const calcPlusOneHour = (timeStr) => {
-  if (!timeStr) return '10:00'
-  const [hStr, mStr] = timeStr.split(':')
-  const nextH = Number(hStr) + 1
-  if (nextH >= 23) return '23:00'
-  return `${String(nextH).padStart(2, '0')}:${mStr || '00'}`
-}
-
-const onBookingStartTimeChange = () => {
-  bookingForm.value.end_time = calcPlusOneHour(bookingForm.value.start_time)
-}
-
-const onEditStartTimeChange = () => {
-  editForm.value.end_time = calcPlusOneHour(editForm.value.start_time)
-}
-
 const bookingDatesInRange = computed(() => {
   if (!bookingDate.value) return []
   const start = bookingDate.value
@@ -1951,7 +1871,6 @@ const openBooking = (room, dateStr, startTime = '09:00', endTime = '10:00', endD
   selectedRoom.value = room || null
   bookingDate.value = targetDate
   bookingEndDate.value = targetEndDate
-  bookingStep.value = 1
 
   let finalStart = startTime
   let finalEnd = endTime
@@ -2031,7 +1950,8 @@ const handlePhoneInput = (e) => {
   bookingForm.value.requester_phone = val
 }
 
-const goToBookingStep2 = async () => {
+const validateAndSubmitBooking = async () => {
+  if (submittingBooking.value) return
   if (!selectedRoom.value) {
     await modal.showAlert('예약할 공간을 선택해 주세요.')
     return
@@ -2067,7 +1987,7 @@ const goToBookingStep2 = async () => {
       return
     }
   }
-  bookingStep.value = 2
+  await submitBooking()
 }
 
 const submitBooking = async () => {
