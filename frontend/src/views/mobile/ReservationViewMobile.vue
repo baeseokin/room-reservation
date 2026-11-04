@@ -92,16 +92,8 @@
           <div class="space-y-4">
             <!-- Room Header (Only in form step) -->
             <div v-if="bookingStep === 'form'" class="space-y-3">
-              <div v-if="selectedRoom?.image_url" class="w-full h-36 rounded-2xl overflow-hidden shadow-inner bg-slate-50 shrink-0">
-                <img :src="selectedRoom?.image_url" class="w-full h-full object-cover" />
-              </div>
-              <div class="space-y-0.5">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-xl font-black text-slate-900 tracking-tight">{{ selectedRoom?.room_name }} 예약</h3>
-                  <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase">{{ selectedRoom?.floor }}{{ selectedRoom?.floor?.includes('B') ? '' : 'F' }}</span>
-                </div>
-                <p class="text-slate-400 text-[0.6875rem] font-bold uppercase tracking-wider">{{ selectedDate }} / 정원 {{ selectedRoom?.capacity }}명</p>
-              </div>
+              <h3 class="text-xl font-black text-slate-900">공간 예약 신청</h3>
+              <ReservationRoomCard :room="selectedRoom" />
             </div>
 
             <!-- Step 1: Form Data -->
@@ -482,6 +474,7 @@
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import ReservationRoomCard from '@/components/admin/ReservationRoomCard.vue'
 import { useAuthStore } from '../../store/auth'
 import { 
   CalendarIcon, 

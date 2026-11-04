@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import ReservationRoomCard from '@/components/admin/ReservationRoomCard.vue'
 import { useAuthStore } from '@/store/auth'
 import { 
   ChevronLeftIcon, ChevronRightIcon, 
@@ -468,6 +469,7 @@ const getAllBlockedInstances = computed(() => {
         instances.push({
           id: `blocked-${room.id}-${bt.id}-${date}`,
           is_blocked: true,
+          room_id: room.id,
           reservation_date: date,
           start_time: bt.start_time,
           end_time: bt.end_time,
@@ -1756,6 +1758,7 @@ onMounted(async () => {
                                @click.stop="openDetail({
                                  id: `blocked-${room.id}-${bt.id}-${date}`,
                                  is_blocked: true,
+                                 room_id: room.id,
                                  reservation_date: date,
                                  start_time: bt.start_time,
                                  end_time: bt.end_time,
@@ -1857,6 +1860,7 @@ onMounted(async () => {
                                @click.stop="openDetail({
                                  id: `blocked-${room.id}-${bt.id}-${selectedDate}`,
                                  is_blocked: true,
+                                 room_id: room.id,
                                  reservation_date: selectedDate,
                                  start_time: bt.start_time,
                                  end_time: bt.end_time,
@@ -2021,17 +2025,7 @@ onMounted(async () => {
             
             <template v-if="!isEditing || editStep === 'form'">
               <!-- Room Info Card -->
-              <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black text-slate-400 uppercase tracking-widest">
-                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    예약 공간
-                  </label>
-                </div>
-                <p class="font-black text-sm text-slate-900">
-                  [{{ detailReservation?.floor }}{{ String(detailReservation?.floor || '').includes('B') ? '' : 'F' }}] {{ detailReservation?.room_name }}
-                </p>
-              </div>
+              <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(detailReservation?.room_id)) || detailReservation" />
 
               <!-- Date Info Card -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">
@@ -2380,19 +2374,8 @@ onMounted(async () => {
           <div ref="bookingModalContentRef" class="flex-1 overflow-y-auto px-8 py-6 space-y-4 scrollbar-hide">
             <template v-if="bookingStep === 'form'">
               <!-- Room Selection -->
-              <div class="bg-white p-4 rounded-3xl border shadow-sm group focus-within:border-indigo-500 transition-all"
-                   :class="[!selectedRoom ? 'border-indigo-300 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'border-slate-200/60']">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="flex items-center gap-1.5 text-[0.75rem] font-black uppercase tracking-widest"
-                         :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-400']">
-                    <MapPinIcon class="w-3.5 h-3.5 text-indigo-500" />
-                    예약 공간
-                  </label>
-                  <span v-if="!selectedRoom" class="text-[0.6875rem] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full animate-pulse">
-                    필수 선택
-                  </span>
-                </div>
-                <select v-model="selectedRoom" 
+              <ReservationRoomCard :room="selectedRoom">
+                <select aria-label="예약할 공간" v-model="selectedRoom"
                         :class="[!selectedRoom ? 'text-indigo-600' : 'text-slate-900']"
                         class="w-full bg-transparent border-none p-0 font-black text-sm focus:ring-0 cursor-pointer outline-none">
                   <option :value="null" disabled>예약할 공간을 선택해 주세요</option>
@@ -2400,7 +2383,7 @@ onMounted(async () => {
                     [{{ r.floor }}{{ String(r.floor).includes('B') ? '' : 'F' }}] {{ r.room_name }}
                   </option>
                 </select>
-              </div>
+              </ReservationRoomCard>
 
               <!-- Date Selection -->
               <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-sm group focus-within:border-indigo-500 transition-all">

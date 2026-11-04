@@ -121,7 +121,7 @@ const router = createRouter({
         {
           path: 'reservations',
           name: 'ReservationsMobile',
-          component: () => import('../views/mobile/ReservationViewMobile.vue'),
+          component: () => import('../views/mobile/ReservationsCalendarViewMobile.vue'),
           meta: { requiresAuth: true }
         },
         {

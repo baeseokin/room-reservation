@@ -1,12 +1,13 @@
 <template>
   <div
-    class="flex flex-col relative select-none overscroll-none"
-    @touchstart="onCalendarTouchStart"
-    @touchmove="onCalendarTouchMove"
-    @touchend="onCalendarTouchEnd"
-    @touchcancel="onCalendarTouchEnd"
-    @mousedown="onCalendarMouseDown"
+    :class="['flex flex-col relative', displayMode === 'calendar' ? 'select-none overscroll-none' : '']"
+    @touchstart="displayMode === 'calendar' && onCalendarTouchStart($event)"
+    @touchmove="displayMode === 'calendar' && onCalendarTouchMove($event)"
+    @touchend="displayMode === 'calendar' && onCalendarTouchEnd($event)"
+    @touchcancel="displayMode === 'calendar' && onCalendarTouchEnd($event)"
+    @mousedown="displayMode === 'calendar' && onCalendarMouseDown($event)"
   >
+    <template v-if="displayMode === 'calendar'">
     <!-- 1. Fixed Top Header Section (상단 완전 고정: 월 네비게이터 + 요일 헤더) -->
     <div class="fixed-calendar-header sticky top-16 z-30 bg-slate-50 pt-1 pb-1 space-y-2 select-none touch-none">
       <!-- 1-1. Top Month Navigator Header -->
@@ -49,13 +50,13 @@
             />
           </div>
 
-          <!-- Right: Status Summary Pill (승인완료 / 대기중) -->
-          <div class="flex items-center gap-1 text-[11px] font-bold">
-            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-black">
-              승인 {{ approvedCount }}
+          <!-- Right: Status Legend -->
+          <div class="flex items-center gap-1 text-[10px] font-bold" aria-label="예약 상태 범례">
+            <span class="px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+              승인
             </span>
-            <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-black">
-              대기 {{ pendingCount }}
+            <span class="px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+              대기
             </span>
           </div>
         </div>
@@ -304,6 +305,56 @@
       </div>
     </div>
 
+    </template>
+    <section v-else class="space-y-4 pb-8">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-black text-slate-900">나의 예약</h2>
+          <p class="text-xs font-bold text-slate-500 mt-1">내가 신청한 예약을 확인하고 관리합니다.</p>
+        </div>
+        <button type="button" @click="fetchAll" :disabled="loading" class="shrink-0 p-3 rounded-xl border border-slate-200 bg-white text-slate-600 disabled:opacity-50" aria-label="예약 목록 새로고침">
+          <ArrowPathIcon class="w-5 h-5" :class="{ 'animate-spin': loading }" />
+        </button>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-3 space-y-3">
+        <input v-model="listQuery" type="search" aria-label="내 예약 검색" placeholder="신청명, 공간명, 사용 목적 검색" class="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-500" />
+        <div class="grid grid-cols-2 gap-2">
+          <select v-model="listPeriod" aria-label="조회 기간" class="rounded-xl border border-slate-200 p-2.5 text-xs font-bold">
+            <option value="3">최근 3개월부터</option><option value="6">최근 6개월부터</option><option value="12">최근 1년부터</option><option value="all">전체 기간</option>
+          </select>
+          <select v-model="listStatus" aria-label="예약 상태" class="rounded-xl border border-slate-200 p-2.5 text-xs font-bold">
+            <option value="all">전체 상태</option><option value="approved">승인완료</option><option value="pending">승인대기</option><option value="cancel_requested">취소요청</option><option value="cancelled">취소됨</option><option value="rejected">거부됨</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-xs font-bold text-slate-500">총 {{ filteredListReservations.length }}건</span>
+        <button type="button" @click="openBookingForActiveDay" class="bg-indigo-600 text-white rounded-xl px-4 py-2.5 text-xs font-black">+ 신규 예약</button>
+      </div>
+      <p v-if="loading" class="text-center py-12 text-sm text-slate-500">예약을 불러오는 중입니다.</p>
+      <p v-else-if="!listGroups.length" class="text-center py-12 rounded-2xl bg-white border border-dashed border-slate-200 text-sm text-slate-500">조건에 맞는 예약이 없습니다.</p>
+      <div v-else class="space-y-3">
+        <article v-for="group in listGroups" :key="group.key" class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+          <button type="button" class="w-full p-4 text-left space-y-2 hover:bg-slate-50" @click="group.recurring ? toggleListGroup(group.key) : openDetail(group.items[0])" :aria-expanded="group.recurring ? expandedListGroups.includes(group.key) : undefined">
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-sm font-black text-slate-900 break-words">{{ group.items[0].title || '(신청명 없음)' }}</span>
+              <span v-if="group.recurring" class="shrink-0 text-xs font-black text-indigo-600">반복 {{ group.items.length }}건 {{ expandedListGroups.includes(group.key) ? '▴' : '▾' }}</span>
+              <span v-else class="shrink-0 rounded-lg px-2 py-1 text-[11px]" :class="statusBadgeClass(group.items[0].status)">{{ statusLabel(group.items[0].status) }}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-600">{{ formatFloorLabel(group.items[0].floor) }} · {{ group.items[0].room_name }}</p>
+            <p class="text-xs text-slate-500">{{ fmtDate(group.items[0].reservation_date) }}<template v-if="group.recurring && group.items.length > 1"> ~ {{ fmtDate(group.items[group.items.length - 1].reservation_date) }}</template></p>
+            <p class="text-xs font-black text-indigo-600">{{ fmtTime(group.items[0].start_time) }} ~ {{ fmtTime(group.items[0].end_time) }}</p>
+          </button>
+          <div v-if="group.recurring && expandedListGroups.includes(group.key)" class="border-t border-slate-100 divide-y divide-slate-100">
+            <button v-for="item in group.items" :key="item.id" type="button" @click="openDetail(item)" class="w-full flex items-center justify-between gap-2 p-4 text-left hover:bg-indigo-50">
+              <span class="text-xs font-bold text-slate-700">{{ fmtDate(item.reservation_date) }} · {{ fmtTime(item.start_time) }} ~ {{ fmtTime(item.end_time) }}</span>
+              <span class="shrink-0 rounded-lg px-2 py-1 text-[11px]" :class="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <!-- ==========================================
          BOTTOM SHEET 1: 공간 예약 신청 모달 (showBookingModal)
     =========================================== -->
@@ -332,7 +383,7 @@
                   {{ bookingForm.reservation_date }}
                 </span>
               </div>
-              <h3 class="text-base font-black text-slate-900">예약 신청</h3>
+              <h3 class="text-base font-black text-slate-900">{{ bookingStep === 'form' ? '예약 신청' : '공간 사용 수칙 동의' }}</h3>
             </div>
             <button
               @click="closeBookingModal"
@@ -343,11 +394,11 @@
           </div>
 
           <!-- Form Body -->
-          <div class="p-6 overflow-y-auto space-y-4">
+          <div ref="bookingBodyRef" class="p-6 overflow-y-auto space-y-4">
+            <template v-if="bookingStep === 'form'">
             <!-- 1. Room Selection -->
-            <div class="space-y-1.5">
-              <label class="text-xs font-black text-slate-700">예약 공간 선택 *</label>
-              <select
+            <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(bookingForm.room_id))">
+              <select aria-label="예약할 공간"
                 v-model="bookingForm.room_id"
                 class="w-full border rounded-2xl px-4 py-3 text-xs font-bold outline-none transition-all"
                 :class="bookingForm.room_id
@@ -365,10 +416,7 @@
                   </option>
                 </optgroup>
               </select>
-              <p v-if="!bookingForm.room_id" class="text-[11px] font-bold text-amber-600 flex items-center gap-1">
-                <span>⚠️</span> 예약을 진행할 공간을 먼저 선택해 주세요.
-              </p>
-            </div>
+            </ReservationRoomCard>
 
             <!-- 2. Date -->
             <div class="space-y-1.5">
@@ -478,16 +526,20 @@
                 class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs font-bold text-slate-800 outline-none resize-none focus:bg-white focus:border-indigo-500"
               ></textarea>
             </div>
+            </template>
+            <SpaceRulesAgreement v-else v-model="bookingRulesAgreed" />
           </div>
 
           <!-- Footer Submit Button -->
-          <div class="p-4 border-t border-slate-100 bg-white">
+          <div class="p-4 border-t border-slate-100 bg-white flex gap-2">
+            <button v-if="bookingStep === 'agreement'" type="button" @click="bookingStep = 'form'" :disabled="submitting"
+                    class="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 text-xs font-black disabled:opacity-50">이전으로</button>
             <button
               @click="submitBooking"
-              :disabled="!bookingForm.room_id || submitting || !!bookingConflictError"
-              class="w-full py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
+              :disabled="!bookingForm.room_id || submitting || !!bookingConflictError || (bookingStep === 'agreement' && !bookingRulesAgreed)"
+              class="flex-[2] py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
             >
-              {{ submitting ? '신청 처리 중...' : '예약 신청하기 (관리자 승인 대기)' }}
+              {{ submitting ? '신청 처리 중...' : bookingStep === 'form' ? '다음' : '동의 및 예약 신청 (관리자 승인 대기)' }}
             </button>
           </div>
         </div>
@@ -523,7 +575,7 @@
                   {{ editForm.reservation_date }}
                 </span>
               </div>
-              <h3 class="text-base font-black text-slate-900">예약 변경 신청</h3>
+              <h3 class="text-base font-black text-slate-900">{{ editStep === 'form' ? '예약 변경 신청' : '공간 사용 수칙 동의' }}</h3>
             </div>
 
             <!-- 2. Cancel Confirm Mode Header -->
@@ -561,9 +613,10 @@
           </div>
 
           <!-- Body -->
-          <div class="p-6 overflow-y-auto space-y-5">
+          <div ref="detailBodyRef" class="p-6 overflow-y-auto space-y-5">
             <!-- Normal View Mode -->
             <template v-if="!isEditing && !showCancelConfirm">
+              <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(selectedRes.room_id)) || selectedRes" />
               <!-- Notice if Cancel Requested -->
               <div
                 v-if="selectedRes.status === 'cancel_requested'"
@@ -644,7 +697,8 @@
 
             <!-- Edit Mode -->
             <template v-else-if="isEditing">
-              <div class="space-y-4">
+              <SpaceRulesAgreement v-if="editStep === 'agreement'" v-model="editRulesAgreed" />
+              <div v-else class="space-y-4">
                 <!-- Recurring Scope Selector (if recurring) -->
                 <div v-if="selectedRes.is_recurring" class="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2">
                   <div class="flex items-center justify-between">
@@ -672,9 +726,8 @@
                 </div>
 
                 <!-- 1. Room Selection -->
-                <div class="space-y-1.5">
-                  <label class="text-xs font-black text-slate-700">예약 공간 선택 *</label>
-                  <select
+                <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(editForm.room_id))">
+                  <select aria-label="예약할 공간"
                     v-model="editForm.room_id"
                     class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
                   >
@@ -688,7 +741,7 @@
                       </option>
                     </optgroup>
                   </select>
-                </div>
+                </ReservationRoomCard>
 
                 <!-- 2. Date -->
                 <div class="space-y-1.5">
@@ -900,17 +953,17 @@
             <!-- Edit Mode Buttons -->
             <template v-else-if="isEditing">
               <button
-                @click="isEditing = false"
+                @click="editStep === 'agreement' ? editStep = 'form' : isEditing = false"
                 class="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 text-xs font-black active:scale-95 transition-all"
               >
-                뒤로
+                {{ editStep === 'agreement' ? '이전으로' : '뒤로' }}
               </button>
               <button
                 @click="submitModify"
-                :disabled="submitting || !!editTimeConflictError"
+                :disabled="submitting || !!editTimeConflictError || (editStep === 'agreement' && !editRulesAgreed)"
                 class="flex-[2] py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
               >
-                {{ submitting ? '신청 중...' : '변경 신청 (관리자 승인 대기)' }}
+                {{ submitting ? '신청 중...' : editStep === 'form' ? '다음' : '동의 및 변경 신청 (관리자 승인 대기)' }}
               </button>
             </template>
 
@@ -1073,9 +1126,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import SpaceRulesAgreement from '@/components/SpaceRulesAgreement.vue'
+import ReservationRoomCard from '@/components/admin/ReservationRoomCard.vue'
 import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/stores/useModalStore'
 import { getHoliday } from '@/utils/holidays'
@@ -1084,9 +1139,11 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
+const { displayMode } = defineProps({ displayMode: { type: String, default: 'list' } })
 const route = useRoute()
 const auth = useAuthStore()
 const modal = useModalStore()
@@ -1095,6 +1152,37 @@ const loading = ref(false)
 const rooms = ref([])
 const myReservations = ref([])
 const allActiveReservations = ref([]) // For conflict checking
+const listQuery = ref('')
+const listStatus = ref('all')
+const listPeriod = ref('3')
+const expandedListGroups = ref([])
+const toggleListGroup = (key) => {
+  expandedListGroups.value = expandedListGroups.value.includes(key)
+    ? expandedListGroups.value.filter(value => value !== key)
+    : [...expandedListGroups.value, key]
+}
+const filteredListReservations = computed(() => {
+  const from = new Date()
+  from.setMonth(from.getMonth() - Number(listPeriod.value || 0))
+  const query = listQuery.value.trim().toLowerCase()
+  return myReservations.value.filter(item => {
+    if (listPeriod.value !== 'all' && fmtDate(item.reservation_date) < toDateStr(from)) return false
+    if (listStatus.value !== 'all' && item.status !== listStatus.value) return false
+    return !query || [item.title, item.room_name, item.reason, item.floor].some(value => String(value || '').toLowerCase().includes(query))
+  }).sort((a, b) => fmtDate(b.reservation_date).localeCompare(fmtDate(a.reservation_date)) || fmtTime(a.start_time).localeCompare(fmtTime(b.start_time)))
+})
+const listGroups = computed(() => {
+  const groups = new Map()
+  for (const item of filteredListReservations.value) {
+    const key = item.is_recurring
+      ? `series-${item.recurring_id || `${item.room_id}-${item.title}-${item.start_time}-${item.end_time}`}`
+      : `single-${item.id}`
+    if (!groups.has(key)) groups.set(key, { key, recurring: Boolean(item.is_recurring), items: [] })
+    groups.get(key).items.push(item)
+  }
+  return [...groups.values()].map(group => ({ ...group, items: group.items.sort((a, b) => fmtDate(a.reservation_date).localeCompare(fmtDate(b.reservation_date))) }))
+})
+
 const includeBlocked = ref(false)
 const policy = ref(null)
 
@@ -1189,8 +1277,6 @@ const getCellDotColors = (cell) => {
 }
 
 // Counts for header summary
-const approvedCount = computed(() => myReservations.value.filter(r => r.status === 'approved').length)
-const pendingCount = computed(() => myReservations.value.filter(r => r.status === 'pending' || r.status === 'cancel_requested').length)
 
 // Sort floors
 const sortFloors = (floorList) => {
@@ -1672,6 +1758,12 @@ const calcPlusOneHour = (timeStr) => {
 // ==========================================================
 // 1. BOOKING MODAL (신규 예약 신청)
 // ==========================================================
+const bookingStep = ref('form')
+const editStep = ref('form')
+const bookingBodyRef = ref(null)
+const detailBodyRef = ref(null)
+const bookingRulesAgreed = ref(false)
+const editRulesAgreed = ref(false)
 const showBookingModal = ref(false)
 const submitting = ref(false)
 const bookingForm = ref({
@@ -1728,7 +1820,7 @@ const currentBookingRoomSchedule = computed(() => {
 })
 
 const openBookingForActiveDay = () => {
-  const targetDate = activeDayStr.value || todayStr.value
+  const targetDate = displayMode === 'list' ? todayStr.value : (activeDayStr.value || todayStr.value)
   if (isPastDate(targetDate)) {
     modal.showAlert('과거 일자에는 예약을 신청할 수 없습니다.')
     return
@@ -1741,6 +1833,8 @@ const openBookingForActiveDay = () => {
     title: '',
     reason: ''
   }
+  bookingStep.value = 'form'
+  bookingRulesAgreed.value = false
   showBookingModal.value = true
 }
 
@@ -1788,6 +1882,7 @@ const bookingConflictError = computed(() => {
 })
 
 const submitBooking = async () => {
+  if (submitting.value) return
   if (!bookingForm.value.room_id) {
     await modal.showAlert('예약할 공간을 선택해 주세요.')
     return
@@ -1802,6 +1897,22 @@ const submitBooking = async () => {
   }
   if (bookingConflictError.value) {
     await modal.showAlert(bookingConflictError.value)
+    return
+  }
+
+  if (bookingStep.value === 'form') {
+    bookingRulesAgreed.value = false
+    bookingStep.value = 'agreement'
+    await nextTick()
+    if (bookingBodyRef.value) {
+      bookingBodyRef.value.scrollTop = 0
+      bookingBodyRef.value.querySelector('input[type="checkbox"]')?.focus({ preventScroll: true })
+    }
+    return
+  }
+
+  if (!bookingRulesAgreed.value) {
+    await modal.showAlert('모든 공간 사용 수칙에 동의해 주세요.')
     return
   }
 
@@ -1923,6 +2034,8 @@ const closeModal = () => {
 const startEdit = () => {
   if (!selectedRes.value) return
   modifyScope.value = 'single'
+  editStep.value = 'form'
+  editRulesAgreed.value = false
   editForm.value = {
     room_id: selectedRes.value.room_id,
     title: selectedRes.value.title || '',
@@ -1976,6 +2089,7 @@ const editTimeConflictError = computed(() => {
 })
 
 const submitModify = async () => {
+  if (submitting.value) return
   if (!editForm.value.title.trim()) {
     await modal.showAlert('신청명을 입력해 주세요.')
     return
@@ -1986,6 +2100,22 @@ const submitModify = async () => {
   }
   if (editTimeConflictError.value) {
     await modal.showAlert(editTimeConflictError.value)
+    return
+  }
+
+  if (editStep.value === 'form') {
+    editRulesAgreed.value = false
+    editStep.value = 'agreement'
+    await nextTick()
+    if (detailBodyRef.value) {
+      detailBodyRef.value.scrollTop = 0
+      detailBodyRef.value.querySelector('input[type="checkbox"]')?.focus({ preventScroll: true })
+    }
+    return
+  }
+
+  if (!editRulesAgreed.value) {
+    await modal.showAlert('모든 공간 사용 수칙에 동의해 주세요.')
     return
   }
 
@@ -2196,15 +2326,29 @@ const fetchAll = async () => {
   }
 }
 
+watch(() => displayMode === 'list' && Boolean(showBookingModal.value || showModal.value || showSearchModal.value), (open, _, onCleanup) => {
+  if (!open) return
+  const elements = [document.documentElement, document.body]
+  const overflow = elements.map(element => element.style.overflow)
+  elements.forEach(element => { element.style.overflow = 'hidden' })
+  onCleanup(() => elements.forEach((element, index) => { element.style.overflow = overflow[index] }))
+})
+
+let previousPageOverflow = null
 onMounted(() => {
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
+  if (displayMode === 'calendar') {
+    previousPageOverflow = [document.documentElement.style.overflow, document.body.style.overflow]
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+  }
   fetchAll()
 })
 
 onUnmounted(() => {
-  document.documentElement.style.overflow = ''
-  document.body.style.overflow = ''
+  if (previousPageOverflow) {
+    document.documentElement.style.overflow = previousPageOverflow[0]
+    document.body.style.overflow = previousPageOverflow[1]
+  }
   window.removeEventListener('mousemove', onCalendarMouseMove)
   window.removeEventListener('mouseup', onCalendarMouseUp)
 })
