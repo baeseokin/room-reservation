@@ -2,12 +2,9 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
 const { 
-  sendNewReservationToAdmin, 
-  sendApprovalAlimTalk, 
   sendRejectionAlimTalk, 
   sendCancellationAlimTalk, 
   sendModificationAlimTalk, 
-  sendInquiryAlimTalk 
 } = require("../services/alimtalk");
 const { getHoliday } = require("../utils/holidays");
 
@@ -450,36 +447,6 @@ router.post("/", async (req, res) => {
 
     await conn.commit();
 
-    // 3. Send AlimTalk to ALL admins
-    const [rooms] = await pool.query("SELECT room_name, floor FROM rooms WHERE id = ?", [room_id]);
-    const roomInfo = rooms[0];
-
-    if (roomInfo) {
-      try {
-        // Get all admin phones
-        const [admins] = await pool.query(
-          `SELECT u.phone FROM users u
-           JOIN user_roles ur ON u.id = ur.user_id
-           JOIN roles r ON ur.role_id = r.id
-           WHERE r.role_name = '관리자' AND u.phone IS NOT NULL AND u.phone != ''`
-        );
-        for (const admin of admins) {
-          await sendNewReservationToAdmin({
-            id: reservationIds[0],
-            room_name: roomInfo.room_name,
-            floor: roomInfo.floor,
-            reservation_date,
-            start_time,
-            end_time,
-            requester_name,
-            requester_phone,
-            title,
-            reason
-          }, admin.phone, req.session.user).catch(e => console.error("Admin AlimTalk skip:", e.message));
-        }
-      } catch (e) { console.error("AlimTalk skip:", e.message); }
-    }
-
     res.json({ success: true, ids: reservationIds });
   } catch (err) {
     if (conn) await conn.rollback();
@@ -537,8 +504,6 @@ router.patch("/bulk-approve", isLogged, isAdmin, async (req, res) => {
         }
         if (row.status === 'cancel_requested') {
           sendCancellationAlimTalk(row, "관리자가 취소 요청을 승인했습니다.", req.session.user).catch(e => console.error("Bulk Cancel AlimTalk skip:", e.message));
-        } else {
-          sendApprovalAlimTalk(row, req.session.user).catch(e => console.error("Bulk Approval AlimTalk skip:", e.message));
         }
       }
     }
@@ -600,9 +565,7 @@ router.patch("/bulk-reject", isLogged, isAdmin, async (req, res) => {
           if (sentSignatures.has(signature)) continue;
           sentSignatures.add(signature);
         }
-        if (row.status === 'cancel_requested') {
-          sendRejectionAlimTalk(row, reject_reason ? `취소 요청 반려: ${reject_reason}` : "취소 요청이 반려되어 예약이 유지됩니다.", req.session.user).catch(e => console.error("Bulk Reject AlimTalk skip:", e.message));
-        } else {
+        if (row.status !== 'cancel_requested') {
           sendRejectionAlimTalk(row, reject_reason, req.session.user).catch(e => console.error("Bulk Rejection AlimTalk skip:", e.message));
         }
       }
@@ -645,9 +608,6 @@ router.patch("/:id/approve", isLogged, isAdmin, async (req, res) => {
         "INSERT INTO reservation_change_logs (reservation_id, action_type, reason, created_at) VALUES (?, 'approve', '관리자가 예약을 승인했습니다.', NOW())",
         [id]
       );
-      if (target.requester_phone) {
-        sendApprovalAlimTalk(target, req.session.user).catch(e => console.error("Approval AlimTalk skip:", e.message));
-      }
       return res.json({ success: true, action: 'approved' });
     }
   } catch (err) {
@@ -679,9 +639,6 @@ router.patch("/:id/reject", isLogged, isAdmin, async (req, res) => {
         "INSERT INTO reservation_change_logs (reservation_id, action_type, reason, created_at) VALUES (?, 'reject_cancel', ?, NOW())",
         [id, reject_reason || '관리자가 취소 요청을 반려했습니다.']
       );
-      if (target.requester_phone) {
-        sendRejectionAlimTalk(target, reject_reason ? `취소 요청 반려: ${reject_reason}` : "취소 요청이 반려되어 예약이 유지됩니다.", req.session.user).catch(e => console.error("Rejection AlimTalk skip:", e.message));
-      }
       return res.json({ success: true, action: 'cancel_rejected' });
     } else {
       // 일반 예약/변경 거부
@@ -718,17 +675,6 @@ router.post("/inquiry", isLogged, async (req, res) => {
       "INSERT INTO reservation_inquiries (reservation_id, inquirer_id, content) VALUES (?, ?, ?)",
       [reservation_id, inquirer_id, content]
     );
-
-    // 2. Send AlimTalk to original requester
-    const [original] = await pool.query(
-      `SELECT r.*, rm.room_name, rm.floor, rm.image_url FROM reservations r 
-       JOIN rooms rm ON r.room_id = rm.id WHERE r.id = ?`,
-      [reservation_id]
-    );
-
-    if (original.length > 0) {
-      await sendInquiryAlimTalk(original[0], req.session.user.userName, content, req.session.user);
-    }
 
     res.json({ success: true });
   } catch (err) {
@@ -1224,7 +1170,7 @@ router.delete("/:id", isLogged, async (req, res) => {
             );
         }
 
-        if (rows[0].requester_phone) {
+        if (isAdminUser && rows[0].requester_phone) {
             const notifReservation = {
                 ...rows[0],
                 title: targetIds.length > 1 ? `${rows[0].title} (반복 ${targetIds.length}건 전체 취소)` : rows[0].title

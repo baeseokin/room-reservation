@@ -27,7 +27,7 @@ OTP_IP_HOURLY_LIMIT=30
 OTP_RESEND_INTERVAL_SECONDS=60
 ```
 
-로컬은 `NODE_ENV=development`, `MESSAGE_PROVIDER=mock` 설정으로 실제 알림톡을 발송하지 않고 인증 응답의 `demoCode`를 화면에 표시한다. `APP_MODE=demo`는 필요하지 않다. 예약 신청·승인·거절·취소·변경·조율 요청 알림도 실제 발송 대신 콘솔에 mock 결과를 남긴다. mock에서는 Sendon 계정·템플릿 설정이 필요하지 않으며 OTP_SECRET 등 인증 설정은 여전히 필요하다.
+로컬은 `NODE_ENV=development`, `MESSAGE_PROVIDER=mock` 설정으로 실제 알림톡을 발송하지 않고 인증 응답의 `demoCode`를 화면에 표시한다. `APP_MODE=demo`는 필요하지 않다. 관리자가 예약을 변경·거절·취소할 때 신청자에게 보내는 알림도 실제 발송 대신 콘솔에 mock 결과를 남긴다. 예약 신청·승인·조율 요청 알림은 발송하지 않는다. mock에서는 Sendon 계정·템플릿 설정이 필요하지 않으며 OTP_SECRET 등 인증 설정은 여전히 필요하다.
 
 백엔드 `.env`의 `MESSAGE_PROVIDER` 하나로 발송 방식을 선택하고 서버를 재시작한다. 환경별 `MESSAGE_PROVIDER__development` 설정은 사용하지 않는다.
 
@@ -45,3 +45,5 @@ OTP는 3분·5회, 일반 인증 세션은 30분, OTP 이후 등록·관리자 �
 프로필의 이름·부서는 PC·모바일에서 수정 가능하다. 인증된 전화번호는 읽기 전용이며 새 번호로 변경하는 인증 기능은 별도 구현 대상이다. 신규 가입용 user_id는 내부 난수 ID로 생성한다. 기존 관리자 사용자 관리 화면의 ID·비밀번호 관리 UX 정비, 예약 승인 절차 제거, 예약 당시 소속부서 스냅샷은 이번 로그인 화면 전환과 별도 작업이다.
 
 검증: `node --test tests/*.test.js`, 프런트 `npm run build`. 실제 DB 마이그레이션·실발송·운영 배포는 별도로 검증한다.
+
+예약 알림 템플릿: `SENDON_TEMPLATE_APPROVED`는 관리자 변경 알림, `SENDON_TEMPLATE_REJECTED`는 관리자 거절·취소 알림에 사용한다. 기존 템플릿 ID 호환을 위해 환경변수 이름을 유지한다. 휴대전화 인증용 `SENDON_TEMPLATE_OTP_ID`는 별도로 유지한다.
