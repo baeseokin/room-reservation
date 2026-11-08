@@ -62,6 +62,11 @@ router.get("/me", isLogged, async (req, res) => {
 router.put("/me", isLogged, async (req, res) => {
   const { user_name, email, phone, dept_name } = req.body;
   try {
+    const { normalizePhone } = require('../services/otp');
+    const [[current]] = await pool.query('SELECT phone FROM users WHERE id = ?', [req.session.user.id]);
+    if (normalizePhone(phone) !== normalizePhone(current.phone)) return res.status(400).json({ success: false, message: '휴대전화번호 변경에는 새 번호 인증이 필요합니다.' });
+    const [[department]] = await pool.query('SELECT id FROM departments WHERE dept_name = ?', [dept_name]);
+    if (!department || typeof user_name !== 'string' || !user_name.trim() || user_name.length > 100) return res.status(400).json({ success: false, message: '이름과 등록된 소속부서를 확인해 주세요.' });
     await pool.query(
       "UPDATE users SET user_name = ?, email = ?, phone = ?, dept_name = ? WHERE id = ?",
       [user_name, email, phone, dept_name, req.session.user.id]

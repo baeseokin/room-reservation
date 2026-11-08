@@ -1,14 +1,14 @@
 const { Sendon } = require("@alipeople/sendon-sdk-typescript");
-const { envPick } = require("../env");
+const { envPick, ENV } = require("../env");
 
-// Sendon SDK 초기화
-const sendon = new Sendon({
-  id: envPick("SENDON_ID", ""),
-  apikey: envPick("SENDON_APIKEY", ""),
-  debug: String(envPick("SENDON_DEBUG", "false")) === "true",
-});
+// 실제 발송이 필요한 시점에만 SDK를 초기화한다.
+let sendon;
+const isMock = () => envPick("MESSAGE_PROVIDER") === "mock";
 
 async function sendAlimTalk(options) {
+  if (isMock() && ENV === "production") {
+    throw new Error("운영 환경에서는 MESSAGE_PROVIDER=mock을 사용할 수 없습니다.");
+  }
   const profileId = envPick("SENDON_PROFILE_ID", "");
 
   // 1. 카카오 알림톡 발송 정보 로깅 (URL 포함, server.log에 즉시 출력)
@@ -28,12 +28,22 @@ async function sendAlimTalk(options) {
     });
   }
 
+  if (isMock()) {
+    console.log("📨 [카카오 알림톡 mock] 실제 발송을 생략했습니다.", { templateId: options.templateId });
+    return { success: true, mock: true, groupId: null, message: "Mock delivery; no message sent" };
+  }
+
   if (!envPick("SENDON_ID") || !envPick("SENDON_APIKEY") || !profileId) {
     console.warn("⚠️  Sendon 설정이 없어 실제 알림톡 API 호출을 건너뜁니다.");
     return { success: false, message: "Sendon configuration missing" };
   }
 
   try {
+    sendon ||= new Sendon({
+      id: envPick("SENDON_ID", ""),
+      apikey: envPick("SENDON_APIKEY", ""),
+      debug: String(envPick("SENDON_DEBUG", "false")) === "true",
+    });
     const result = await sendon.kakao.sendAlimTalk({ sendProfileId: profileId, ...options });
     console.log("📨 [카카오 알림톡 발송 결과]:", { code: result.code, message: result.message, groupId: result.data?.groupId });
     return {
@@ -63,7 +73,7 @@ async function sendNewReservationToAdmin(reservation, adminPhone, actor = null) 
   console.log("✅ sendNewReservationToAdmin adminPhone :", adminPhone);
 
   const templateId = envPick("SENDON_TEMPLATE_NEW_RESERVATION", "");
-  if (!templateId) {
+  if (!templateId && !isMock()) {
     console.warn("⚠️  SENDON_TEMPLATE_NEW_RESERVATION 미설정 — 알림톡 건너뜀");
     return;
   }
@@ -96,7 +106,7 @@ async function sendApprovalAlimTalk(reservation, actor = null) {
   console.log("✅ sendApprovalAlimTalk reservation :", reservation);
 
   const templateId = envPick("SENDON_TEMPLATE_APPROVED", "");
-  if (!templateId || !reservation.requester_phone) {
+  if ((!templateId && !isMock()) || !reservation.requester_phone) {
     console.warn("⚠️  승인 알림톡 설정 미비 — 건너뜀");
     return;
   }
@@ -130,7 +140,7 @@ async function sendRejectionAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendRejectionAlimTalk reason :", reason);
 
   const templateId = envPick("SENDON_TEMPLATE_REJECTED", "");
-  if (!templateId || !reservation.requester_phone) {
+  if ((!templateId && !isMock()) || !reservation.requester_phone) {
     console.warn("⚠️  거부 알림톡 설정 미비 — 건너뜀");
     return;
   }
@@ -167,7 +177,7 @@ async function sendCancellationAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendCancellationAlimTalk reservation :", reservation, "reason :", reason);
 
   const templateId = envPick("SENDON_TEMPLATE_REJECTED", envPick("SENDON_TEMPLATE_APPROVED", ""));
-  if (!templateId || !reservation.requester_phone) {
+  if ((!templateId && !isMock()) || !reservation.requester_phone) {
     console.warn("⚠️  취소 알림톡 설정 미비 — 건너뜀");
     return;
   }
@@ -204,7 +214,7 @@ async function sendModificationAlimTalk(reservation, reason, actor = null) {
   console.log("✅ sendModificationAlimTalk reservation :", reservation, "reason :", reason);
 
   const templateId = envPick("SENDON_TEMPLATE_APPROVED", envPick("SENDON_TEMPLATE_REJECTED", ""));
-  if (!templateId || !reservation.requester_phone) {
+  if ((!templateId && !isMock()) || !reservation.requester_phone) {
     console.warn("⚠️  변경 알림톡 설정 미비 — 건너뜀");
     return;
   }
@@ -239,7 +249,7 @@ async function sendModificationAlimTalk(reservation, reason, actor = null) {
  */
 async function sendInquiryAlimTalk(reservation, userName, content, actor = null) {
   const templateId = envPick("SENDON_TEMPLATE_INQUIRY", envPick("SENDON_TEMPLATE_APPROVED", ""));
-  if (!templateId || !reservation.requester_phone) return;
+  if ((!templateId && !isMock()) || !reservation.requester_phone) return;
   const dateStr = reservation.reservation_date instanceof Date
     ? reservation.reservation_date.toISOString().split("T")[0]
     : String(reservation.reservation_date).slice(0, 10);

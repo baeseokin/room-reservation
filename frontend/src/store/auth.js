@@ -13,18 +13,6 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.roles?.includes('관리자') ?? false,
   },
   actions: {
-    async login(userId, password) {
-      try {
-        const res = await axios.post('/api/auth/login', { userId, password })
-        if (res.data.success) {
-          this.user = res.data.user
-          return { success: true }
-        }
-        return { success: false, message: res.data.message }
-      } catch (e) {
-        return { success: false, message: e.response?.data?.message || '로그인 오류' }
-      }
-    },
     async checkSession() {
       try {
         const res = await axios.get('/api/auth/session')

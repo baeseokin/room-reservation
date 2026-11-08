@@ -2,10 +2,10 @@
 import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
-import { 
-  UserCircleIcon, 
-  EnvelopeIcon, 
-  PhoneIcon, 
+import {
+  UserCircleIcon,
+  EnvelopeIcon,
+  PhoneIcon,
   BuildingLibraryIcon,
   IdentificationIcon,
   CheckBadgeIcon,
@@ -76,14 +76,14 @@ const updateProfile = async () => {
       phone: profile.value.phone,
       dept_name: profile.value.dept_name
     })
-    
+
     // Sync with auth store
     await auth.checkSession()
-    
+
     modal.showAlert('프로필이 성공적으로 업데이트되었습니다.')
     fetchProfile()
   } catch (err) {
-    modal.showAlert('업데이트 중 오류가 발생했습니다.')
+    modal.showAlert(err.response?.data?.message || '업데이트 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
@@ -100,17 +100,17 @@ onMounted(() => {
     <!-- Profile Header -->
     <div class="flex flex-col md:flex-row items-center gap-10 bg-white p-12 rounded-[3.5rem] shadow-2xl border border-slate-50 relative overflow-hidden group">
       <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-50 rounded-full blur-3xl group-hover:bg-indigo-100 transition-colors duration-1000"></div>
-      
+
       <div class="relative z-10 w-32 h-32 rounded-[2.5rem] bg-slate-900 flex items-center justify-center text-4xl font-black text-white shadow-2xl shadow-indigo-200">
         {{ profile.user_name?.charAt(0) }}
       </div>
-      
+
       <div class="relative z-10 text-center md:text-left space-y-3">
         <h1 class="text-4xl font-black text-slate-900 tracking-tight">마이 프로필</h1>
         <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">개인 정보 및 설정 관리</p>
         <div class="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
           <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[0.75rem] font-black uppercase tracking-widest">{{ profile.dept_name || '부서 미지정' }}</span>
-          <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[0.75rem] font-black uppercase tracking-widest">{{ profile.user_id }}</span>
+
         </div>
       </div>
     </div>
@@ -122,11 +122,11 @@ onMounted(() => {
         <div class="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
           <div class="flex items-center gap-3">
             <IdentificationIcon class="w-6 h-6 text-indigo-400" />
-            <span class="text-[0.75rem] font-black uppercase tracking-widest text-slate-500">계정 아이디</span>
+            <span class="text-[0.75rem] font-black uppercase tracking-widest text-slate-500">인증된 휴대전화번호</span>
           </div>
-          <p class="text-xl font-black">{{ profile.user_id }}</p>
+          <p class="text-xl font-black">{{ profile.phone }}</p>
           <div class="pt-4 border-t border-slate-800">
-             <p class="text-[0.75rem] text-slate-500 font-bold leading-relaxed">계정 아이디는 수정할 수 없습니다. 변경이 필요한 경우 관리자에게 문의하세요.</p>
+             <p class="text-[0.75rem] text-slate-500 font-bold leading-relaxed">이 번호로 카카오 알림톡 인증을 진행합니다.</p>
           </div>
         </div>
       </div>
@@ -145,12 +145,12 @@ onMounted(() => {
             </div>
 
             <!-- Department Combo Box -->
-            <div class="space-y-2 group opacity-75">
-              <label class="block text-[0.75rem] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서 (수정 불가)</label>
+            <div class="space-y-2 group">
+              <label class="block text-[0.75rem] font-black text-slate-300 uppercase tracking-widest ml-1">소속 부서</label>
               <div class="relative">
                 <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl border-2 border-transparent transition-all">
                   <BuildingOfficeIcon class="w-6 h-6 text-slate-300" />
-                  <select v-model="profile.dept_name" disabled class="w-full bg-transparent border-none p-0 font-black text-slate-500 focus:ring-0 appearance-none cursor-not-allowed">
+                  <select v-model="profile.dept_name" class="w-full bg-transparent border-none p-0 font-black text-slate-500 focus:ring-0 appearance-none cursor-pointer">
                     <option value="">부서 미지정</option>
                     <option v-for="dept in departments" :key="dept.id" :value="dept.dept_name">{{ dept.dept_name }}</option>
                   </select>
@@ -172,15 +172,15 @@ onMounted(() => {
               <label class="block text-[0.75rem] font-black text-slate-300 uppercase tracking-widest ml-1">연락처</label>
               <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl group-focus-within:bg-white border-2 border-transparent group-focus-within:border-indigo-100 transition-all">
                 <PhoneIcon class="w-6 h-6 text-slate-300" />
-                <input type="text" v-model="profile.phone" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="010-0000-0000" />
+                <input type="text" readonly aria-label="인증된 휴대전화번호" v-model="profile.phone" class="w-full bg-transparent border-none p-0 font-black text-slate-800 focus:ring-0 font-sans" placeholder="010-0000-0000" />
               </div>
               <p class="text-[0.75rem] text-indigo-500 font-bold ml-1 mt-1 leading-relaxed">
-                ※ 입력한 핸드폰 번호로 카카오 알림톡이 전송되오니 정확한 정보를 입력하여 주십시요.
+                카카오 알림톡으로 인증한 번호입니다. 번호 변경은 관리자에게 문의해 주세요.
               </p>
             </div>
           </div>
 
-          <button 
+          <button
             @click="updateProfile"
             :disabled="saving"
             class="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-100 flex items-center justify-center gap-3 hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"

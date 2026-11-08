@@ -51,7 +51,7 @@ router.post("/", isLogged, isAdmin, async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      "INSERT INTO users (user_id, user_name, email, phone, password) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO users (user_id, user_name, email, phone, password_hash) VALUES (?, ?, ?, ?, ?)",
       [user_id, user_name, email || null, phone || null, passwordHash]
     );
 
@@ -81,7 +81,7 @@ router.put("/:id", isLogged, isAdmin, async (req, res) => {
     if (password && password.trim()) {
       const hash = await bcrypt.hash(password, 10);
       await pool.query(
-        "UPDATE users SET user_name=?, email=?, phone=?, password=? WHERE id=?",
+        "UPDATE users SET user_name=?, email=?, phone=?, password_hash=? WHERE id=?",
         [user_name, email || null, phone || null, hash, id]
       );
     } else {

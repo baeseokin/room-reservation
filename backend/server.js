@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const session = require("express-session");
+const DatabaseSessionStore = require("./services/session-store");
 const path = require("path");
 require("dotenv").config();
 
@@ -36,6 +37,9 @@ const initDb = async () => {
 };
 initDb();
 
+if (ENV === 'production' && String(envPick('SESSION_SECRET', '')).length < 32) {
+  throw new Error('A project-specific SESSION_SECRET of at least 32 characters is required.');
+}
 const app = express();
 const PORT = envNumber("PORT", 3002); // Using 3002 for Room Reservation
 
@@ -63,16 +67,27 @@ if (ENV === "production") {
 
 app.use(
   session({
+    name: "room.sid.v2",
+    store: new DatabaseSessionStore(pool),
     secret: envPick("SESSION_SECRET", "room-secret-key"),
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: "auto",
-      sameSite: "lax"
+      sameSite: "lax",
+      maxAge: 1800000
     }
   })
 );
+
+// Require an explicitly allowed browser Origin for authentication mutations.
+app.use('/api/auth', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const origin = req.get('Origin');
+  if (!origin || !allowedOrigins.includes(origin)) return res.status(403).json({ success: false, message: '허용되지 않은 요청입니다.' });
+  next();
+});
 
 // Routes
 const authRoutes = require("./routes/auth");
