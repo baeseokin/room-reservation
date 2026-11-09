@@ -38,3 +38,27 @@ backend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Environment variants (keep sanitized examples trackable)
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Local credentials and deployment secrets
+.aws/
+*-secret.yaml
+*-secret.yml
+
+# Tool caches and test output
+.vite/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+
+# Editor temporary files
+*.swp
+*.swo
+*~

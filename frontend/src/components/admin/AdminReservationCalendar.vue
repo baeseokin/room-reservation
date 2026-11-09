@@ -2217,7 +2217,7 @@ defineExpose({ fetchData, openReservationById })
     <!-- Cancellation Reason Modal with KakaoTalk Notice -->
     <Teleport to="body">
       <transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100">
-        <div v-if="showCancelConfirmModal" class="fixed inset-0 z-[2500] flex items-center justify-center p-4">
+        <div v-if="showCancelConfirmModal" class="fixed inset-0 z-[4500] flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showCancelConfirmModal = false"></div>
           <div class="bg-white rounded-[2.5rem] shadow-2xl p-7 max-w-md w-full space-y-5 z-10 border border-white">
             <div class="flex items-center gap-3">

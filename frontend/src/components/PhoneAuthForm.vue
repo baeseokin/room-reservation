@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
+import loginBackground from '../assets/login_bg.png'
 const props = defineProps({ admin: Boolean, mobile: Boolean })
 const auth = useAuthStore()
 const route = useRoute()
@@ -17,6 +18,22 @@ const remaining = computed(() => Math.max(0, Math.ceil((deadline.value - now.val
 const resendRemaining = computed(() => Math.max(0, Math.ceil((resendAt.value - now.value) / 1000)))
 const countdown = computed(() => `${Math.floor(remaining.value / 60)}:${String(remaining.value % 60).padStart(2, '0')}`)
 const normalizedPhone = computed(() => phone.value.replace(/[-\s]/g, ''))
+function formatPhone(event) {
+  const input = event.target
+  const digitOffset = input.value.slice(0, input.selectionStart ?? input.value.length).replace(/\D/g, '').length
+  const digits = input.value.replace(/\D/g, '').slice(0, 11)
+  const middleEnd = digits.length > 10 ? 7 : 6
+  const formatted = [digits.slice(0, 3), digits.slice(3, middleEnd), digits.slice(middleEnd)].filter(Boolean).join('-')
+  phone.value = formatted
+  input.value = formatted
+  // Keep the cursor beside the same digit when editing in the middle.
+  let cursor = 0, count = 0
+  while (cursor < formatted.length && count < digitOffset) {
+    if (/\d/.test(formatted[cursor])) count++
+    cursor++
+  }
+  input.setSelectionRange(cursor, cursor)
+}
 const inputClass = 'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60'
 async function run(action) {
   if (busy.value) return
@@ -78,11 +95,22 @@ function reset() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 flex items-center justify-center px-5 py-10 font-sans">
-    <section class="w-full max-w-md rounded-[2rem] bg-white p-7 sm:p-10 shadow-xl shadow-slate-200/60 border border-slate-100">
+  <main class="min-h-screen bg-[#f3f4f6] flex items-center justify-center px-5 py-8 sm:px-10 lg:py-16 font-sans">
+    <div class="w-full max-w-7xl grid grid-cols-1 items-center gap-6 lg:grid-cols-[1.35fr_1fr] lg:gap-16">
+    <div aria-hidden="true" class="church-art pointer-events-none relative mx-auto w-48 sm:w-64 lg:w-full lg:max-w-[680px] aspect-square">
+      <img :src="loginBackground" alt="" class="church-art-halo absolute inset-0 h-full w-full object-contain" />
+      <img :src="loginBackground" alt="" class="church-art-image relative h-full w-full object-contain" />
+    </div>
+    <div class="w-full max-w-lg mx-auto">
+    <header class="mb-8 text-center lg:mb-10">
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tight leading-snug text-slate-800">
+        원천교회 <span class="text-indigo-600">공간예약 시스템</span>
+      </h1>
+      <p class="mt-4 text-xs sm:text-sm font-semibold tracking-[0.15em] text-slate-400">WONCHEON ROOM RESERVATION SYSTEM</p>
+    </header>
+    <section class="w-full max-w-md mx-auto rounded-[2rem] bg-white p-7 sm:p-10 shadow-xl shadow-slate-300/40 border border-white">
       <header class="text-center mb-8">
-        <p class="font-bold text-slate-500 mb-2">원천교회 공간예약</p>
-        <h1 class="text-2xl font-black text-slate-900">{{ stage === 'profile' ? '처음 오셨나요?' : stage === 'password' ? '관리자 비밀번호 확인' : '카카오 알림톡 인증' }}</h1>
+        <h2 class="text-2xl font-black text-slate-900">{{ stage === 'profile' ? '처음 오셨나요?' : stage === 'password' ? '관리자 비밀번호 확인' : '카카오 알림톡 인증' }}</h2>
         <p class="mt-3 text-sm text-slate-500 leading-relaxed">{{ stage === 'profile' ? '예약에 사용할 이름과 소속부서를 등록해 주세요.' : stage === 'password' ? '휴대전화 인증이 완료되었습니다. 관리자 비밀번호를 입력해 주세요.' : '휴대전화번호로 받은 인증번호로 간편하게 시작하세요.' }}</p>
       </header>
       <p v-if="error" role="alert" class="mb-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{{ error }}</p>
@@ -91,7 +119,7 @@ function reset() {
       <form @submit.prevent="submit" class="space-y-5">
         <div v-if="stage === 'phone' || stage === 'code'">
           <label for="auth-phone" class="block text-sm font-bold text-slate-700 mb-2">휴대전화번호</label>
-          <input id="auth-phone" v-model="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="01012345678" maxlength="13" required :disabled="busy || stage === 'code'" :class="inputClass" />
+          <input id="auth-phone" :value="phone" @input="formatPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="010-1234-5678" maxlength="13" required :disabled="busy || stage === 'code'" :class="inputClass" />
         </div>
         <div v-if="stage === 'code'">
           <label for="auth-code" class="block text-sm font-bold text-slate-700 mb-2">인증번호</label>
@@ -125,5 +153,25 @@ function reset() {
       </form>
       <p class="mt-7 text-center text-xs leading-relaxed text-slate-400">카카오 알림톡으로 휴대전화번호를 인증합니다.</p>
     </section>
+    </div>
+    </div>
   </main>
 </template>
+
+<style scoped>
+.church-art {
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 48%, transparent 73%);
+  mask-image: radial-gradient(ellipse at center, #000 48%, transparent 73%);
+}
+
+.church-art-halo {
+  filter: blur(18px);
+  opacity: 0.5;
+  transform: scale(1.03);
+}
+
+.church-art-image {
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 72%);
+}
+</style>
