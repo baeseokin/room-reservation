@@ -450,7 +450,7 @@
                 <span class="w-6 h-6 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-[0.5625rem] shrink-0 mt-0.5 shadow-md shadow-indigo-200">📋</span>
                 <div>
                   <h4 class="text-sm font-bold text-slate-900">최대 2일 소요</h4>
-                  <p class="text-[0.625rem] text-slate-600 mt-0.5">예약 신청 후 관리자 승인 완료까지 **최대 2일**이 소요됩니다.</p>
+                  <p class="text-[0.625rem] text-slate-600 mt-0.5">예약 신청이 완료되면 즉시 확정됩니다.</p>
                 </div>
               </div>
             </div>

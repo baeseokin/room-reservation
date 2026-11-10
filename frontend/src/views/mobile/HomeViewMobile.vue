@@ -23,7 +23,7 @@
           <CheckBadgeIcon class="w-6 h-6 text-white" />
         </div>
         <div>
-          <div class="text-[0.625rem] font-black uppercase tracking-widest opacity-60 mb-1">예약 승인 대기</div>
+          <div class="text-[0.625rem] font-black uppercase tracking-widest opacity-60 mb-1">확정 예약</div>
           <div class="text-3xl font-black">{{ pendingResCount }}건</div>
         </div>
       </div>
@@ -156,7 +156,7 @@ onMounted(async () => {
     // 2. Fetch data for admin stats if applicable
     if (auth.isAdmin) {
       // Fetch pending reservations count
-      const pRes = await axios.get('/api/reservations', { params: { status: 'pending' } })
+      const pRes = await axios.get('/api/reservations', { params: { status: 'approved' } })
       pendingResCount.value = pRes.data.length
 
 

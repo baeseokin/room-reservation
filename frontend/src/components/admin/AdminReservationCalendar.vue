@@ -1337,11 +1337,7 @@ defineExpose({ fetchData, openReservationById })
         <div class="flex items-center gap-2 sm:gap-3 text-xs font-bold text-slate-500 whitespace-nowrap shrink-0">
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
             <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-indigo-600 rounded-full shadow-xs shrink-0"></span>
-            <span class="whitespace-nowrap">승인완료</span>
-          </div>
-          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-            <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-400 rounded-full shadow-xs shrink-0"></span>
-            <span class="whitespace-nowrap">승인대기</span>
+            <span class="whitespace-nowrap">예약 확정</span>
           </div>
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
             <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-400 rounded-full shadow-xs shrink-0"></span>
@@ -1662,7 +1658,7 @@ defineExpose({ fetchData, openReservationById })
             <div class="flex p-1 bg-slate-100 rounded-xl overflow-x-auto">
               <button v-for="s in [
                 { id: 'all', name: '전체' }, 
-                { id: 'approved', name: '승인완료' }, 
+                { id: 'approved', name: '예약 확정' },
                 { id: 'pending', name: '승인대기' },
                 { id: 'cancelled', name: '취소' },
                 { id: 'rejected', name: '반려' }
@@ -1836,7 +1832,7 @@ defineExpose({ fetchData, openReservationById })
                     종료됨
                   </span>
                   <span v-else-if="detailReservation?.status === 'approved'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    승인완료
+                    예약 확정
                   </span>
                   <span v-else-if="detailReservation?.status === 'pending'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-amber-50 text-amber-700 border border-amber-200">
                     승인대기
@@ -2067,7 +2063,7 @@ defineExpose({ fetchData, openReservationById })
                        class="p-2.5 rounded-2xl border flex items-center justify-between gap-2 text-xs transition-all">
                     <div class="flex items-center gap-2 min-w-0">
                       <span v-if="r.status === 'approved'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
-                        승인완료
+                        예약 확정
                       </span>
                       <span v-else-if="r.status === 'pending'" class="px-2 py-0.5 rounded-md text-[0.625rem] font-black bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
                         승인대기
@@ -2167,11 +2163,7 @@ defineExpose({ fetchData, openReservationById })
               </template>
               <template v-else>
                 <!-- If Pending, show Approve Button -->
-                <button v-if="detailReservation?.status === 'pending'" 
-                        @click="approveFromDetail" 
-                        class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-emerald-100 flex items-center gap-1.5 uppercase tracking-widest">
-                  <CheckCircleIcon class="w-4 h-4" /> 승인하기
-                </button>
+
 
                 <!-- Cancel Button (If not cancelled) -->
                 <button v-if="detailReservation?.status !== 'cancelled' && detailReservation?.status !== 'rejected'" 

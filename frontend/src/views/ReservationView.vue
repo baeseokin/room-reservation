@@ -1183,7 +1183,7 @@ const getDotTooltipBadgeText = (res) => {
   if (res.is_blocked) return '고정 일정'
   if (isEnded(res)) return '종료됨'
   if (res.status === 'pending') return '승인대기'
-  return '승인완료'
+  return '예약 확정'
 }
 
 const getReservationsForRoomAndDate = (roomId, date) => {
@@ -1604,7 +1604,7 @@ onMounted(async () => {
           <div class="flex items-center gap-2 sm:gap-3 text-xs font-bold text-slate-500 whitespace-nowrap shrink-0">
             <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
               <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-indigo-600 rounded-full shadow-xs shrink-0"></span>
-              <span class="whitespace-nowrap">승인완료</span>
+              <span class="whitespace-nowrap">예약 확정</span>
             </div>
             <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
               <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-400 rounded-full shadow-xs shrink-0"></span>
@@ -1909,7 +1909,7 @@ onMounted(async () => {
         <div v-else class="p-6 max-w-6xl mx-auto space-y-6">
           <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
             <div class="flex p-1 bg-slate-100 rounded-xl">
-              <button v-for="s in [{ id: 'all', name: '전체' }, { id: 'approved', name: '승인완료' }, { id: 'pending', name: '승인대기' }]" :key="s.id" 
+              <button v-for="s in [{ id: 'all', name: '전체' }, { id: 'approved', name: '예약 확정' }, { id: 'pending', name: '승인대기' }]" :key="s.id"
                       @click="statusFilter = s.id"
                       :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold']"
                       class="px-4 py-1.5 rounded-lg text-xs transition-all">
@@ -2010,7 +2010,7 @@ onMounted(async () => {
                     종료됨
                   </span>
                   <span v-else-if="detailReservation?.status === 'approved'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    승인완료
+                    예약 확정
                   </span>
                   <span v-else class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-amber-50 text-amber-700 border border-amber-200">
                     승인대기
@@ -2886,7 +2886,7 @@ onMounted(async () => {
                 <span class="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-md shadow-indigo-200">📋</span>
                 <div>
                   <h4 class="text-sm font-bold text-slate-900">최대 2일 소요</h4>
-                  <p class="text-xs text-slate-600 mt-0.5">예약 신청 후 관리자 승인 완료까지 **최대 2일**이 소요됩니다.</p>
+                  <p class="text-xs text-slate-600 mt-0.5">예약 신청이 완료되면 즉시 확정됩니다.</p>
                 </div>
               </div>
             </div>

@@ -91,7 +91,7 @@ CREATE TABLE `reservations` (
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
   `reason` text DEFAULT NULL,
-  `status` varchar(20) DEFAULT 'pending',
+  `status` varchar(20) DEFAULT 'approved',
   `is_recurring` tinyint(1) DEFAULT 0,
   `recurrence_rule` varchar(100) DEFAULT NULL,
   `parent_reservation_id` int(11) DEFAULT NULL,

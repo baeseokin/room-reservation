@@ -7,7 +7,7 @@
         <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
           <CalendarIcon class="w-6 h-6" />
         </div>
-        <h3 class="text-lg font-black text-slate-900">예약 및 승인</h3>
+        <h3 class="text-lg font-black text-slate-900">예약 및 이용</h3>
         <ul class="space-y-3">
           <li class="flex gap-3 items-start">
             <div class="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0"></div>
@@ -15,11 +15,11 @@
           </li>
           <li class="flex gap-3 items-start">
             <div class="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0"></div>
-            <p class="text-sm font-bold text-slate-600 leading-relaxed">예약 신청 후 관리자의 승인이 있어야 사용이 확정됩니다.</p>
+            <p class="text-sm font-bold text-slate-600 leading-relaxed">예약 신청이 완료되면 즉시 사용이 확정됩니다.</p>
           </li>
           <li class="flex gap-3 items-start">
             <div class="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0"></div>
-            <p class="text-sm font-bold text-slate-600 leading-relaxed">승인 결과는 카카오 알림톡으로 발송됩니다.</p>
+            <p class="text-sm font-bold text-slate-600 leading-relaxed">예약 내역은 내 예약 확인 메뉴에서 확인할 수 있습니다.</p>
           </li>
         </ul>
       </div>

@@ -278,7 +278,7 @@ const cancelReservation = async (id) => {
 
 const statusMap = {
   pending: { label: '대기중', class: 'bg-amber-50 text-amber-600' },
-  approved: { label: '승인됨', class: 'bg-green-50 text-green-600' },
+  approved: { label: '예약 확정', class: 'bg-green-50 text-green-600' },
   rejected: { label: '반려됨', class: 'bg-rose-50 text-rose-600' },
   cancelled: { label: '취소됨', class: 'bg-red-50 text-red-500' },
   finished: { label: '종료됨', class: 'bg-slate-100 text-slate-400' }
@@ -487,7 +487,7 @@ const groupedReservations = computed(() => {
       <div class="inline-flex p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0 self-start md:self-auto">
         <button v-for="s in [
           { id: 'all', name: '전체' }, 
-          { id: 'approved', name: '승인완료' }, 
+          { id: 'approved', name: '예약 확정' },
           { id: 'pending', name: '승인대기' },
           { id: 'cancelled', name: '취소' },
           { id: 'rejected', name: '반려' }
@@ -738,7 +738,7 @@ const groupedReservations = computed(() => {
 
           <!-- 승인 / 반려 / 신청 시간 안내 -->
           <div v-if="editingRes?.status === 'approved' && editingRes?.updated_at" class="bg-emerald-50/70 border border-emerald-200/60 p-4 rounded-2xl flex items-center justify-between">
-            <span class="text-xs font-black text-emerald-700">승인 시간</span>
+            <span class="text-xs font-black text-emerald-700">확정 시간</span>
             <span class="text-xs font-black text-emerald-800">{{ formatDateTime(editingRes.updated_at) }}</span>
           </div>
           <div v-else-if="editingRes?.status === 'rejected' && editingRes?.updated_at" class="bg-rose-50/70 border border-rose-200/60 p-4 rounded-2xl flex items-center justify-between">
@@ -789,7 +789,7 @@ const groupedReservations = computed(() => {
                </button>
              </template>
 
-             <!-- 2. 취소 가능한 상태 (대기중 / 승인됨): "예약 취소"와 "닫기" -->
+             <!-- 2. 취소 가능한 상태 (대기중 / 예약 확정): "예약 취소"와 "닫기" -->
              <template v-else-if="editingRes?.status !== 'cancelled' && getEffectiveStatus(editingRes) !== 'finished'">
                <button @click="cancelReservation(editingRes.id)" 
                        class="flex-1 py-5 bg-rose-50 text-rose-500 font-black uppercase tracking-widest text-xs rounded-[2rem] hover:bg-rose-100 transition-all active:scale-95">

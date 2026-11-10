@@ -324,7 +324,7 @@
             <option value="3">최근 3개월부터</option><option value="6">최근 6개월부터</option><option value="12">최근 1년부터</option><option value="all">전체 기간</option>
           </select>
           <select v-model="listStatus" aria-label="예약 상태" class="rounded-xl border border-slate-200 p-2.5 text-xs font-bold">
-            <option value="all">전체 상태</option><option value="approved">승인완료</option><option value="pending">승인대기</option><option value="cancel_requested">취소요청</option><option value="cancelled">취소됨</option><option value="rejected">거부됨</option>
+            <option value="all">전체 상태</option><option value="approved">예약 확정</option><option value="pending">승인대기</option><option value="cancel_requested">취소요청</option><option value="cancelled">취소됨</option><option value="rejected">거부됨</option>
           </select>
         </div>
       </div>
@@ -540,7 +540,7 @@
               :disabled="!bookingForm.room_id || submitting || !!bookingConflictError || (bookingStep === 'agreement' && !bookingRulesAgreed)"
               class="flex-[2] py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
             >
-              {{ submitting ? '신청 처리 중...' : bookingStep === 'form' ? '다음' : '동의 및 예약 신청 (관리자 승인 대기)' }}
+              {{ submitting ? '신청 처리 중...' : bookingStep === 'form' ? '다음' : '동의 및 예약 확정' }}
             </button>
           </div>
         </div>
@@ -866,7 +866,7 @@
                 <!-- 6. Modify Reason for Admin Approval -->
                 <div class="space-y-1.5">
                   <label class="text-xs font-black text-indigo-600">
-                    변경 사유 * (관리자 승인 검토 시 안내됩니다)
+                    변경 사유 *
                   </label>
                   <textarea
                     v-model="editForm.modify_reason"
@@ -884,7 +884,7 @@
                 <div class="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-xs text-rose-700 space-y-1.5">
                   <p class="font-black">예약 취소 신청</p>
                   <p class="text-[11px] leading-relaxed">
-                    {{ selectedRes.status === 'approved' ? '취소 신청 후 관리자 승인이 완료되면 최종 취소됩니다.' : '예약을 취소하시겠습니까?' }}
+                    {{ selectedRes.status === 'approved' ? '취소하면 즉시 반영됩니다.' : '예약을 취소하시겠습니까?' }}
                   </p>
                 </div>
 
@@ -913,7 +913,7 @@
 
                 <div class="space-y-1.5">
                   <label class="text-xs font-black text-rose-600">
-                    취소 사유 * (관리자 승인 검토 시 안내됩니다)
+                    취소 사유 *
                   </label>
                   <textarea
                     v-model="cancelReason"
@@ -964,7 +964,7 @@
                 :disabled="submitting || !!editTimeConflictError || (editStep === 'agreement' && !editRulesAgreed)"
                 class="flex-[2] py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 transition-all"
               >
-                {{ submitting ? '신청 중...' : editStep === 'form' ? '다음' : '동의 및 변경 신청 (관리자 승인 대기)' }}
+                {{ submitting ? '신청 중...' : editStep === 'form' ? '다음' : '동의 및 예약 변경' }}
               </button>
             </template>
 
@@ -981,7 +981,7 @@
                 :disabled="submitting"
                 class="flex-[2] py-4 rounded-2xl bg-rose-600 text-white text-xs font-black shadow-lg shadow-rose-100 active:scale-95 disabled:opacity-50 transition-all"
               >
-                {{ submitting ? '처리 중...' : (selectedRes.status === 'approved' ? '취소 신청 (관리자 승인 대기)' : '취소 확정') }}
+                {{ submitting ? '처리 중...' : (selectedRes.status === 'approved' ? '예약 취소' : '취소 확정') }}
               </button>
             </template>
           </div>
@@ -1227,7 +1227,7 @@ const shortHolidayName = (name) => {
 const statusLabel = (s) => ({
   pending: '승인대기',
   cancel_requested: '취소요청',
-  approved: '승인완료',
+  approved: '예약 확정',
   rejected: '거부됨',
   cancelled: '취소됨'
 }[s] || s)
@@ -1925,7 +1925,7 @@ const submitBooking = async () => {
     })
     closeBookingModal()
     await fetchAll()
-    await modal.showAlert('예약 신청이 접수되었습니다. 관리자 승인 후 최종 확정됩니다.')
+    await modal.showAlert('예약이 확정되었습니다.')
   } catch (err) {
     await modal.showAlert(err.response?.data?.message || '예약 신청에 실패했습니다.')
   } finally {
@@ -2090,7 +2090,7 @@ const submitModify = async () => {
     return
   }
   if (!editForm.value.modify_reason.trim()) {
-    await modal.showAlert('변경 사유를 입력해 주세요. (관리자 승인 검토 시 안내됩니다)')
+    await modal.showAlert('변경 사유를 입력해 주세요.')
     return
   }
   if (editTimeConflictError.value) {
@@ -2131,8 +2131,8 @@ const submitModify = async () => {
     const count = res.data?.count || 1
     await modal.showAlert(
       count > 1
-        ? `총 ${count}건의 예약 변경 신청이 접수되었습니다. 관리자 승인 후 확정됩니다.`
-        : '예약 변경 신청이 접수되었습니다. 관리자 승인 후 최종 확정됩니다.'
+        ? `총 ${count}건의 예약 변경이 완료되었습니다.`
+        : '예약 변경이 완료되었습니다.'
     )
   } catch (err) {
     await modal.showAlert(err.response?.data?.message || '예약 변경 신청에 실패했습니다.')
@@ -2143,7 +2143,7 @@ const submitModify = async () => {
 
 const submitCancel = async () => {
   if (!cancelReason.value.trim()) {
-    await modal.showAlert('취소 사유를 입력해 주세요. (관리자 승인 검토 시 안내됩니다)')
+    await modal.showAlert('취소 사유를 입력해 주세요.')
     return
   }
 

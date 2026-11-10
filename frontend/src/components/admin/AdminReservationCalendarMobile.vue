@@ -936,14 +936,7 @@
                 </button>
               </template>
               <template v-else>
-                <button
-                  v-if="selectedRes.status === 'pending'"
-                  @click="approveFromModal"
-                  :disabled="submitting"
-                  class="flex-1 py-3.5 rounded-2xl bg-emerald-600 text-white text-xs font-black shadow-sm active:scale-95"
-                >
-                  승인하기
-                </button>
+
                 <button
                   v-if="selectedRes.status !== 'cancelled' && selectedRes.status !== 'rejected'"
                   @click="startEdit"
@@ -1223,7 +1216,7 @@ const shortHolidayName = (name) => {
 const statusLabel = (s) => ({
   pending: '승인대기',
   cancel_requested: '취소요청',
-  approved: '승인완료',
+  approved: '예약 확정',
   rejected: '거부됨',
   cancelled: '취소됨'
 }[s] || s)
@@ -1326,7 +1319,7 @@ const expandedBlockedItems = computed(() => {
   return items
 })
 
-// 캘린더에 표시할 유효 예약 (승인완료 + 승인대기 + 토글 시 고정 일정)
+// 캘린더에 표시할 유효 예약 (예약 확정 + 승인대기 + 토글 시 고정 일정)
 const activeCalendarItems = computed(() => {
   const validRes = reservations.value.filter((r) => r.status === 'approved' || r.status === 'pending')
   return [...validRes, ...expandedBlockedItems.value].sort((a, b) =>

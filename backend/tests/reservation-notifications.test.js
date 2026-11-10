@@ -28,19 +28,19 @@ function loadRoutes() {
       throw new Error(name);
     }
   });
-  async function run(route, roles) {
+  async function run(route, roles, expectedStatus = 200) {
     const req = { params: { id: '1' }, body: { reservation_id: 1, content: 'question', reject_reason: 'reason' }, session: { user: { id: 1, roles } } };
     const res = { statusCode: 200, status(value) { this.statusCode = value; return this; }, json(value) { this.body = value; } };
     await handlers.get(route)(req, res);
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.body.success, true);
+    assert.equal(res.statusCode, expectedStatus);
+    assert.equal(res.body.success, expectedStatus === 200);
   }
   return { run, notifications, queries };
 }
 
 test('reservation approval and inquiry do not send notifications', async () => {
   const routes = loadRoutes();
-  await routes.run('patch /:id/approve', ['관리자']);
+  await routes.run('patch /:id/approve', ['관리자'], 410);
   await routes.run('post /inquiry', ['사용자']);
   assert.equal(routes.notifications.length, 0);
 });
@@ -55,9 +55,11 @@ test('self cancellation is silent; admin cancellation notifies the requester', a
     assert.equal(routes.notifications[0].args[0].requester_phone, '01012345678');
   }
 });
-test('admin reservation rejection notifies the requester', async () => {
+test('approval and rejection endpoints are retired without database writes', async () => {
   const routes = loadRoutes();
-  await routes.run('patch /:id/reject', ['관리자']);
-  assert.equal(routes.notifications.length, 1);
-  assert.equal(routes.notifications[0].name, 'sendRejectionAlimTalk');
+  for (const path of ['/bulk-approve', '/bulk-reject', '/:id/approve', '/:id/reject']) {
+    await routes.run('patch ' + path, ['관리자'], 410);
+  }
+  assert.equal(routes.queries.length, 0);
+  assert.equal(routes.notifications.length, 0);
 });

@@ -64,7 +64,7 @@ const auth = useAuthStore()
             <ClockIcon class="w-7 h-7" />
           </div>
           <h3 class="text-xl font-black text-slate-900 mb-2">예약 현황 확인</h3>
-          <p class="text-slate-500 text-sm font-medium leading-relaxed">내가 신청한 예약의 승인 상태를 확인하고 필요 시 일정을 변경하거나 취소할 수 있습니다.</p>
+          <p class="text-slate-500 text-sm font-medium leading-relaxed">내가 신청한 예약 내역을 확인하고 필요 시 일정을 변경하거나 취소할 수 있습니다.</p>
         </router-link>
       </div>
     </div>
@@ -83,11 +83,11 @@ const auth = useAuthStore()
               </div>
               <div class="flex items-start gap-4">
                 <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm font-black shrink-0">2</div>
-                <p class="font-bold text-indigo-50 leading-relaxed">관리자의 승인이 완료되면 예약이 확정됩니다.</p>
+                <p class="font-bold text-indigo-50 leading-relaxed">예약 신청이 완료되면 즉시 확정됩니다.</p>
               </div>
               <div class="flex items-start gap-4">
                 <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm font-black shrink-0">3</div>
-                <p class="font-bold text-indigo-50 leading-relaxed">승인 결과는 알림톡 또는 내 예약 확인 메뉴에서 보실 수 있습니다.</p>
+                <p class="font-bold text-indigo-50 leading-relaxed">예약 내역은 내 예약 확인 메뉴에서 보실 수 있습니다.</p>
               </div>
             </div>
           </div>
