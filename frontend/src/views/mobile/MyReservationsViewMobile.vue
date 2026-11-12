@@ -324,7 +324,7 @@
             <option value="3">최근 3개월부터</option><option value="6">최근 6개월부터</option><option value="12">최근 1년부터</option><option value="all">전체 기간</option>
           </select>
           <select v-model="listStatus" aria-label="예약 상태" class="rounded-xl border border-slate-200 p-2.5 text-xs font-bold">
-            <option value="all">전체 상태</option><option value="approved">예약 확정</option><option value="pending">승인대기</option><option value="cancel_requested">취소요청</option><option value="cancelled">취소됨</option><option value="rejected">거부됨</option>
+            <option value="all">전체 상태</option><option value="approved">예약 확정</option><option value="cancelled">취소됨</option><option value="rejected">거부됨</option>
           </select>
         </div>
       </div>
@@ -618,37 +618,6 @@
             <!-- Normal View Mode -->
             <template v-if="!isEditing && !showCancelConfirm">
               <ReservationRoomCard :room="rooms.find(r => String(r.id) === String(selectedRes.room_id)) || selectedRes" />
-              <!-- Notice if Cancel Requested -->
-              <div
-                v-if="selectedRes.status === 'cancel_requested'"
-                class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 space-y-1"
-              >
-                <p class="font-black flex items-center gap-1.5">
-                  <span>⏳</span>
-                  <span>취소 승인 대기 중</span>
-                </p>
-                <p class="text-[11px] text-rose-600">
-                  관리자가 취소 요청을 검토 중입니다. 승인 완료 시 최종 취소 처리됩니다.
-                </p>
-                <p v-if="selectedRes.reject_reason" class="text-[11px] text-rose-800 bg-white/60 p-2 rounded-lg mt-1 font-medium">
-                  취소 사유: {{ selectedRes.reject_reason }}
-                </p>
-              </div>
-
-              <!-- Notice if Pending -->
-              <div
-                v-else-if="selectedRes.status === 'pending'"
-                class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 space-y-1"
-              >
-                <p class="font-black flex items-center gap-1.5">
-                  <span>⏳</span>
-                  <span>승인 대기 중</span>
-                </p>
-                <p class="text-[11px] text-amber-700">
-                  관리자 승인 후 최종 확정됩니다. 승인 완료 시 알림톡이 발송됩니다.
-                </p>
-              </div>
-
               <!-- Title & Basic Info -->
               <div class="space-y-1">
                 <h2 class="text-xl font-black text-slate-900 leading-snug">
@@ -929,13 +898,8 @@
           <!-- Footer Buttons -->
           <div class="p-4 border-t border-slate-100 bg-white flex gap-2 shrink-0">
             <template v-if="!isEditing && !showCancelConfirm">
-              <!-- If Cancel Requested -->
-              <div v-if="selectedRes.status === 'cancel_requested'" class="flex-1 text-center py-4 text-xs font-bold text-rose-500">
-                취소 승인 대기 중입니다.
-              </div>
-
               <!-- Normal Actions -->
-              <template v-else-if="selectedRes.status !== 'cancelled' && selectedRes.status !== 'rejected'">
+              <template v-if="selectedRes.status !== 'cancelled' && selectedRes.status !== 'rejected'">
                 <button
                   @click="startEdit"
                   class="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 transition-all"

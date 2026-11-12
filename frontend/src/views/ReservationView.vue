@@ -1137,7 +1137,6 @@ const getCalendarItemsForDate = (date) => {
 const getCalendarItemDotColor = (res) => {
   if (res.is_blocked) return 'bg-teal-100 border border-dashed border-teal-400'
   if (isEnded(res)) return 'bg-slate-400'
-  if (res.status === 'pending') return 'bg-amber-400'
   return 'bg-indigo-600'
 }
 
@@ -1175,14 +1174,13 @@ const handleDotMouseLeave = () => {
 const getDotTooltipBadgeClass = (res) => {
   if (res.is_blocked) return 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
   if (isEnded(res)) return 'bg-slate-700 text-slate-300'
-  if (res.status === 'pending') return 'bg-amber-400 text-slate-950 font-black'
   return 'bg-indigo-600 text-white'
 }
 
 const getDotTooltipBadgeText = (res) => {
   if (res.is_blocked) return '고정 일정'
   if (isEnded(res)) return '종료됨'
-  if (res.status === 'pending') return '승인대기'
+  if (res.status === 'pending') return ''
   return '예약 확정'
 }
 
@@ -1607,10 +1605,6 @@ onMounted(async () => {
               <span class="whitespace-nowrap">예약 확정</span>
             </div>
             <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
-              <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-400 rounded-full shadow-xs shrink-0"></span>
-              <span class="whitespace-nowrap">승인대기</span>
-            </div>
-            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap">
               <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-slate-400 rounded-full shadow-xs shrink-0"></span>
               <span class="whitespace-nowrap">종료됨</span>
             </div>
@@ -1778,10 +1772,9 @@ onMounted(async () => {
                                @click.stop="openDetail(res)"
                                :class="[
                                  isEnded(res) ? 'bg-slate-200 text-slate-700 border border-slate-300 shadow-sm' : 
-                                 res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
+                                 'bg-indigo-600 text-white shadow-md'
                                ]"
                                class="text-[0.6875rem] font-bold px-1.5 py-1 rounded-lg truncate transition-all hover:scale-[1.01]">
-                            <span v-if="res.status === 'pending'" class="mr-1 text-[0.5625rem] font-bold bg-white/30 px-1 py-0.2 rounded">대기</span>
                             ({{ res.start_time.slice(0,5) }}) {{ res.title || '예약' }}
                           </div>
                           <div v-if="getReservationsForRoomAndDate(room.id, date).length + getBlockedForRoomAndDate(room, date).length > 4" class="text-[0.625rem] font-black text-slate-400 px-1">
@@ -1884,10 +1877,9 @@ onMounted(async () => {
                                  :style="{ ...getDayReservationStyle(res), top: (8 + rIdx * 30) + 'px' }"
                                  :class="[
                                    isEnded(res) ? 'bg-slate-200 text-slate-700 border border-slate-300 shadow-sm' : 
-                                   res.status === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
+                                   'bg-indigo-600 text-white shadow-md'
                                  ]"
                                  class="absolute h-7 rounded-lg flex items-center px-2.5 text-xs font-bold truncate z-20 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-transform">
-                              <span v-if="res.status === 'pending'" class="mr-1 text-[0.5625rem] font-bold bg-white/30 px-1.5 py-0.2 rounded-full">대기</span>
                               {{ res.title || '예약' }}
                             </div>
                           </template>
@@ -1909,7 +1901,7 @@ onMounted(async () => {
         <div v-else class="p-6 max-w-6xl mx-auto space-y-6">
           <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
             <div class="flex p-1 bg-slate-100 rounded-xl">
-              <button v-for="s in [{ id: 'all', name: '전체' }, { id: 'approved', name: '예약 확정' }, { id: 'pending', name: '승인대기' }]" :key="s.id"
+              <button v-for="s in [{ id: 'all', name: '전체' }, { id: 'approved', name: '예약 확정' }]" :key="s.id"
                       @click="statusFilter = s.id"
                       :class="[statusFilter === s.id ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 font-bold']"
                       class="px-4 py-1.5 rounded-lg text-xs transition-all">
@@ -1947,12 +1939,12 @@ onMounted(async () => {
                   <span v-if="res.is_blocked" class="bg-teal-600 text-white px-2 py-0.5 rounded-md text-[0.6875rem] font-black uppercase">
                     고정 일정
                   </span>
-                  <span v-else :class="[
+                  <span v-else-if="res.status !== 'pending'" :class="[
                           res.status === 'approved' ? 'bg-indigo-600 text-white' : 
-                          res.status === 'pending' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'
+                          'bg-slate-200 text-slate-700'
                         ]" 
                         class="px-2 py-0.5 rounded-md text-[0.6875rem] font-black uppercase">
-                    {{ res.status === 'approved' ? '승인' : res.status === 'pending' ? '대기' : res.status }}
+                    {{ res.status === 'approved' ? '예약 확정' : res.status }}
                   </span>
                 </div>
                 <h3 class="text-sm font-black text-slate-900 mt-2 mb-1 group-hover:text-indigo-600 transition-colors">
@@ -2011,9 +2003,6 @@ onMounted(async () => {
                   </span>
                   <span v-else-if="detailReservation?.status === 'approved'" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
                     예약 확정
-                  </span>
-                  <span v-else class="px-2 py-0.5 rounded-full text-[0.6875rem] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                    승인대기
                   </span>
                 </div>
               </div>
@@ -2782,6 +2771,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-slate-700/50">
             <span
               class="px-2 py-0.5 rounded-md text-[10px] font-black shrink-0 tracking-tight"
+              v-if="getDotTooltipBadgeText(hoveredDotReservation)"
               :class="getDotTooltipBadgeClass(hoveredDotReservation)"
             >
               {{ getDotTooltipBadgeText(hoveredDotReservation) }}

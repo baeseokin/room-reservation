@@ -65,7 +65,11 @@
 
           <li class="flex gap-3 items-start">
             <div class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0"></div>
-            <p class="text-sm font-bold text-slate-600 leading-relaxed">당일 급한 변경이 필요한 경우, 사무실(02-337-5400)로 연락 바랍니다.</p>
+            <p class="text-sm font-bold text-slate-600 leading-relaxed">나의 예약에서 직접 취소 또는 변경이 가능합니다.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <div class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0"></div>
+            <p class="text-sm font-bold text-slate-600 leading-relaxed">기타 문의사항은 사무실(02-337-5400)로 연락 바랍니다.</p>
           </li>
         </ul>
       </div>

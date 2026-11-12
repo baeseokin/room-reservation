@@ -488,7 +488,6 @@ const groupedReservations = computed(() => {
         <button v-for="s in [
           { id: 'all', name: '전체' }, 
           { id: 'approved', name: '예약 확정' },
-          { id: 'pending', name: '승인대기' },
           { id: 'cancelled', name: '취소' },
           { id: 'rejected', name: '반려' }
         ]" :key="s.id" 
