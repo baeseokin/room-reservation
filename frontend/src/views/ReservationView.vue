@@ -2823,7 +2823,7 @@ onMounted(async () => {
     <Teleport to="body">
       <div v-if="showNoticeModal" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showNoticeModal = false"></div>
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-white overflow-hidden animate-in transform-gpu antialiased">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-white max-h-[calc(100dvh-2rem)] overflow-y-auto animate-in transform-gpu antialiased">
           <!-- Header -->
           <div class="bg-indigo-900 px-8 py-8 text-white relative">
             <button @click="showNoticeModal = false" class="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -2833,9 +2833,9 @@ onMounted(async () => {
               <div class="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                 <InformationCircleIcon class="w-4 h-4 text-white" />
               </div>
-              <h3 class="text-lg font-black tracking-tight">공간 예약 신청 안내</h3>
+              <h3 class="text-xl font-black tracking-tight">공간 예약 신청 안내</h3>
             </div>
-            <p class="text-indigo-200 text-xs font-bold uppercase tracking-widest">이용 수칙 및 예약 규정 안내</p>
+            <p class="text-indigo-200 text-sm font-bold uppercase tracking-widest">이용 수칙 및 예약 규정 안내</p>
           </div>
 
           <!-- Body -->
@@ -2844,16 +2844,16 @@ onMounted(async () => {
               <div v-if="!policySettings.allow_same_day" class="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                 <span class="w-7 h-7 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">✕</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-800">당일 신청 불가</h4>
-                  <p class="text-xs text-slate-500 mt-0.5">당일 날짜에 대한 예약 신청은 허용되지 않습니다.</p>
+                  <h4 class="text-base font-bold text-slate-800">당일 신청 불가</h4>
+                  <p class="text-sm leading-relaxed text-slate-500 mt-0.5">당일 날짜에 대한 예약 신청은 허용되지 않습니다.</p>
                 </div>
               </div>
 
               <div v-if="!policySettings.allow_monday || !policySettings.allow_holidays" class="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                 <span class="w-7 h-7 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">✕</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-800">예약 신청 제한</h4>
-                  <p class="text-xs text-slate-500 mt-0.5">
+                  <h4 class="text-base font-bold text-slate-800">예약 신청 제한</h4>
+                  <p class="text-sm leading-relaxed text-slate-500 mt-0.5">
                     <span v-if="!policySettings.allow_monday">매주 월요일</span>
                     <span v-if="!policySettings.allow_monday && !policySettings.allow_holidays"> 및 </span>
                     <span v-if="!policySettings.allow_holidays">법정 공휴일</span>
@@ -2865,9 +2865,9 @@ onMounted(async () => {
               <div class="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                 <span class="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">⏰</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-800">이용 시간 제한</h4>
-                  <p class="text-xs text-slate-500 mt-0.5">
-                    예약 가능 시간은 **오전 {{ policySettings.start_time.slice(0, 5) }} ~ 오후 {{ policySettings.end_time.slice(0, 5) }}** 사이입니다.
+                  <h4 class="text-base font-bold text-slate-800">이용 시간 제한</h4>
+                  <p class="text-sm leading-relaxed text-slate-500 mt-0.5">
+                    예약 가능 시간은 오전 {{ policySettings.start_time.slice(0, 5) }} ~ 오후 {{ policySettings.end_time.slice(0, 5) }} 사이입니다.
                   </p>
                 </div>
               </div>
@@ -2875,29 +2875,22 @@ onMounted(async () => {
               <div class="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                 <span class="w-7 h-7 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">📅</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-800">예약 기간 제약</h4>
-                  <p class="text-xs text-slate-500 mt-0.5">
+                  <h4 class="text-base font-bold text-slate-800">예약 기간 제약</h4>
+                  <p class="text-sm leading-relaxed text-slate-500 mt-0.5">
                     현재월을 포함하여 +{{ policySettings.max_booking_months !== undefined ? policySettings.max_booking_months : 1 }}개월 후의 말일까지만 예약이 가능합니다.
                   </p>
                 </div>
               </div>
 
-              <div class="flex items-start gap-3 p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
-                <span class="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-md shadow-indigo-200">📋</span>
-                <div>
-                  <h4 class="text-sm font-bold text-slate-900">최대 2일 소요</h4>
-                  <p class="text-xs text-slate-600 mt-0.5">예약 신청이 완료되면 즉시 확정됩니다.</p>
-                </div>
-              </div>
             </div>
 
             <!-- Footer Toggles -->
             <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
               <label class="flex items-center gap-2 cursor-pointer group">
                 <input type="checkbox" v-model="dontShowToday" class="rounded text-indigo-600 focus:ring-indigo-500/20 border-slate-300 w-4 h-4 cursor-pointer" />
-                <span class="text-xs font-bold text-slate-500 group-hover:text-slate-800 transition-colors">오늘 하루 보지 않기</span>
+                <span class="text-sm font-bold text-slate-500 group-hover:text-slate-800 transition-colors">오늘 하루 보지 않기</span>
               </label>
-              <button @click="closeNotice" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-md active:scale-95">확인</button>
+              <button @click="closeNotice" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-md active:scale-95">확인</button>
             </div>
           </div>
         </div>
